@@ -1,0 +1,32 @@
+# Database (user data)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+!data/.gitkeep
+
+# Security database
+data/security.db
+
+# Cache & Temp
+*.tmp
+*.log
+*.cache
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# PHP
+vendor/
+composer.lock
+
+# Environment
+.env
+.env.local
+*.local.php

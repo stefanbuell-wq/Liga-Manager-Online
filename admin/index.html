@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMO Admin Center</title>
+    <link rel="stylesheet" href="../css/league-modern.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --header-height: 64px;
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-live: #00FF88;
+            --color-bg-dark: #0D0D0D;
+            --color-bg-card: #1A1F1A;
+            --color-bg-elevated: #1E231E;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #A0A0A0;
+            --color-text-muted: #666666;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Layout */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--color-bg-card);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--color-text-primary);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            border-radius: 8px;
+        }
+
+        .nav-items {
+            flex: 1;
+            padding: 16px 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 14px 24px;
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+        }
+
+        .nav-item:hover {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(226, 0, 26, 0.15);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            height: var(--header-height);
+            background: var(--color-bg-card);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: var(--color-bg-dark);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--color-bg-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+
+        .card h3, .card h2 {
+            margin-top: 0;
+            color: var(--color-text-primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Forms & Inputs */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="date"],
+        input[type="time"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--color-text-primary);
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button.btn-secondary {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+        }
+
+        button.btn-secondary:hover {
+            background: var(--color-bg-card);
+            border-color: var(--color-text-muted);
+        }
+
+        button.btn-danger {
+            background: #dc3545;
+        }
+
+        button.btn-danger:hover {
+            background: #c82333;
+        }
+
+        button.btn-success {
+            background: var(--color-live);
+            color: var(--color-bg-dark);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--color-text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--color-bg-elevated);
+        }
+
+        tr:hover {
+            background: var(--color-bg-elevated);
+        }
+
+        /* Editor Specific */
+        .match-row {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+
+        .match-row:last-child {
+            border-bottom: none;
+        }
+
+        .teams-display {
+            flex: 1;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .score-input {
+            width: 60px !important;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* News Specific */
+        .editor-toolbar {
+            margin-bottom: 0;
+            background: var(--color-bg-elevated);
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            border-bottom: none;
+        }
+
+        .editor-toolbar button {
+            padding: 6px 12px;
+            background: var(--color-bg-card);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            font-size: 0.85rem;
+            margin-right: 6px;
+        }
+
+        .editor-toolbar button:hover {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        #news-content-editor {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            min-height: 300px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        /* Login Screen Overlay */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--color-bg-dark);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--color-text-primary);
+        }
+
+        .login-box h2::before {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 60px;
+            background: var(--color-primary);
+            border-radius: 16px;
+            margin: 0 auto 20px;
+        }
+
+        #login-error {
+            color: var(--color-primary) !important;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        /* Logout button in topbar */
+        .topbar button {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--color-live);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+        }
+
+        .badge-danger {
+            background: rgba(226, 0, 26, 0.15);
+            color: var(--color-primary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-bg-elevated);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-muted);
+        }
+
+        /* Links */
+        a {
+            color: var(--color-primary);
+        }
+
+        a:hover {
+            color: var(--color-primary-hover);
+        }
+
+        /* Select dropdown arrow fix for dark mode */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A0A0A0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="hidden">
+        <div class="card login-box">
+            <h2 style="text-align:center; margin-top:0;">LMO Admin Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Benutzername</label>
+                    <input type="text" id="login-user" required>
+                </div>
+                <div class="form-group">
+                    <label>Passwort</label>
+                    <input type="password" id="login-pass" required>
+                </div>
+                <button type="submit" style="width:100%;">Anmelden</button>
+                <p id="login-error" style="color:red; text-align:center; margin-top:10px;"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">LMO Admin</div>
+        <nav class="nav-items">
+            <a class="nav-item active" onclick="switchTab('dashboard')">🏠 Dashboard (Ligen)</a>
+            <a class="nav-item" onclick="switchTab('teams')">👥 Teams</a>
+            <a class="nav-item" onclick="switchTab('corrections')">📊 Punktekorrekturen</a>
+            <a class="nav-item" onclick="switchTab('news')">📰 News Manager</a>
+            <a class="nav-item" onclick="switchTab('users')">🔐 Benutzer</a>
+        </nav>
+        <div style="padding: 20px;">
+            <button onclick="doLogout()" class="btn-secondary" style="width:100%">Abmelden</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <h2 id="page-title" style="margin:0;">Dashboard</h2>
+            <div id="user-info">Admin</div>
+        </header>
+
+        <section class="content-area">
+
+            <!-- VIEW: Dashboard (League List) -->
+            <div id="view-dashboard" class="view-section">
+                <div class="card">
+                    <h3>Verfügbare Ligen</h3>
+                    <div id="league-list-container">Lade...</div>
+                </div>
+            </div>
+
+            <!-- VIEW: League Editor -->
+            <div id="view-editor" class="view-section hidden">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <button onclick="switchTab('dashboard')" class="btn-secondary">&larr; Zurück</button>
+                        <h3 id="editor-league-name" style="margin:0;">Liga bearbeiten</h3>
+                        <button id="btn-save-matches" onclick="saveMatches()">💾 Speichern</button>
+                    </div>
+
+                    <div
+                        style="margin-bottom:20px; display:flex; gap:10px; align-items:center; background:#f9f9f9; padding:15px; border-radius:8px;">
+                        <label style="margin:0;">Spieltag wählen:</label>
+                        <select id="round-select" style="width:auto; min-width:150px;"></select>
+                    </div>
+
+                    <div id="matches-container">
+                        <!-- Matches will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Teams Manager -->
+            <div id="view-teams" class="view-section hidden">
+                <!-- Liga-Auswahl für Teams -->
+                <div id="teams-league-select-panel" class="card">
+                    <h3>Liga auswählen</h3>
+                    <div id="teams-league-list">Lade Ligen...</div>
+                </div>
+
+                <!-- Teams-Liste -->
+                <div id="teams-list-panel" class="card hidden">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <div>
+                            <button onclick="backToLeagueSelect()" class="btn-secondary">&larr; Zurück</button>
+                            <span id="teams-league-name" style="font-weight:bold; margin-left:15px;"></span>
+                        </div>
+                        <button onclick="openTeamEditor(null)">+ Neues Team</button>
+                    </div>
+                    <div id="teams-container">Lade Teams...</div>
+                </div>
+
+                <!-- Team-Editor -->
+                <div id="team-editor-panel" class="card hidden">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h3 id="team-editor-title">Team bearbeiten</h3>
+                        <button onclick="closeTeamEditor()" class="btn-secondary">Abbrechen</button>
+                    </div>
+
+                    <form id="team-form">
+                        <input type="hidden" id="team-id">
+                        <div class="form-group">
+                            <label>Teamname *</label>
+                            <input type="text" id="team-name" required placeholder="z.B. FC Musterstadt">
+                        </div>
+                        <div class="form-group">
+                            <label>Kurzname</label>
+                            <input type="text" id="team-short-name" placeholder="z.B. FCM (optional)">
+                        </div>
+                        <div class="form-group">
+                            <label>Logo-Datei</label>
+                            <input type="text" id="team-logo" placeholder="z.B. FCMusterstadt.gif (optional)">
+                            <small style="color:#888;">Dateiname im Ordner img/teams/</small>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button type="submit">💾 Speichern</button>
+                            <button type="button" id="btn-delete-team" onclick="deleteTeam()" class="btn-danger hidden">🗑 Löschen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW: News Manager -->
+            <div id="view-news" class="view-section hidden">
+                <!-- News List -->
+                <div id="news-list-panel" class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3>Alle Nachrichten</h3>
+                        <button onclick="openNewsEditor(null)">+ Neuer Beitrag</button>
+                    </div>
+                    <div id="news-items-container">Lade Nachrichten...</div>
+                </div>
+
+                <!-- News Editor Form -->
+                <div id="news-editor-panel" class="card hidden">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h3 id="news-editor-title">Beitrag bearbeiten</h3>
+                        <button onclick="closeNewsEditor()" class="btn-secondary">Abbrechen</button>
+                    </div>
+
+                    <form id="news-form">
+                        <input type="hidden" id="news-id">
+                        <div class="form-group">
+                            <label>Titel</label>
+                            <input type="text" id="news-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Autor</label>
+                            <input type="text" id="news-author" value="Redaktion">
+                        </div>
+                        <div class="form-group">
+                            <label>Inhalt</label>
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="fmt('b')"><b>B</b></button>
+                                <button type="button" onclick="fmt('i')"><i>I</i></button>
+                                <button type="button" onclick="fmt('h3')">H3</button>
+                                <button type="button" onclick="fmt('p')">P</button>
+                                <button type="button" onclick="fmt('a')">Link</button>
+                                <button type="button" onclick="fmt('br')">Break</button>
+                            </div>
+                            <textarea id="news-content-editor"></textarea>
+                        </div>
+                        <button type="submit">Beitrag speichern</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW: Punktekorrekturen -->
+            <div id="view-corrections" class="view-section hidden">
+                <div id="corr-league-select-panel" class="card">
+                    <h3>Liga auswählen</h3>
+                    <div id="corr-league-list">Lade Ligen...</div>
+                </div>
+
+                <div id="corr-main-panel" class="card hidden">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <div>
+                            <button onclick="backToCorrLeagueSelect()" class="btn-secondary">&larr; Zurück</button>
+                            <span id="corr-league-name" style="font-weight:bold; margin-left:15px;"></span>
+                        </div>
+                        <button onclick="openCorrectionEditor(null)">+ Neue Korrektur</button>
+                    </div>
+
+                    <div id="corrections-list">Lade...</div>
+
+                    <!-- Korrektur-Editor -->
+                    <div id="corr-editor" class="hidden" style="margin-top:20px; padding:20px; background:#f9f9f9; border-radius:8px;">
+                        <h4 id="corr-editor-title">Korrektur hinzufügen</h4>
+                        <div class="form-group">
+                            <label>Team</label>
+                            <select id="corr-team-select" style="width:100%;"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Punkte (negativ = Abzug, positiv = Bonus)</label>
+                            <input type="number" id="corr-points" value="0" style="width:100px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Grund</label>
+                            <input type="text" id="corr-reason" placeholder="z.B. Spielerwechsel-Verstoß">
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="saveCorrection()">Speichern</button>
+                            <button onclick="closeCorrectionEditor()" class="btn-secondary">Abbrechen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Benutzerverwaltung -->
+            <div id="view-users" class="view-section hidden">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3>Benutzer</h3>
+                        <button onclick="openUserEditor(null)">+ Neuer Benutzer</button>
+                    </div>
+                    <div id="users-list">Lade...</div>
+                </div>
+
+                <!-- Benutzer-Editor -->
+                <div id="user-editor-panel" class="card hidden">
+                    <h3 id="user-editor-title">Benutzer bearbeiten</h3>
+                    <form id="user-form">
+                        <input type="hidden" id="user-id">
+                        <div class="form-group">
+                            <label>Benutzername *</label>
+                            <input type="text" id="user-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Anzeigename</label>
+                            <input type="text" id="user-displayname">
+                        </div>
+                        <div class="form-group">
+                            <label>Passwort <span id="pw-hint">(min. 8 Zeichen, Buchstaben + Zahlen)</span></label>
+                            <input type="password" id="user-password">
+                        </div>
+                        <div class="form-group">
+                            <label>Rolle</label>
+                            <select id="user-role">
+                                <option value="editor">Editor</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="user-active" checked> Aktiv
+                            </label>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button type="submit">Speichern</button>
+                            <button type="button" onclick="closeUserEditor()" class="btn-secondary">Abbrechen</button>
+                            <button type="button" id="btn-delete-user" onclick="deleteUser()" class="btn-danger hidden">Löschen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = '../api';
+
+        // State
+        let currentLeagueData = null;
+        let currentRound = 1;
+        let csrfToken = null; // CSRF Token for POST requests
+
+        // Helper: POST with CSRF token
+        async function postWithCsrf(url, data) {
+            const payload = { ...data, csrf_token: csrfToken };
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            // Update CSRF token if provided in response
+            if (result.csrf_token) {
+                csrfToken = result.csrf_token;
+            }
+            return result;
+        }
+
+        // -- AUTH & INIT --
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = await checkAuth();
+            if (!auth) {
+                document.getElementById('login-overlay').classList.remove('hidden');
+            } else {
+                loadDashboard();
+            }
+
+            // Login Handler
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value;
+                const p = document.getElementById('login-pass').value;
+                const res = await fetch(`${API_BASE}/login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const d = await res.json();
+                // Store CSRF token from login response
+                if (d.csrf_token) {
+                    csrfToken = d.csrf_token;
+                }
+                if (d.success) {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    loadDashboard();
+                } else {
+                    document.getElementById('login-error').textContent = d.error;
+                }
+            });
+
+            // News Form Handler
+            document.getElementById('news-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveNews();
+            });
+
+            // Round Change Handler
+            document.getElementById('round-select').addEventListener('change', (e) => {
+                currentRound = parseInt(e.target.value);
+                renderMatches();
+            });
+        });
+
+        async function checkAuth() {
+            try {
+                const data = await (await fetch(`${API_BASE}/check-auth.php`)).json();
+                // Store CSRF token
+                if (data.csrf_token) {
+                    csrfToken = data.csrf_token;
+                }
+                return data.authenticated;
+            } catch (e) { return false; }
+        }
+
+        async function doLogout() {
+            await fetch(`${API_BASE}/logout.php`);
+            location.reload();
+        }
+
+        // -- NAVIGATION --
+        function switchTab(tabId) {
+            // Update Sidebar
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const navMap = { 'dashboard': 0, 'editor': 0, 'teams': 1, 'corrections': 2, 'news': 3, 'users': 4 };
+            if (navMap[tabId] !== undefined) document.querySelectorAll('.nav-item')[navMap[tabId]].classList.add('active');
+
+            // Hide/Show Views
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+
+            if (tabId === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Dashboard';
+                loadDashboard();
+            } else if (tabId === 'teams') {
+                document.getElementById('view-teams').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Teams verwalten';
+                loadTeamsLeagueList();
+            } else if (tabId === 'corrections') {
+                document.getElementById('view-corrections').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Punktekorrekturen';
+                loadCorrLeagueList();
+            } else if (tabId === 'news') {
+                document.getElementById('view-news').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'News Manager';
+                loadNewsList();
+            } else if (tabId === 'users') {
+                document.getElementById('view-users').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Benutzerverwaltung';
+                loadUsersList();
+            } else if (tabId === 'editor') {
+                document.getElementById('view-editor').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Liga Editor';
+            }
+        }
+
+        // -- DASHBOARD LOGIC --
+        async function loadDashboard() {
+            const container = document.getElementById('league-list-container');
+            container.innerHTML = 'Lade...';
+            const data = await (await fetch(`${API_BASE}/list-leagues.php`)).json();
+
+            if (!data.leagues || data.leagues.length === 0) {
+                container.innerHTML = 'Keine Ligen gefunden.';
+                return;
+            }
+
+            container.innerHTML = data.leagues.map(l => `
+                <div onclick="openLeagueEditor('${l.file}')" 
+                     style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; font-size:1.1rem;">${l.name}</span>
+                    <span style="color:#666; font-size:0.9rem;">${l.file} &rarr;</span>
+                </div>
+            `).join('');
+        }
+
+        // -- LEAGUE EDITOR LOGIC --
+        async function openLeagueEditor(file) {
+            switchTab('editor'); // Show editor view
+            document.getElementById('matches-container').innerHTML = 'Lade Daten...';
+            currentLeagueFile = file;
+
+            const data = await (await fetch(`${API_BASE}/get-league-data.php?liga=${file}`)).json();
+            if (data.error) { alert(data.error); switchTab('dashboard'); return; }
+
+            currentLeagueData = data;
+            document.getElementById('editor-league-name').textContent = data.options.Name;
+
+            // Setup Rounds
+            const rounds = parseInt(data.options.Rounds);
+            const actual = parseInt(data.options.Actual);
+            currentRound = actual;
+
+            const sel = document.getElementById('round-select');
+            sel.innerHTML = '';
+            for (let i = 1; i <= rounds; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Spieltag ${i}`;
+                if (i === actual) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            renderMatches();
+        }
+
+        function renderMatches() {
+            const matches = currentLeagueData.matches[currentRound] || [];
+            const container = document.getElementById('matches-container');
+
+            if (matches.length === 0) { container.innerHTML = 'Huch, keine Spiele gefunden.'; return; }
+
+            container.innerHTML = matches.map((m, idx) => `
+                <div class="match-row" data-idx="${idx}" style="flex-direction:column; align-items:stretch; padding:15px 0;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                        <div class="teams-display">
+                            <span style="flex:1; text-align:right; font-weight:600;">${m.home}</span>
+                            <span style="padding:0 10px;">vs</span>
+                            <span style="flex:1; text-align:left; font-weight:600;">${m.guest}</span>
+                        </div>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                            <input type="text" class="score-input home-score" value="${m.home_goals !== null ? m.home_goals : ''}" placeholder="-">
+                            :
+                            <input type="text" class="score-input guest-score" value="${m.guest_goals !== null ? m.guest_goals : ''}" placeholder="-">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:0.9rem;">
+                        <div>
+                            <label style="font-size:0.8rem; color:#666;">Datum</label>
+                            <input type="date" class="match-date" value="${m.date || ''}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#666;">Uhrzeit</label>
+                            <input type="time" class="match-time" value="${m.time || ''}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:#666;">Notiz</label>
+                            <input type="text" class="match-note" value="${m.match_note || ''}" placeholder="z.B. verlegt, abgesagt..." style="width:100%; padding:5px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function saveMatches() {
+            const rows = document.querySelectorAll('.match-row');
+            const dataToSave = [];
+
+            rows.forEach(row => {
+                const idx = row.dataset.idx;
+                const h = row.querySelector('.home-score').value;
+                const g = row.querySelector('.guest-score').value;
+                const date = row.querySelector('.match-date').value;
+                const time = row.querySelector('.match-time').value;
+                const note = row.querySelector('.match-note').value;
+                const original = currentLeagueData.matches[currentRound][idx];
+
+                dataToSave.push({
+                    home_id: original.home_id,
+                    guest_id: original.guest_id,
+                    home_goals: h,
+                    guest_goals: g,
+                    date: date,
+                    time: time,
+                    note: note
+                });
+            });
+
+            const btn = document.getElementById('btn-save-matches');
+            const oldText = btn.textContent;
+            btn.textContent = '...'; btn.disabled = true;
+
+            const result = await postWithCsrf(`${API_BASE}/save-matchday.php`, {
+                liga: currentLeagueFile,
+                round: currentRound,
+                matches: dataToSave
+            });
+
+            btn.textContent = oldText; btn.disabled = false;
+
+            if (result.success) {
+                alert("Gespeichert!");
+                // Reload to confirm data
+                openLeagueEditor(currentLeagueFile);
+            } else {
+                alert("Fehler: " + result.error);
+            }
+        }
+
+        // -- NEWS MANAGER LOGIC --
+        async function loadNewsList() {
+            document.getElementById('news-items-container').innerHTML = 'Lade...';
+            const data = await (await fetch(`${API_BASE}/get-news-list.php`)).json();
+
+            if (!data.news || data.news.length === 0) {
+                document.getElementById('news-items-container').innerHTML = 'Keine News.';
+                return;
+            }
+
+            document.getElementById('news-items-container').innerHTML = data.news.map(n => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #eee; background:white;">
+                    <div>
+                        <div style="font-weight:bold;">${n.title}</div>
+                        <div style="font-size:0.85em; color:#888;">${new Date(n.timestamp * 1000).toLocaleDateString()} | ${n.author}</div>
+                    </div>
+                    <button onclick="openNewsEditor(${n.id})" class="btn-secondary" style="font-size:0.8em;">Bearbeiten</button>
+                </div>
+            `).join('');
+        }
+
+        async function openNewsEditor(id) {
+            document.getElementById('news-list-panel').classList.add('hidden');
+            document.getElementById('news-editor-panel').classList.remove('hidden');
+
+            document.getElementById('news-id').value = id || '';
+            document.getElementById('news-editor-title').textContent = id ? 'Beitrag bearbeiten' : 'Neuer Beitrag';
+
+            if (id) {
+                const data = await (await fetch(`${API_BASE}/news.php?id=${id}`)).json();
+                document.getElementById('news-title').value = data.title;
+                document.getElementById('news-author').value = data.author;
+                document.getElementById('news-content-editor').value = data.content;
+            } else {
+                document.getElementById('news-title').value = '';
+                document.getElementById('news-author').value = 'Redaktion';
+                document.getElementById('news-content-editor').value = '';
+            }
+        }
+
+        function closeNewsEditor() {
+            document.getElementById('news-editor-panel').classList.add('hidden');
+            document.getElementById('news-list-panel').classList.remove('hidden');
+        }
+
+        async function saveNews() {
+            const data = {
+                id: document.getElementById('news-id').value || null,
+                title: document.getElementById('news-title').value,
+                author: document.getElementById('news-author').value,
+                content: document.getElementById('news-content-editor').value
+            };
+
+            const result = await postWithCsrf(`${API_BASE}/save-news.php`, data);
+            if (result.success) {
+                alert("Gespeichert!");
+                closeNewsEditor();
+                loadNewsList();
+            } else {
+                alert("Fehler: " + result.error);
+            }
+        }
+
+        function fmt(tag) {
+            const editor = document.getElementById('news-content-editor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            const sel = text.substring(start, end);
+            let ins = '';
+
+            if (tag === 'b') ins = `<b>${sel}</b>`;
+            if (tag === 'i') ins = `<i>${sel}</i>`;
+            if (tag === 'h3') ins = `<h3>${sel}</h3>`;
+            if (tag === 'p') ins = `<p>${sel}</p>`;
+            if (tag === 'br') ins = `<br>`;
+            if (tag === 'a') {
+                const u = prompt('Link URL:', 'https://');
+                if (u) ins = `<a href="${u}" target="_blank">${sel || u}</a>`;
+            }
+
+            if (ins) {
+                editor.value = text.substring(0, start) + ins + text.substring(end);
+            }
+        }
+
+        // -- TEAMS MANAGER LOGIC --
+        let currentTeamsLeague = null;
+
+        async function loadTeamsLeagueList() {
+            const container = document.getElementById('teams-league-list');
+            container.innerHTML = 'Lade...';
+
+            // Panels zurücksetzen
+            document.getElementById('teams-league-select-panel').classList.remove('hidden');
+            document.getElementById('teams-list-panel').classList.add('hidden');
+            document.getElementById('team-editor-panel').classList.add('hidden');
+
+            const data = await (await fetch(`${API_BASE}/list-leagues.php`)).json();
+
+            if (!data.leagues || data.leagues.length === 0) {
+                container.innerHTML = 'Keine Ligen gefunden.';
+                return;
+            }
+
+            container.innerHTML = data.leagues.map(l => `
+                <div onclick="loadTeamsForLeague('${l.file}')"
+                     style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">${l.name}</span>
+                    <span style="color:#666; font-size:0.9rem;">${l.file} &rarr;</span>
+                </div>
+            `).join('');
+        }
+
+        async function loadTeamsForLeague(ligaFile) {
+            currentTeamsLeague = ligaFile;
+
+            // Panels umschalten
+            document.getElementById('teams-league-select-panel').classList.add('hidden');
+            document.getElementById('teams-list-panel').classList.remove('hidden');
+            document.getElementById('team-editor-panel').classList.add('hidden');
+
+            document.getElementById('teams-container').innerHTML = 'Lade Teams...';
+
+            const data = await (await fetch(`${API_BASE}/teams.php?liga=${ligaFile}`)).json();
+
+            if (data.error) {
+                document.getElementById('teams-container').innerHTML = `Fehler: ${data.error}`;
+                return;
+            }
+
+            document.getElementById('teams-league-name').textContent = data.league.name;
+
+            if (!data.teams || data.teams.length === 0) {
+                document.getElementById('teams-container').innerHTML = 'Keine Teams in dieser Liga.';
+                return;
+            }
+
+            document.getElementById('teams-container').innerHTML = `
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f8f9fa; text-align:left;">
+                            <th style="padding:12px;">Logo</th>
+                            <th style="padding:12px;">Name</th>
+                            <th style="padding:12px;">Kurzname</th>
+                            <th style="padding:12px;">Spiele</th>
+                            <th style="padding:12px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.teams.map(t => `
+                            <tr style="border-bottom:1px solid #eee;">
+                                <td style="padding:12px;">
+                                    <img src="../img/teams/${t.logo_file || (t.name.replace(/[^a-zA-Z0-9]/g, '') + '.gif')}"
+                                         onerror="this.src='../img/teams/blank.png'"
+                                         style="height:30px; width:auto;">
+                                </td>
+                                <td style="padding:12px; font-weight:600;">${t.name}</td>
+                                <td style="padding:12px; color:#666;">${t.short_name || '-'}</td>
+                                <td style="padding:12px;">${t.match_count}</td>
+                                <td style="padding:12px; text-align:right;">
+                                    <button onclick="openTeamEditor(${t.id})" class="btn-secondary" style="font-size:0.85rem; padding:6px 12px;">Bearbeiten</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function backToLeagueSelect() {
+            currentTeamsLeague = null;
+            document.getElementById('teams-league-select-panel').classList.remove('hidden');
+            document.getElementById('teams-list-panel').classList.add('hidden');
+            document.getElementById('team-editor-panel').classList.add('hidden');
+        }
+
+        async function openTeamEditor(teamId) {
+            document.getElementById('teams-list-panel').classList.add('hidden');
+            document.getElementById('team-editor-panel').classList.remove('hidden');
+
+            document.getElementById('team-id').value = teamId || '';
+            document.getElementById('team-editor-title').textContent = teamId ? 'Team bearbeiten' : 'Neues Team';
+
+            // Löschen-Button nur bei bestehendem Team zeigen
+            document.getElementById('btn-delete-team').classList.toggle('hidden', !teamId);
+
+            if (teamId) {
+                const data = await (await fetch(`${API_BASE}/teams.php?id=${teamId}`)).json();
+                if (data.team) {
+                    document.getElementById('team-name').value = data.team.name || '';
+                    document.getElementById('team-short-name').value = data.team.short_name || '';
+                    document.getElementById('team-logo').value = data.team.logo_file || '';
+                }
+            } else {
+                document.getElementById('team-name').value = '';
+                document.getElementById('team-short-name').value = '';
+                document.getElementById('team-logo').value = '';
+            }
+        }
+
+        function closeTeamEditor() {
+            document.getElementById('team-editor-panel').classList.add('hidden');
+            document.getElementById('teams-list-panel').classList.remove('hidden');
+        }
+
+        async function saveTeam() {
+            const teamId = document.getElementById('team-id').value;
+            const data = {
+                action: teamId ? 'update' : 'create',
+                id: teamId || null,
+                liga: currentTeamsLeague,
+                name: document.getElementById('team-name').value.trim(),
+                short_name: document.getElementById('team-short-name').value.trim(),
+                logo_file: document.getElementById('team-logo').value.trim()
+            };
+
+            if (!data.name) {
+                alert('Bitte Teamnamen eingeben');
+                return;
+            }
+
+            const result = await postWithCsrf(`${API_BASE}/teams.php`, data);
+
+            if (result.success) {
+                alert(result.message);
+                closeTeamEditor();
+                loadTeamsForLeague(currentTeamsLeague);
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        }
+
+        async function deleteTeam() {
+            const teamId = document.getElementById('team-id').value;
+            if (!teamId) return;
+
+            if (!confirm('Team wirklich löschen? Dies ist nur möglich, wenn keine Spiele existieren.')) {
+                return;
+            }
+
+            const result = await postWithCsrf(`${API_BASE}/teams.php`, { action: 'delete', id: teamId });
+
+            if (result.success) {
+                alert(result.message);
+                closeTeamEditor();
+                loadTeamsForLeague(currentTeamsLeague);
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        }
+
+        // Team-Form Handler
+        document.getElementById('team-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveTeam();
+        });
+
+        // ==================== PUNKTEKORREKTUREN ====================
+        let currentCorrLeague = null;
+        let currentCorrData = null;
+
+        async function loadCorrLeagueList() {
+            document.getElementById('corr-league-select-panel').classList.remove('hidden');
+            document.getElementById('corr-main-panel').classList.add('hidden');
+
+            const container = document.getElementById('corr-league-list');
+            container.innerHTML = 'Lade...';
+
+            const data = await (await fetch(`${API_BASE}/list-leagues.php`)).json();
+
+            if (!data.leagues || data.leagues.length === 0) {
+                container.innerHTML = 'Keine Ligen gefunden.';
+                return;
+            }
+
+            container.innerHTML = data.leagues.map(l => `
+                <div onclick="loadCorrectionsForLeague('${l.file}')"
+                     style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between;">
+                    <span style="font-weight:bold;">${l.name}</span>
+                    <span style="color:#666;">${l.file} &rarr;</span>
+                </div>
+            `).join('');
+        }
+
+        async function loadCorrectionsForLeague(ligaFile) {
+            currentCorrLeague = ligaFile;
+            document.getElementById('corr-league-select-panel').classList.add('hidden');
+            document.getElementById('corr-main-panel').classList.remove('hidden');
+            document.getElementById('corr-editor').classList.add('hidden');
+
+            const data = await (await fetch(`${API_BASE}/corrections.php?liga=${ligaFile}`)).json();
+
+            if (data.error) {
+                document.getElementById('corrections-list').innerHTML = `Fehler: ${data.error}`;
+                return;
+            }
+
+            currentCorrData = data;
+            document.getElementById('corr-league-name').textContent = ligaFile;
+
+            // Team-Dropdown befüllen
+            const teamSelect = document.getElementById('corr-team-select');
+            teamSelect.innerHTML = data.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+            // Korrekturen anzeigen
+            if (data.corrections.length === 0) {
+                document.getElementById('corrections-list').innerHTML = '<p style="color:#888;">Keine Korrekturen vorhanden.</p>';
+            } else {
+                document.getElementById('corrections-list').innerHTML = `
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f8f9fa;">
+                                <th style="padding:12px; text-align:left;">Team</th>
+                                <th style="padding:12px; text-align:center;">Punkte</th>
+                                <th style="padding:12px; text-align:left;">Grund</th>
+                                <th style="padding:12px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.corrections.map(c => `
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:12px; font-weight:600;">${c.team_name}</td>
+                                    <td style="padding:12px; text-align:center; color:${c.points < 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">
+                                        ${c.points > 0 ? '+' : ''}${c.points}
+                                    </td>
+                                    <td style="padding:12px; color:#666;">${c.reason || '-'}</td>
+                                    <td style="padding:12px; text-align:right;">
+                                        <button onclick="deleteCorrection(${c.id})" class="btn-danger" style="font-size:0.8rem; padding:5px 10px;">Löschen</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+
+        function backToCorrLeagueSelect() {
+            currentCorrLeague = null;
+            loadCorrLeagueList();
+        }
+
+        function openCorrectionEditor() {
+            document.getElementById('corr-editor').classList.remove('hidden');
+            document.getElementById('corr-points').value = '-3';
+            document.getElementById('corr-reason').value = '';
+        }
+
+        function closeCorrectionEditor() {
+            document.getElementById('corr-editor').classList.add('hidden');
+        }
+
+        async function saveCorrection() {
+            const data = {
+                action: 'save',
+                liga: currentCorrLeague,
+                team_id: document.getElementById('corr-team-select').value,
+                points: parseInt(document.getElementById('corr-points').value) || 0,
+                reason: document.getElementById('corr-reason').value.trim()
+            };
+
+            const result = await postWithCsrf(`${API_BASE}/corrections.php`, data);
+
+            if (result.success) {
+                closeCorrectionEditor();
+                loadCorrectionsForLeague(currentCorrLeague);
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        }
+
+        async function deleteCorrection(id) {
+            if (!confirm('Korrektur wirklich löschen?')) return;
+
+            const result = await postWithCsrf(`${API_BASE}/corrections.php`, { action: 'delete', id: id });
+
+            if (result.success) {
+                loadCorrectionsForLeague(currentCorrLeague);
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        }
+
+        // ==================== BENUTZERVERWALTUNG ====================
+        async function loadUsersList() {
+            document.getElementById('user-editor-panel').classList.add('hidden');
+            const container = document.getElementById('users-list');
+            container.innerHTML = 'Lade...';
+
+            const data = await (await fetch(`${API_BASE}/users.php?list=1`)).json();
+
+            if (data.error) {
+                container.innerHTML = `Fehler: ${data.error}`;
+                return;
+            }
+
+            if (!data.users || data.users.length === 0) {
+                container.innerHTML = 'Keine Benutzer gefunden.';
+                return;
+            }
+
+            container.innerHTML = `
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f8f9fa;">
+                            <th style="padding:12px; text-align:left;">Benutzername</th>
+                            <th style="padding:12px; text-align:left;">Anzeigename</th>
+                            <th style="padding:12px; text-align:center;">Rolle</th>
+                            <th style="padding:12px; text-align:center;">Status</th>
+                            <th style="padding:12px; text-align:left;">Letzter Login</th>
+                            <th style="padding:12px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.users.map(u => `
+                            <tr style="border-bottom:1px solid #eee;">
+                                <td style="padding:12px; font-weight:600;">${u.username}</td>
+                                <td style="padding:12px;">${u.display_name || '-'}</td>
+                                <td style="padding:12px; text-align:center;">
+                                    <span style="padding:3px 8px; border-radius:4px; font-size:0.8rem; background:${u.role === 'admin' ? '#ffc107' : '#17a2b8'}; color:${u.role === 'admin' ? '#000' : '#fff'};">
+                                        ${u.role === 'admin' ? 'Admin' : 'Editor'}
+                                    </span>
+                                </td>
+                                <td style="padding:12px; text-align:center;">
+                                    <span style="color:${u.active ? '#28a745' : '#dc3545'};">${u.active ? '✓ Aktiv' : '✗ Inaktiv'}</span>
+                                </td>
+                                <td style="padding:12px; color:#666; font-size:0.9rem;">${u.last_login ? new Date(u.last_login).toLocaleString('de') : 'Nie'}</td>
+                                <td style="padding:12px; text-align:right;">
+                                    <button onclick="openUserEditor(${u.id})" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;">Bearbeiten</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function openUserEditor(userId) {
+            document.getElementById('user-editor-panel').classList.remove('hidden');
+            document.getElementById('user-id').value = userId || '';
+            document.getElementById('user-editor-title').textContent = userId ? 'Benutzer bearbeiten' : 'Neuer Benutzer';
+            document.getElementById('btn-delete-user').classList.toggle('hidden', !userId);
+            document.getElementById('pw-hint').textContent = userId ? '(leer lassen = unverändert)' : '(min. 8 Zeichen, Buchstaben + Zahlen)';
+            document.getElementById('user-password').required = !userId;
+
+            if (userId) {
+                const data = await (await fetch(`${API_BASE}/users.php?id=${userId}`)).json();
+                if (data.user) {
+                    document.getElementById('user-username').value = data.user.username;
+                    document.getElementById('user-username').disabled = true; // Username nicht änderbar
+                    document.getElementById('user-displayname').value = data.user.display_name || '';
+                    document.getElementById('user-password').value = '';
+                    document.getElementById('user-role').value = data.user.role;
+                    document.getElementById('user-active').checked = data.user.active == 1;
+                }
+            } else {
+                document.getElementById('user-username').value = '';
+                document.getElementById('user-username').disabled = false;
+                document.getElementById('user-displayname').value = '';
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-role').value = 'editor';
+                document.getElementById('user-active').checked = true;
+            }
+        }
+
+        function closeUserEditor() {
+            document.getElementById('user-editor-panel').classList.add('hidden');
+        }
+
+        async function saveUser() {
+            const userId = document.getElementById('user-id').value;
+            const data = {
+                action: userId ? 'update' : 'create',
+                id: userId || null,
+                username: document.getElementById('user-username').value.trim(),
+                display_name: document.getElementById('user-displayname').value.trim(),
+                password: document.getElementById('user-password').value,
+                role: document.getElementById('user-role').value,
+                active: document.getElementById('user-active').checked ? 1 : 0
+            };
+
+            if (!data.username) {
+                alert('Benutzername ist erforderlich');
+                return;
+            }
+
+            if (!userId && data.password.length < 8) {
+                alert('Passwort muss mindestens 8 Zeichen haben und Buchstaben sowie Zahlen enthalten');
+                return;
+            }
+
+            const result = await postWithCsrf(`${API_BASE}/users.php`, data);
+
+            if (result.success) {
+                alert(result.message);
+                closeUserEditor();
+                loadUsersList();
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        }
+
+        async function deleteUser() {
+            const userId = document.getElementById('user-id').value;
+            if (!userId) return;
+
+            if (!confirm('Benutzer wirklich löschen?')) return;
+
+            const result = await postWithCsrf(`${API_BASE}/users.php`, { action: 'delete', id: userId });
+
+            if (result.success) {
+                alert(result.message);
+                closeUserEditor();
+                loadUsersList();
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        }
+
+        // User-Form Handler
+        document.getElementById('user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveUser();
+        });
+
+    </script>
+</body>
+
+</html>

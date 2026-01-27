@@ -1,0 +1,388 @@
+:root {
+    --primary-color: #EF403C;
+    /* Hafo Red */
+    --text-color: #333;
+    --bg-color: #f9f9f9;
+    --card-bg: #fff;
+    --border-color: #e0e0e0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1,
+h2,
+h3 {
+    margin-top: 0;
+    color: #111;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Grid Layout for Desktop */
+.grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    /* Matches (Flexible) | Table (Fixed width) */
+    gap: 40px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .grid-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-layout>.table-wrapper {
+        order: -1;
+        /* Table first on mobile */
+    }
+}
+
+/* Match Date Header */
+.match-date-header {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #666;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* Match Row (List Style) */
+.match-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 12px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    width: 100%;
+}
+
+.match-row:hover {
+    background-color: #fbfbfb;
+}
+
+.match-info {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.match-row .team-home,
+.match-row .team-guest {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    color: #111;
+    font-size: 1.05rem;
+}
+
+.match-row .team-home {
+    text-align: right;
+}
+
+.match-row .team-guest {
+    text-align: left;
+}
+
+.match-row .team-logo {
+    height: 30px;
+    width: auto;
+    margin: 0 10px;
+    flex-shrink: 0;
+    /* Don't squash logos */
+}
+
+.match-row .score-box {
+    background-color: #333;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 6px 14px;
+    border-radius: 4px;
+    min-width: 50px;
+    text-align: center;
+    white-space: nowrap;
+    margin: 0 5px;
+    flex-shrink: 0;
+}
+
+.match-row .score-box.pending {
+    background-color: #eee;
+    color: #888;
+    font-size: 1rem;
+}
+
+/* News Link */
+.news-link {
+    font-size: 0.85rem;
+    color: #666;
+    /* Default gray like Kicker */
+    text-decoration: none;
+    margin-left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.news-link:hover {
+    color: #EF403C;
+    /* Red on hover */
+}
+
+.news-link .arrow {
+    font-size: 1.2rem;
+    line-height: 0.8;
+    color: #EF403C;
+    /* Red circle/arrow in image */
+}
+
+@media (max-width: 600px) {
+    .news-link {
+        display: none;
+        /* Hide on mobile if too tight */
+    }
+}
+
+/* Navigation - Red and Simple */
+.match-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    color: #EF403C;
+    font-weight: 600;
+}
+
+.match-nav-btn {
+    color: #EF403C;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.match-nav-btn:hover {
+    text-decoration: underline;
+}
+
+/* Navigation */
+.round-nav select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 1rem;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.btn {
+    text-decoration: none;
+    padding: 8px 14px;
+    background: #f0f0f0;
+    color: #333;
+    border-radius: 6px;
+    margin: 0 5px;
+    font-weight: 600;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+.btn:hover {
+    background: #e0e0e0;
+}
+
+footer {
+    margin-top: 40px;
+    text-align: center;
+    color: #999;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #eee;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--primary-color);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cross Table */
+#cross-table th,
+#cross-table td {
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 8px;
+    border: 1px solid #f0f0f0;
+}
+
+#cross-table th:first-child,
+#cross-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 5;
+    text-align: left;
+    font-weight: 600;
+    width: 150px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+#cross-table td.played {
+    font-weight: bold;
+    color: #333;
+    background-color: #fff;
+}
+
+#cross-table td.self {
+    background-color: #eee;
+}
+
+#cross-table th {
+    top: 0;
+    z-index: 10;
+}
+
+#cross-table th:first-child {
+    z-index: 15;
+}
+
+/* Schedule List */
+.schedule-group {
+    background: white;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.schedule-group h3 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Fever Chart */
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    height: 500px;
+    overflow-x: auto;
+}
+
+svg.fever-chart {
+    width: 100%;
+    min-width: 600px;
+    height: 100%;
+}
+
+.chart-line {
+    fill: none;
+    stroke-width: 2;
+    transition: opacity 0.2s;
+}
+
+.chart-line:hover {
+    stroke-width: 4;
+    cursor: pointer;
+}
+
+.chart-dot {
+    fill: white;
+    stroke-width: 2;
+    r: 3;
+}
+
+.chart-axis-line {
+    stroke: #eee;
+    stroke-width: 1;
+}
+
+.chart-text {
+    font-size: 10px;
+    fill: #888;
+}

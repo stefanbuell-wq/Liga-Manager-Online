@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Manager Online</title>
+    <link rel="stylesheet" href="css/league-modern.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Force Critical Layout Styles inline to bypass cache issues */
+        .match-row {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .match-info {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            flex: 1 !important;
+            justify-content: center !important;
+        }
+
+        .team-home,
+        .team-guest {
+            flex: 1 !important;
+            font-weight: 600;
+            font-size: 1.05rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .team-home {
+            text-align: right !important;
+        }
+
+        .team-guest {
+            text-align: left !important;
+        }
+
+        .team-logo {
+            height: 30px !important;
+            width: auto !important;
+            margin: 0 10px !important;
+            flex-shrink: 0 !important;
+        }
+
+        .score-box {
+            background: #333;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+            margin: 0 5px;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+
+        .score-box.pending {
+            background: #eee;
+            color: #888;
+        }
+
+        .news-link {
+            font-size: 0.85rem;
+            color: #EF403C;
+            text-decoration: none;
+            margin-left: 15px;
+            white-space: nowrap !important;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        /* News Modal */
+        .news-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
+        .news-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+        }
+        .news-modal-content {
+            position: relative;
+            background: white;
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            margin: 2vh auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .news-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+        .news-modal-close:hover { color: #000; }
+        #news-modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            line-height: 1.7;
+        }
+        .news-header {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .news-meta {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .news-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #222;
+            margin: 0;
+        }
+        .news-content {
+            font-size: 1rem;
+            color: #333;
+        }
+        .news-content b { color: #000; }
+        .news-content br + br { margin-bottom: 1em; display: block; content: ""; }
+
+        /* News Card in Archive */
+        .news-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .news-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .news-card-date {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .news-card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #222;
+            margin: 8px 0;
+        }
+        .news-card-preview {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        /* Match News Button */
+        .match-news-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: #EF403C;
+            color: white !important;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .match-news-btn:hover {
+            background: #d63530;
+        }
+
+        /* Inline Notiz */
+        .match-note-inline {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            color: #856404;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin-top: 6px;
+            text-align: center;
+            border-left: 3px solid #ffc107;
+            font-weight: 500;
+        }
+
+        /* Match Extras */
+        .match-extras {
+            margin-top: 8px;
+            font-size: 0.9em;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .match-link {
+            text-decoration: none;
+            color: #666;
+        }
+        .match-link:hover {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="app">
+        <h1>Liga Manager Online</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="tab-overview">Aktuell</button>
+            <button class="tab-btn" data-tab="tab-schedule">Spielplan</button>
+            <button class="tab-btn" data-tab="tab-crosstable">Kreuztabelle</button>
+            <button class="tab-btn" data-tab="tab-stats">Fieberkurve</button>
+            <button class="tab-btn" data-tab="tab-news">Spielberichte</button>
+        </div>
+
+        <!-- Overview Tab (Existing) -->
+        <div id="tab-overview" class="tab-content active">
+            <header>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <select id="league-select"
+                        style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; max-width: 200px;">
+                        <option disabled selected>Liga wechseln...</option>
+                    </select>
+                    <div id="round-nav" class="round-nav">
+                        <!-- Nav populated by JS -->
+                    </div>
+                </div>
+                <a href="admin/index.html" class="btn" style="background:var(--primary-color); color:white;">Login</a>
+            </header>
+
+            <div class="grid-layout">
+                <div id="matches-container">
+                    <!-- Matches populated by JS (Left Column) -->
+                </div>
+
+                <div class="table-wrapper">
+                    <h3>TABELLE</h3>
+                    <table id="league-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">PL.</th>
+                                <th>TEAM</th>
+                                <th>SP.</th>
+                                <th>DIFF.</th>
+                                <th>PKT.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="tab-schedule" class="tab-content">
+            <div id="full-schedule">
+                <div style="text-align: center; padding: 20px;">Lade Spielplan...</div>
+            </div>
+        </div>
+
+        <!-- CrossTable Tab -->
+        <div id="tab-crosstable" class="tab-content">
+            <div class="table-wrapper box-scroll">
+                <table id="cross-table">
+                    <!-- Populated by JS -->
+                </table>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="tab-stats" class="tab-content">
+            <div class="chart-container" id="fever-chart">
+                <!-- SVG Chart -->
+            </div>
+        </div>
+
+        <!-- News/Spielberichte Tab -->
+        <div id="tab-news" class="tab-content">
+            <div id="news-archive" style="max-width:900px; margin:0 auto;">
+                <div style="text-align: center; padding: 40px;">Lade Spielberichte...</div>
+            </div>
+        </div>
+
+        <!-- News Modal Container -->
+        <div id="news-modal" class="news-modal" style="display:none;">
+            <div class="news-modal-overlay" onclick="app.closeNewsModal()"></div>
+            <div class="news-modal-content">
+                <button class="news-modal-close" onclick="app.closeNewsModal()">&times;</button>
+                <div id="news-modal-body"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Liga Manager Online Modernized</p>
+        </footer>
+    </div>
+
+    <script src="js/league-viewer.js?v=0128"></script>
+
+</body>
+
+</html>
