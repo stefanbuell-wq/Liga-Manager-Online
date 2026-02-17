@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Editor - HAFO Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-bg-dark: #0D0D0D;
+            --color-bg-card: #1A1F1A;
+            --color-bg-elevated: #1E231E;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #A0A0A0;
+            --color-text-muted: #666666;
+            --color-success: #22C55E;
+            --color-live: #00FF88;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-bg-card);
+            border-bottom: 1px solid var(--color-border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+        }
+
+        .header h1 {
+            font-family: 'Urbanist', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-bg-card);
+        }
+
+        /* Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Sidebar - Settings Panel */
+        .settings-panel {
+            background: var(--color-bg-card);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .settings-section {
+            margin-bottom: 32px;
+        }
+
+        .settings-section h2 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .setting-row {
+            margin-bottom: 16px;
+        }
+
+        .setting-row label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            margin-bottom: 6px;
+        }
+
+        /* Color Picker */
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 4px 12px 4px 4px;
+        }
+
+        .color-input-wrapper input[type="color"] {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+        }
+
+        .color-input-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-input-wrapper input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+
+        .color-input-wrapper input[type="text"] {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--color-text-primary);
+            font-family: monospace;
+            font-size: 13px;
+            outline: none;
+        }
+
+        /* Text Input */
+        .text-input {
+            width: 100%;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .text-input:focus {
+            border-color: var(--color-primary);
+        }
+
+        /* Range Slider */
+        .range-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .range-wrapper input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--color-bg-elevated);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .range-wrapper input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-value {
+            min-width: 45px;
+            text-align: right;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            font-family: monospace;
+        }
+
+        /* Select */
+        .select-input {
+            width: 100%;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--color-bg-dark);
+        }
+
+        .preview-frame {
+            background: var(--color-bg-dark);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px var(--color-border);
+        }
+
+        /* Preview Content */
+        .preview-header {
+            background: rgba(13, 13, 13, 0.9);
+            border-bottom: 1px solid var(--color-border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .preview-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Urbanist', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .preview-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--preview-primary, #E2001A);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-nav {
+            display: flex;
+            gap: 24px;
+        }
+
+        .preview-nav a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .preview-nav a.active {
+            color: var(--preview-primary, #E2001A);
+        }
+
+        .preview-content {
+            padding: 32px 24px;
+        }
+
+        .preview-hero {
+            background: linear-gradient(135deg, var(--preview-primary, #E2001A) 0%, #ff4d6a 100%);
+            border-radius: var(--preview-radius, 12px);
+            padding: 48px 32px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .preview-hero h2 {
+            font-family: 'Urbanist', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .preview-hero p {
+            opacity: 0.9;
+        }
+
+        .preview-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .preview-card {
+            background: var(--preview-card, #1A1F1A);
+            border: 1px solid var(--color-border);
+            border-radius: var(--preview-radius, 12px);
+            padding: 20px;
+        }
+
+        .preview-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .preview-badge {
+            background: var(--preview-live, #00FF88);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .preview-match {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .preview-team {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-team-name {
+            font-weight: 500;
+        }
+
+        .preview-score {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .preview-score.winner {
+            color: var(--preview-live, #00FF88);
+        }
+
+        .preview-table {
+            background: var(--preview-card, #1A1F1A);
+            border: 1px solid var(--color-border);
+            border-radius: var(--preview-radius, 12px);
+            overflow: hidden;
+        }
+
+        .preview-table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--color-border);
+            font-weight: 600;
+        }
+
+        .preview-table-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .preview-table-row:last-child {
+            border-bottom: none;
+        }
+
+        .preview-rank {
+            width: 30px;
+            font-weight: 700;
+            color: var(--preview-primary, #E2001A);
+        }
+
+        .preview-team-cell {
+            flex: 1;
+        }
+
+        .preview-points {
+            font-weight: 700;
+        }
+
+        /* Preset Buttons */
+        .presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-elevated);
+            color: var(--color-text-secondary);
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        /* Status Messages */
+        .status-message {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            z-index: 1000;
+        }
+
+        .status-message.success {
+            background: var(--color-success);
+            color: white;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #EF4444;
+            color: white;
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <a href="index.html" class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Zuruck
+            </a>
+            <h1>Design Editor</h1>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="resetToDefaults()">Zurucksetzen</button>
+            <button class="btn btn-primary" onclick="saveTheme()">Speichern</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <!-- Presets -->
+            <div class="settings-section">
+                <h2>Schnellauswahl</h2>
+                <div class="presets">
+                    <button class="preset-btn" onclick="applyPreset('default')">Standard (Rot)</button>
+                    <button class="preset-btn" onclick="applyPreset('blue')">Blau</button>
+                    <button class="preset-btn" onclick="applyPreset('green')">Grun</button>
+                    <button class="preset-btn" onclick="applyPreset('purple')">Lila</button>
+                    <button class="preset-btn" onclick="applyPreset('orange')">Orange</button>
+                    <button class="preset-btn" onclick="applyPreset('light')">Hell-Modus</button>
+                </div>
+            </div>
+
+            <!-- Branding -->
+            <div class="settings-section">
+                <h2>Branding</h2>
+                <div class="setting-row">
+                    <label>Website-Name</label>
+                    <input type="text" class="text-input" id="siteName" value="HAFO.de" oninput="updatePreview()">
+                </div>
+                <div class="setting-row">
+                    <label>Tagline</label>
+                    <input type="text" class="text-input" id="siteTagline" value="Hamburger Fußball Online" oninput="updatePreview()">
+                </div>
+            </div>
+
+            <!-- Primary Colors -->
+            <div class="settings-section">
+                <h2>Hauptfarben</h2>
+                <div class="setting-row">
+                    <label>Primarfarbe</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorPrimary" value="#E2001A" oninput="syncColorInput(this)">
+                        <input type="text" id="colorPrimaryText" value="#E2001A" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Primarfarbe Hover</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorPrimaryHover" value="#ff1a35" oninput="syncColorInput(this)">
+                        <input type="text" id="colorPrimaryHoverText" value="#ff1a35" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Live/Akzent-Farbe</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorLive" value="#00FF88" oninput="syncColorInput(this)">
+                        <input type="text" id="colorLiveText" value="#00FF88" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Background Colors -->
+            <div class="settings-section">
+                <h2>Hintergrundfarben</h2>
+                <div class="setting-row">
+                    <label>Hintergrund (Dunkel)</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorBgDark" value="#0D0D0D" oninput="syncColorInput(this)">
+                        <input type="text" id="colorBgDarkText" value="#0D0D0D" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Karten-Hintergrund</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorBgCard" value="#1A1F1A" oninput="syncColorInput(this)">
+                        <input type="text" id="colorBgCardText" value="#1A1F1A" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Erhohter Hintergrund</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorBgElevated" value="#1E231E" oninput="syncColorInput(this)">
+                        <input type="text" id="colorBgElevatedText" value="#1E231E" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Text Colors -->
+            <div class="settings-section">
+                <h2>Textfarben</h2>
+                <div class="setting-row">
+                    <label>Primartext</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorTextPrimary" value="#FFFFFF" oninput="syncColorInput(this)">
+                        <input type="text" id="colorTextPrimaryText" value="#FFFFFF" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Sekundartext</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorTextSecondary" value="#A0A0A0" oninput="syncColorInput(this)">
+                        <input type="text" id="colorTextSecondaryText" value="#A0A0A0" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Gedampfter Text</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="colorTextMuted" value="#666666" oninput="syncColorInput(this)">
+                        <input type="text" id="colorTextMutedText" value="#666666" oninput="syncColorPicker(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layout -->
+            <div class="settings-section">
+                <h2>Layout</h2>
+                <div class="setting-row">
+                    <label>Border Radius</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="borderRadius" min="0" max="24" value="12" oninput="updateRangeValue(this)">
+                        <span class="range-value" id="borderRadiusValue">12px</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Schatten-Intensitat</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="shadowIntensity" min="0" max="100" value="40" oninput="updateRangeValue(this)">
+                        <span class="range-value" id="shadowIntensityValue">0.40</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typography -->
+            <div class="settings-section">
+                <h2>Schriften</h2>
+                <div class="setting-row">
+                    <label>Hauptschrift</label>
+                    <select class="select-input" id="fontPrimary" onchange="updatePreview()">
+                        <option value="Inter">Inter</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Open Sans">Open Sans</option>
+                        <option value="Lato">Lato</option>
+                        <option value="Poppins">Poppins</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Display-Schrift</label>
+                    <select class="select-input" id="fontDisplay" onchange="updatePreview()">
+                        <option value="Urbanist">Urbanist</option>
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Oswald">Oswald</option>
+                        <option value="Bebas Neue">Bebas Neue</option>
+                        <option value="Inter">Inter</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <div class="preview-frame" id="previewFrame">
+                <!-- Preview Header -->
+                <div class="preview-header">
+                    <div class="preview-logo">
+                        <div class="preview-logo-icon">&#9917;</div>
+                        <span id="previewSiteName">HAFO<span style="color: var(--preview-primary)">.de</span></span>
+                    </div>
+                    <nav class="preview-nav">
+                        <a href="#" class="active">News</a>
+                        <a href="#">Ligen</a>
+                        <a href="#">Tabelle</a>
+                        <a href="#">Statistiken</a>
+                    </nav>
+                </div>
+
+                <!-- Preview Content -->
+                <div class="preview-content">
+                    <!-- Hero -->
+                    <div class="preview-hero">
+                        <h2>Hamburg-Oberliga</h2>
+                        <p id="previewTagline">Hamburger Fußball Online</p>
+                    </div>
+
+                    <!-- Match Cards -->
+                    <div class="preview-cards">
+                        <div class="preview-card">
+                            <div class="preview-card-header">
+                                <span>67'</span>
+                                <span class="preview-badge">LIVE</span>
+                            </div>
+                            <div class="preview-match">
+                                <div class="preview-team">
+                                    <span class="preview-team-name">TuS Dassendorf</span>
+                                    <span class="preview-score winner">2</span>
+                                </div>
+                                <div class="preview-team">
+                                    <span class="preview-team-name">SC Victoria</span>
+                                    <span class="preview-score">1</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-card">
+                            <div class="preview-card-header">
+                                <span>34'</span>
+                                <span class="preview-badge">LIVE</span>
+                            </div>
+                            <div class="preview-match">
+                                <div class="preview-team">
+                                    <span class="preview-team-name">Altona 93</span>
+                                    <span class="preview-score">0</span>
+                                </div>
+                                <div class="preview-team">
+                                    <span class="preview-team-name">Concordia</span>
+                                    <span class="preview-score">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-card">
+                            <div class="preview-card-header">
+                                <span>Ende</span>
+                                <span style="color: var(--color-text-muted);">Beendet</span>
+                            </div>
+                            <div class="preview-match">
+                                <div class="preview-team">
+                                    <span class="preview-team-name">HSV III</span>
+                                    <span class="preview-score winner">3</span>
+                                </div>
+                                <div class="preview-team">
+                                    <span class="preview-team-name">Bramfelder SV</span>
+                                    <span class="preview-score">2</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table Preview -->
+                    <div class="preview-table">
+                        <div class="preview-table-header">Tabelle</div>
+                        <div class="preview-table-row">
+                            <span class="preview-rank">1</span>
+                            <span class="preview-team-cell">TuS Dassendorf</span>
+                            <span class="preview-points">45</span>
+                        </div>
+                        <div class="preview-table-row">
+                            <span class="preview-rank">2</span>
+                            <span class="preview-team-cell">Altona 93</span>
+                            <span class="preview-points">42</span>
+                        </div>
+                        <div class="preview-table-row">
+                            <span class="preview-rank">3</span>
+                            <span class="preview-team-cell">HSV III</span>
+                            <span class="preview-points">38</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="statusMessage" class="status-message"></div>
+
+    <script>
+        const API_BASE = '../api';
+        let currentTheme = {};
+
+        // Presets
+        const presets = {
+            default: {
+                colorPrimary: '#E2001A',
+                colorPrimaryHover: '#ff1a35',
+                colorLive: '#00FF88',
+                colorBgDark: '#0D0D0D',
+                colorBgCard: '#1A1F1A',
+                colorBgElevated: '#1E231E',
+                colorTextPrimary: '#FFFFFF',
+                colorTextSecondary: '#A0A0A0',
+                colorTextMuted: '#666666'
+            },
+            blue: {
+                colorPrimary: '#0066FF',
+                colorPrimaryHover: '#3385FF',
+                colorLive: '#00FF88',
+                colorBgDark: '#0A0E14',
+                colorBgCard: '#141A22',
+                colorBgElevated: '#1A222D',
+                colorTextPrimary: '#FFFFFF',
+                colorTextSecondary: '#8899AA',
+                colorTextMuted: '#556677'
+            },
+            green: {
+                colorPrimary: '#00AA55',
+                colorPrimaryHover: '#00CC66',
+                colorLive: '#FFD700',
+                colorBgDark: '#0A120E',
+                colorBgCard: '#142018',
+                colorBgElevated: '#1A2820',
+                colorTextPrimary: '#FFFFFF',
+                colorTextSecondary: '#88AA99',
+                colorTextMuted: '#557766'
+            },
+            purple: {
+                colorPrimary: '#8B5CF6',
+                colorPrimaryHover: '#A78BFA',
+                colorLive: '#22D3EE',
+                colorBgDark: '#0D0A14',
+                colorBgCard: '#1A1424',
+                colorBgElevated: '#221A30',
+                colorTextPrimary: '#FFFFFF',
+                colorTextSecondary: '#A098B0',
+                colorTextMuted: '#6B6080'
+            },
+            orange: {
+                colorPrimary: '#F97316',
+                colorPrimaryHover: '#FB923C',
+                colorLive: '#22C55E',
+                colorBgDark: '#0F0A08',
+                colorBgCard: '#1F1610',
+                colorBgElevated: '#2A1E16',
+                colorTextPrimary: '#FFFFFF',
+                colorTextSecondary: '#B0A090',
+                colorTextMuted: '#806050'
+            },
+            light: {
+                colorPrimary: '#E2001A',
+                colorPrimaryHover: '#ff1a35',
+                colorLive: '#16A34A',
+                colorBgDark: '#F5F5F5',
+                colorBgCard: '#FFFFFF',
+                colorBgElevated: '#FAFAFA',
+                colorTextPrimary: '#1A1A1A',
+                colorTextSecondary: '#666666',
+                colorTextMuted: '#999999'
+            }
+        };
+
+        // Load theme on page load
+        document.addEventListener('DOMContentLoaded', loadTheme);
+
+        async function loadTheme() {
+            try {
+                const res = await fetch(`${API_BASE}/theme.php`);
+                const theme = await res.json();
+                currentTheme = theme;
+                applyThemeToForm(theme);
+                updatePreview();
+            } catch (e) {
+                console.error('Error loading theme:', e);
+            }
+        }
+
+        function applyThemeToForm(theme) {
+            // Text inputs
+            ['siteName', 'siteTagline'].forEach(key => {
+                const el = document.getElementById(key);
+                if (el && theme[key]) el.value = theme[key];
+            });
+
+            // Color inputs
+            ['colorPrimary', 'colorPrimaryHover', 'colorLive', 'colorBgDark', 'colorBgCard',
+             'colorBgElevated', 'colorTextPrimary', 'colorTextSecondary', 'colorTextMuted'].forEach(key => {
+                const colorEl = document.getElementById(key);
+                const textEl = document.getElementById(key + 'Text');
+                if (colorEl && theme[key]) {
+                    colorEl.value = theme[key];
+                    if (textEl) textEl.value = theme[key];
+                }
+            });
+
+            // Range inputs
+            if (theme.borderRadius) {
+                document.getElementById('borderRadius').value = theme.borderRadius;
+                document.getElementById('borderRadiusValue').textContent = theme.borderRadius + 'px';
+            }
+            if (theme.shadowIntensity) {
+                document.getElementById('shadowIntensity').value = theme.shadowIntensity * 100;
+                document.getElementById('shadowIntensityValue').textContent = parseFloat(theme.shadowIntensity).toFixed(2);
+            }
+
+            // Selects
+            ['fontPrimary', 'fontDisplay'].forEach(key => {
+                const el = document.getElementById(key);
+                if (el && theme[key]) el.value = theme[key];
+            });
+        }
+
+        function syncColorInput(colorPicker) {
+            const textInput = document.getElementById(colorPicker.id + 'Text');
+            if (textInput) textInput.value = colorPicker.value;
+            updatePreview();
+        }
+
+        function syncColorPicker(textInput) {
+            const colorPicker = document.getElementById(textInput.id.replace('Text', ''));
+            if (colorPicker && /^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+                colorPicker.value = textInput.value;
+            }
+            updatePreview();
+        }
+
+        function updateRangeValue(rangeInput) {
+            const valueEl = document.getElementById(rangeInput.id + 'Value');
+            if (rangeInput.id === 'borderRadius') {
+                valueEl.textContent = rangeInput.value + 'px';
+            } else if (rangeInput.id === 'shadowIntensity') {
+                valueEl.textContent = (rangeInput.value / 100).toFixed(2);
+            }
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const frame = document.getElementById('previewFrame');
+
+            // Update CSS variables
+            frame.style.setProperty('--preview-primary', document.getElementById('colorPrimary').value);
+            frame.style.setProperty('--preview-live', document.getElementById('colorLive').value);
+            frame.style.setProperty('--preview-card', document.getElementById('colorBgCard').value);
+            frame.style.setProperty('--preview-radius', document.getElementById('borderRadius').value + 'px');
+            frame.style.setProperty('--color-bg-dark', document.getElementById('colorBgDark').value);
+            frame.style.setProperty('--color-text-primary', document.getElementById('colorTextPrimary').value);
+            frame.style.setProperty('--color-text-secondary', document.getElementById('colorTextSecondary').value);
+            frame.style.setProperty('--color-text-muted', document.getElementById('colorTextMuted').value);
+            frame.style.setProperty('--color-border', `rgba(255,255,255,0.08)`);
+
+            // Update text content
+            const siteName = document.getElementById('siteName').value;
+            document.getElementById('previewSiteName').innerHTML = siteName.replace(/\.(\w+)$/, '.<span style="color:var(--preview-primary)">$1</span>');
+            document.getElementById('previewTagline').textContent = document.getElementById('siteTagline').value;
+
+            // Update preview background
+            frame.style.background = document.getElementById('colorBgDark').value;
+        }
+
+        function applyPreset(presetName) {
+            const preset = presets[presetName];
+            if (!preset) return;
+
+            Object.keys(preset).forEach(key => {
+                const colorEl = document.getElementById(key);
+                const textEl = document.getElementById(key + 'Text');
+                if (colorEl) {
+                    colorEl.value = preset[key];
+                    if (textEl) textEl.value = preset[key];
+                }
+            });
+
+            updatePreview();
+        }
+
+        function getFormData() {
+            return {
+                siteName: document.getElementById('siteName').value,
+                siteTagline: document.getElementById('siteTagline').value,
+                colorPrimary: document.getElementById('colorPrimary').value,
+                colorPrimaryHover: document.getElementById('colorPrimaryHover').value,
+                colorLive: document.getElementById('colorLive').value,
+                colorBgDark: document.getElementById('colorBgDark').value,
+                colorBgCard: document.getElementById('colorBgCard').value,
+                colorBgElevated: document.getElementById('colorBgElevated').value,
+                colorTextPrimary: document.getElementById('colorTextPrimary').value,
+                colorTextSecondary: document.getElementById('colorTextSecondary').value,
+                colorTextMuted: document.getElementById('colorTextMuted').value,
+                borderRadius: document.getElementById('borderRadius').value,
+                shadowIntensity: (document.getElementById('shadowIntensity').value / 100).toFixed(2),
+                fontPrimary: document.getElementById('fontPrimary').value,
+                fontDisplay: document.getElementById('fontDisplay').value
+            };
+        }
+
+        async function saveTheme() {
+            const data = getFormData();
+
+            try {
+                const res = await fetch(`${API_BASE}/theme.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    showStatus('Design erfolgreich gespeichert!', 'success');
+                } else {
+                    showStatus(result.error || 'Fehler beim Speichern', 'error');
+                }
+            } catch (e) {
+                showStatus('Verbindungsfehler', 'error');
+            }
+        }
+
+        function resetToDefaults() {
+            if (confirm('Alle Einstellungen auf Standard zurucksetzen?')) {
+                applyPreset('default');
+                document.getElementById('siteName').value = 'HAFO.de';
+                document.getElementById('siteTagline').value = 'Hamburger Fußball Online';
+                document.getElementById('borderRadius').value = 12;
+                document.getElementById('borderRadiusValue').textContent = '12px';
+                document.getElementById('shadowIntensity').value = 40;
+                document.getElementById('shadowIntensityValue').textContent = '0.40';
+                updatePreview();
+            }
+        }
+
+        function showStatus(message, type) {
+            const el = document.getElementById('statusMessage');
+            el.textContent = message;
+            el.className = 'status-message ' + type;
+            setTimeout(() => {
+                el.className = 'status-message';
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

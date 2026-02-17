@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum Administration - LMO Admin</title>
+    <link rel="stylesheet" href="../css/league-modern.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --header-height: 64px;
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-live: #00FF88;
+            --color-bg-dark: #0D0D0D;
+            --color-bg-card: #1A1F1A;
+            --color-bg-elevated: #1E231E;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #A0A0A0;
+            --color-text-muted: #666666;
+            --color-warning: #F59E0B;
+            --color-info: #3B82F6;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--color-bg-card);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            border-radius: 8px;
+        }
+
+        .nav-items { flex: 1; padding: 16px 0; }
+
+        .nav-item {
+            display: block;
+            padding: 14px 24px;
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(226, 0, 26, 0.15);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            height: var(--header-height);
+            background: var(--color-bg-card);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .topbar h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: var(--color-bg-dark);
+        }
+
+        .card {
+            background: var(--color-bg-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+
+        .card h3 { margin-top: 0; color: var(--color-text-primary); }
+        .hidden { display: none !important; }
+
+        .form-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+        }
+
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--color-text-primary);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        button:hover { background: var(--color-primary-hover); }
+        button.btn-secondary { background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: var(--color-text-primary); }
+        button.btn-secondary:hover { background: var(--color-bg-card); border-color: var(--color-text-muted); }
+        button.btn-danger { background: #dc3545; }
+        button.btn-danger:hover { background: #c82333; }
+        button.btn-success { background: var(--color-live); color: var(--color-bg-dark); }
+        button.btn-info { background: var(--color-info); }
+        button.btn-sm { padding: 8px 14px; font-size: 0.85rem; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--color-border); }
+        th { font-weight: 600; color: var(--color-text-muted); font-size: 0.85rem; text-transform: uppercase; background: var(--color-bg-elevated); }
+        tr:hover { background: var(--color-bg-elevated); }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: rgba(0, 255, 136, 0.15); color: var(--color-live); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
+        .badge-danger { background: rgba(226, 0, 26, 0.15); color: var(--color-primary); }
+        .badge-info { background: rgba(59, 130, 246, 0.15); color: var(--color-info); }
+        .badge-muted { background: rgba(102, 102, 102, 0.15); color: var(--color-text-muted); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--color-primary); line-height: 1; }
+        .stat-label { margin-top: 8px; color: var(--color-text-muted); font-size: 0.9rem; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 20px; background: transparent; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+        .tab-btn:hover { background: var(--color-bg-elevated); transform: none; }
+        .tab-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--color-bg-dark);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box { width: 100%; max-width: 420px; }
+        .login-box h2 { text-align: center; margin-bottom: 30px; }
+        .login-box h2::before { content: ''; display: block; width: 60px; height: 60px; background: var(--color-primary); border-radius: 16px; margin: 0 auto 20px; }
+        #login-error { color: var(--color-primary) !important; text-align: center; margin-top: 15px; font-weight: 500; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--color-bg-card);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; }
+
+        .permission-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .permission-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .permission-item label {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .role-admin { background: rgba(226, 0, 26, 0.2); color: var(--color-primary); }
+        .role-editor { background: rgba(59, 130, 246, 0.2); color: var(--color-info); }
+        .role-user { background: rgba(102, 102, 102, 0.2); color: var(--color-text-muted); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--color-bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--color-bg-elevated); border-radius: 4px; }
+    </style>
+</head>
+
+<body>
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-box card">
+            <h2>Forum Admin Login</h2>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label>Benutzername</label>
+                    <input type="text" id="login-username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Passwort</label>
+                    <input type="password" id="login-password" required autocomplete="current-password">
+                </div>
+                <button type="submit" style="width: 100%;">Anmelden</button>
+                <p id="login-error" class="hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">LMO Admin</div>
+        <nav class="nav-items">
+            <a href="index.html" class="nav-item">Dashboard</a>
+            <a href="edit.html" class="nav-item">Spieltag bearbeiten</a>
+            <a href="forum.html" class="nav-item active">Forum</a>
+            <a href="design.html" class="nav-item">Design</a>
+            <a href="../forum.html" class="nav-item">Forum ansehen</a>
+            <a href="../index.html" class="nav-item">Zur Website</a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <h2>Forum Administration</h2>
+            <div>
+                <span id="user-info" style="margin-right: 15px; color: var(--color-text-secondary);"></span>
+                <button class="btn-secondary" onclick="logout()">Abmelden</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-categories">0</div>
+                    <div class="stat-label">Kategorien</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-topics">0</div>
+                    <div class="stat-label">Themen</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-posts">0</div>
+                    <div class="stat-label">Beiträge</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-users">0</div>
+                    <div class="stat-label">Benutzer</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('categories')">Kategorien</button>
+                <button class="tab-btn" onclick="switchTab('permissions')">Berechtigungen</button>
+                <button class="tab-btn" onclick="switchTab('users')">Benutzer</button>
+                <button class="tab-btn" onclick="switchTab('topics')">Alle Themen</button>
+                <button class="tab-btn" onclick="switchTab('leagues')">Liga-Integration</button>
+            </div>
+
+            <!-- Tab: Kategorien -->
+            <div id="tab-categories" class="tab-content active">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">Kategorien verwalten</h3>
+                        <button onclick="showCategoryModal()">+ Neue Kategorie</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Beschreibung</th>
+                                <th>Sortierung</th>
+                                <th>Themen</th>
+                                <th>Homepage</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-table">
+                            <tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Berechtigungen -->
+            <div id="tab-permissions" class="tab-content">
+                <div class="card">
+                    <h3>Kategorie-Berechtigungen</h3>
+                    <p style="color: var(--color-text-muted); margin-bottom: 20px;">
+                        Legen Sie fest, wer welche Kategorien sehen und nutzen kann.
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kategorie</th>
+                                <th>Sichtbar</th>
+                                <th>Antworten</th>
+                                <th>Themen erstellen</th>
+                                <th>Homepage</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="permissions-table">
+                            <tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>Berechtigungsstufen</h3>
+                    <table>
+                        <thead><tr><th>Stufe</th><th>Beschreibung</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="badge badge-success">public</span></td><td>Alle (auch Gäste ohne Anmeldung)</td></tr>
+                            <tr><td><span class="badge badge-info">registered</span></td><td>Nur registrierte Benutzer</td></tr>
+                            <tr><td><span class="badge badge-warning">editor</span></td><td>Nur Redakteure und Admins</td></tr>
+                            <tr><td><span class="badge badge-danger">admin</span></td><td>Nur Administratoren</td></tr>
+                            <tr><td><span class="badge badge-muted">none</span></td><td>Niemand (deaktiviert)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Benutzer -->
+            <div id="tab-users" class="tab-content">
+                <div class="card">
+                    <h3>Benutzerverwaltung</h3>
+                    <p style="color: var(--color-text-muted); margin-bottom: 20px;">
+                        Verwalten Sie Benutzerrollen. Redakteure können Beiträge moderieren.
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Benutzer</th>
+                                <th>E-Mail</th>
+                                <th>Rolle</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Topics -->
+            <div id="tab-topics" class="tab-content">
+                <div class="card">
+                    <h3>Alle Themen</h3>
+                    <div style="margin-bottom: 20px;">
+                        <select id="filter-category" onchange="loadTopics()" style="width: auto;">
+                            <option value="">Alle Kategorien</option>
+                        </select>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Titel</th>
+                                <th>Kategorie</th>
+                                <th>Autor</th>
+                                <th>Antworten</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topics-table">
+                            <tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Liga-Integration -->
+            <div id="tab-leagues" class="tab-content">
+                <div class="card">
+                    <h3>Liga-Manager Integration</h3>
+                    <p style="color: var(--color-text-muted); margin-bottom: 20px;">
+                        Verknüpfen Sie Ligen mit Forum-Kategorien und erstellen Sie automatisch Spieltag-Topics.
+                    </p>
+
+                    <div style="margin-bottom: 20px;">
+                        <label>Liga auswählen:</label>
+                        <select id="league-select" onchange="loadLeagueDetails()" style="width: auto; min-width: 300px;">
+                            <option value="">-- Liga wählen --</option>
+                        </select>
+                    </div>
+
+                    <div id="league-details" class="hidden">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card" style="padding: 15px;">
+                                <div class="stat-value" id="league-stat-topics" style="font-size: 1.8rem;">0</div>
+                                <div class="stat-label">Forum-Topics</div>
+                            </div>
+                            <div class="stat-card" style="padding: 15px;">
+                                <div class="stat-value" id="league-stat-rounds" style="font-size: 1.8rem;">0</div>
+                                <div class="stat-label">Spieltage</div>
+                            </div>
+                            <div class="stat-card" style="padding: 15px;">
+                                <div class="stat-value" id="league-stat-matches" style="font-size: 1.8rem;">0</div>
+                                <div class="stat-label">Spiele</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                            <button onclick="createLeagueCategory()">Forum-Kategorie erstellen</button>
+                            <button class="btn-secondary" onclick="showBulkTopicsModal()">Spieltag-Topics erstellen</button>
+                        </div>
+
+                        <h4 style="margin-top: 30px;">Verknüpfte Forum-Topics</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Spieltag</th>
+                                    <th>Topic</th>
+                                    <th>Typ</th>
+                                    <th>Beiträge</th>
+                                    <th>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="league-topics-table">
+                                <tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Keine Liga ausgewählt</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Alle Ligen mit Forum-Kategorien</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Liga</th>
+                                <th>Forum-Kategorie</th>
+                                <th>Topics</th>
+                                <th>Beiträge</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-leagues-table">
+                            <tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="modal" onclick="if(event.target === this) closeCategoryModal()">
+        <div class="modal-content">
+            <h3 id="category-modal-title">Neue Kategorie</h3>
+            <form onsubmit="saveCategory(event)">
+                <input type="hidden" id="category-id">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="category-name" required minlength="2" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <textarea id="category-description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Sortierung</label>
+                    <input type="number" id="category-sort" value="0">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeCategoryModal()">Abbrechen</button>
+                    <button type="submit">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Permission Modal -->
+    <div id="permission-modal" class="modal" onclick="if(event.target === this) closePermissionModal()">
+        <div class="modal-content">
+            <h3>Berechtigungen bearbeiten</h3>
+            <p id="permission-category-name" style="color: var(--color-text-muted); margin-bottom: 20px;"></p>
+            <form onsubmit="savePermissions(event)">
+                <input type="hidden" id="permission-category-id">
+                <div class="permission-grid">
+                    <div class="permission-item">
+                        <label>Sichtbarkeit</label>
+                        <select id="perm-view">
+                            <option value="public">Alle (public)</option>
+                            <option value="registered">Registrierte (registered)</option>
+                            <option value="editor">Redakteure (editor)</option>
+                            <option value="admin">Admins (admin)</option>
+                        </select>
+                    </div>
+                    <div class="permission-item">
+                        <label>Antworten erlaubt</label>
+                        <select id="perm-reply">
+                            <option value="public">Alle (public)</option>
+                            <option value="registered">Registrierte (registered)</option>
+                            <option value="editor">Redakteure (editor)</option>
+                            <option value="admin">Admins (admin)</option>
+                            <option value="none">Niemand (none)</option>
+                        </select>
+                    </div>
+                    <div class="permission-item">
+                        <label>Themen erstellen</label>
+                        <select id="perm-create">
+                            <option value="public">Alle (public)</option>
+                            <option value="registered">Registrierte (registered)</option>
+                            <option value="editor">Redakteure (editor)</option>
+                            <option value="admin">Admins (admin)</option>
+                            <option value="none">Niemand (none)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="perm-homepage">
+                    <label for="perm-homepage">Auf Startseite anzeigen</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="perm-archived">
+                    <label for="perm-archived">Archiviert (keine neuen Beiträge)</label>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn-secondary" onclick="closePermissionModal()">Abbrechen</button>
+                    <button type="submit">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Role Modal -->
+    <div id="user-modal" class="modal" onclick="if(event.target === this) closeUserModal()">
+        <div class="modal-content">
+            <h3>Benutzerrolle ändern</h3>
+            <p id="user-modal-name" style="color: var(--color-text-muted); margin-bottom: 20px;"></p>
+            <form onsubmit="saveUserRole(event)">
+                <input type="hidden" id="user-modal-id">
+                <div class="form-group">
+                    <label>Rolle</label>
+                    <select id="user-modal-role">
+                        <option value="user">Benutzer</option>
+                        <option value="editor">Redakteur</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeUserModal()">Abbrechen</button>
+                    <button type="submit">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Topics Modal -->
+    <div id="bulk-topics-modal" class="modal" onclick="if(event.target === this) closeBulkTopicsModal()">
+        <div class="modal-content">
+            <h3>Spieltag-Topics erstellen</h3>
+            <p style="color: var(--color-text-muted); margin-bottom: 20px;" id="bulk-topics-league-name"></p>
+            <form onsubmit="createBulkTopics(event)">
+                <input type="hidden" id="bulk-topics-league-id">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Von Spieltag</label>
+                        <input type="number" id="bulk-topics-from" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Bis Spieltag</label>
+                        <input type="number" id="bulk-topics-to" value="34" min="1">
+                    </div>
+                </div>
+                <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 20px;">
+                    Bereits existierende Spieltag-Topics werden übersprungen.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeBulkTopicsModal()">Abbrechen</button>
+                    <button type="submit">Topics erstellen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Match Report Modal -->
+    <div id="match-report-modal" class="modal" onclick="if(event.target === this) closeMatchReportModal()">
+        <div class="modal-content">
+            <h3>Spielbericht erstellen</h3>
+            <form onsubmit="createMatchReport(event)">
+                <input type="hidden" id="report-match-id">
+                <div class="form-group">
+                    <label>Titel</label>
+                    <input type="text" id="report-title" required minlength="5" placeholder="z.B. Heimsieg gegen...">
+                </div>
+                <div class="form-group">
+                    <label>Inhalt</label>
+                    <textarea id="report-content" rows="8" required minlength="10" placeholder="Spielbericht..."></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeMatchReportModal()">Abbrechen</button>
+                    <button type="submit">Spielbericht erstellen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.pathname.replace(/\/admin\/?.*$/, '') + '/api';
+        let csrfToken = null;
+        let categories = [];
+        let leagues = [];
+        let selectedLeagueId = null;
+        let users = [];
+
+        document.addEventListener('DOMContentLoaded', () => checkAuth());
+
+        // ============================================
+        // AUTHENTICATION
+        // ============================================
+
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_BASE}/check-auth.php`, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.authenticated && data.user && data.user.role === 'admin') {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('user-info').textContent = `Eingeloggt als: ${data.user.name || 'Admin'}`;
+                    csrfToken = data.csrf_token;
+                    loadAll();
+                } else if (data.authenticated) {
+                    document.getElementById('login-error').textContent = 'Admin-Berechtigung erforderlich';
+                    document.getElementById('login-error').classList.remove('hidden');
+                } else {
+                    csrfToken = data.csrf_token;
+                }
+            } catch (e) {
+                console.error('Auth check failed:', e);
+            }
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            try {
+                const res = await fetch(`${API_BASE}/login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password, csrf_token: csrfToken })
+                });
+
+                const data = await res.json();
+
+                if (data.success && data.user && data.user.role === 'admin') {
+                    csrfToken = data.csrf_token;
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('user-info').textContent = `Eingeloggt als: ${data.user.name || 'Admin'}`;
+                    loadAll();
+                } else if (data.success) {
+                    errorEl.textContent = 'Admin-Berechtigung erforderlich';
+                    errorEl.classList.remove('hidden');
+                } else {
+                    errorEl.textContent = data.error || 'Login fehlgeschlagen';
+                    errorEl.classList.remove('hidden');
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                }
+            } catch (e) {
+                errorEl.textContent = 'Netzwerkfehler';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${API_BASE}/logout.php`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ csrf_token: csrfToken })
+                });
+            } catch (e) {}
+            window.location.reload();
+        }
+
+        function loadAll() {
+            loadStats();
+            loadCategories();
+            loadUsers();
+            loadLeagues();
+        }
+
+        // ============================================
+        // TABS
+        // ============================================
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            if (tab === 'topics') loadTopics();
+            if (tab === 'permissions') renderPermissionsTable();
+            if (tab === 'users') loadUsers();
+            if (tab === 'leagues') loadLeagues();
+        }
+
+        // ============================================
+        // STATS
+        // ============================================
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php?action=stats`, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.success && data.stats) {
+                    document.getElementById('stat-categories').textContent = data.stats.categories || 0;
+                    document.getElementById('stat-topics').textContent = data.stats.topics || 0;
+                    document.getElementById('stat-posts').textContent = data.stats.posts || 0;
+                }
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+            } catch (e) {
+                console.error('Error loading stats:', e);
+            }
+        }
+
+        // ============================================
+        // CATEGORIES
+        // ============================================
+
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_BASE}/forum-categories.php?all=1`, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                categories = data.categories || [];
+
+                renderCategoriesTable();
+                renderPermissionsTable();
+
+                const filterSelect = document.getElementById('filter-category');
+                filterSelect.innerHTML = '<option value="">Alle Kategorien</option>' +
+                    categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+            } catch (e) {
+                console.error('Error loading categories:', e);
+            }
+        }
+
+        function renderCategoriesTable() {
+            const tbody = document.getElementById('categories-table');
+
+            if (categories.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Keine Kategorien vorhanden</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = categories.map(cat => `
+                <tr>
+                    <td><strong>${escapeHtml(cat.name)}</strong></td>
+                    <td style="color: var(--color-text-muted);">${escapeHtml(cat.description || '-')}</td>
+                    <td>${cat.sort_order || 0}</td>
+                    <td>${cat.topic_count || 0}</td>
+                    <td>${cat.show_on_homepage ? '<span class="badge badge-success">Ja</span>' : '<span class="badge badge-muted">Nein</span>'}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-sm btn-secondary" onclick="editCategory(${cat.id})">Bearbeiten</button>
+                            <button class="btn-sm btn-danger" onclick="deleteCategory(${cat.id})">Löschen</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPermissionsTable() {
+            const tbody = document.getElementById('permissions-table');
+
+            if (categories.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Keine Kategorien vorhanden</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = categories.map(cat => `
+                <tr>
+                    <td><strong>${escapeHtml(cat.name)}</strong></td>
+                    <td><span class="badge ${getBadgeClass(cat.view_permission)}">${cat.view_permission || 'public'}</span></td>
+                    <td><span class="badge ${getBadgeClass(cat.reply_permission)}">${cat.reply_permission || 'registered'}</span></td>
+                    <td><span class="badge ${getBadgeClass(cat.create_permission)}">${cat.create_permission || 'registered'}</span></td>
+                    <td>${cat.show_on_homepage ? '<span class="badge badge-success">Ja</span>' : '<span class="badge badge-muted">Nein</span>'}</td>
+                    <td>
+                        <button class="btn-sm btn-info" onclick="editPermissions(${cat.id})">Bearbeiten</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getBadgeClass(perm) {
+            switch(perm) {
+                case 'public': return 'badge-success';
+                case 'registered': return 'badge-info';
+                case 'editor': return 'badge-warning';
+                case 'admin': return 'badge-danger';
+                case 'none': return 'badge-muted';
+                default: return 'badge-info';
+            }
+        }
+
+        function showCategoryModal(categoryId = null) {
+            const modal = document.getElementById('category-modal');
+            const title = document.getElementById('category-modal-title');
+
+            if (categoryId) {
+                const cat = categories.find(c => c.id === categoryId);
+                if (cat) {
+                    title.textContent = 'Kategorie bearbeiten';
+                    document.getElementById('category-id').value = cat.id;
+                    document.getElementById('category-name').value = cat.name;
+                    document.getElementById('category-description').value = cat.description || '';
+                    document.getElementById('category-sort').value = cat.sort_order || 0;
+                }
+            } else {
+                title.textContent = 'Neue Kategorie';
+                document.getElementById('category-id').value = '';
+                document.getElementById('category-name').value = '';
+                document.getElementById('category-description').value = '';
+                document.getElementById('category-sort').value = 0;
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.remove('active');
+        }
+
+        function editCategory(id) {
+            showCategoryModal(id);
+        }
+
+        async function saveCategory(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('category-id').value;
+            const name = document.getElementById('category-name').value.trim();
+            const description = document.getElementById('category-description').value.trim();
+            const sortOrder = parseInt(document.getElementById('category-sort').value) || 0;
+
+            const payload = {
+                action: id ? 'update_category' : 'create_category',
+                name, description, sort_order: sortOrder,
+                csrf_token: csrfToken
+            };
+            if (id) payload.id = parseInt(id);
+
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    closeCategoryModal();
+                    loadCategories();
+                    loadStats();
+                } else {
+                    alert(data.error || 'Fehler beim Speichern');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        async function deleteCategory(id) {
+            const cat = categories.find(c => c.id === id);
+            if (!cat) return;
+
+            if (cat.topic_count > 0) {
+                alert(`Diese Kategorie enthält ${cat.topic_count} Themen. Bitte erst alle Themen löschen.`);
+                return;
+            }
+
+            if (!confirm(`Kategorie "${cat.name}" wirklich löschen?`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ action: 'delete_category', id, csrf_token: csrfToken })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    loadCategories();
+                    loadStats();
+                } else {
+                    alert(data.error || 'Fehler beim Löschen');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        // ============================================
+        // PERMISSIONS
+        // ============================================
+
+        function editPermissions(categoryId) {
+            const cat = categories.find(c => c.id === categoryId);
+            if (!cat) return;
+
+            document.getElementById('permission-category-id').value = cat.id;
+            document.getElementById('permission-category-name').textContent = `Kategorie: ${cat.name}`;
+            document.getElementById('perm-view').value = cat.view_permission || 'public';
+            document.getElementById('perm-reply').value = cat.reply_permission || 'registered';
+            document.getElementById('perm-create').value = cat.create_permission || 'registered';
+            document.getElementById('perm-homepage').checked = !!cat.show_on_homepage;
+            document.getElementById('perm-archived').checked = !!cat.is_archived;
+
+            document.getElementById('permission-modal').classList.add('active');
+        }
+
+        function closePermissionModal() {
+            document.getElementById('permission-modal').classList.remove('active');
+        }
+
+        async function savePermissions(event) {
+            event.preventDefault();
+
+            const payload = {
+                action: 'update_permissions',
+                id: parseInt(document.getElementById('permission-category-id').value),
+                view_permission: document.getElementById('perm-view').value,
+                reply_permission: document.getElementById('perm-reply').value,
+                create_permission: document.getElementById('perm-create').value,
+                show_on_homepage: document.getElementById('perm-homepage').checked ? 1 : 0,
+                is_archived: document.getElementById('perm-archived').checked ? 1 : 0,
+                csrf_token: csrfToken
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    closePermissionModal();
+                    loadCategories();
+                } else {
+                    alert(data.error || 'Fehler beim Speichern');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        // ============================================
+        // USERS
+        // ============================================
+
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php?action=users`, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                users = data.users || [];
+
+                document.getElementById('stat-users').textContent = users.length;
+                renderUsersTable();
+
+            } catch (e) {
+                console.error('Error loading users:', e);
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table');
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Keine Benutzer</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const roleClass = `role-${user.role || 'user'}`;
+                return `
+                    <tr>
+                        <td>
+                            <strong>${escapeHtml(user.display_name || user.username)}</strong>
+                            ${user.display_name && user.username !== user.display_name ? `<br><small style="color: var(--color-text-muted);">@${escapeHtml(user.username)}</small>` : ''}
+                        </td>
+                        <td style="color: var(--color-text-muted);">${escapeHtml(user.email || '-')}</td>
+                        <td><span class="role-badge ${roleClass}">${user.role || 'user'}</span></td>
+                        <td>${user.active ? '<span class="badge badge-success">Aktiv</span>' : '<span class="badge badge-muted">Inaktiv</span>'}</td>
+                        <td>
+                            <button class="btn-sm btn-secondary" onclick="editUserRole(${user.id})">Rolle ändern</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function editUserRole(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('user-modal-id').value = user.id;
+            document.getElementById('user-modal-name').textContent = `Benutzer: ${user.display_name || user.username}`;
+            document.getElementById('user-modal-role').value = user.role || 'user';
+
+            document.getElementById('user-modal').classList.add('active');
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-modal').classList.remove('active');
+        }
+
+        async function saveUserRole(event) {
+            event.preventDefault();
+
+            const payload = {
+                action: 'update_user_role',
+                user_id: parseInt(document.getElementById('user-modal-id').value),
+                role: document.getElementById('user-modal-role').value,
+                csrf_token: csrfToken
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    closeUserModal();
+                    loadUsers();
+                } else {
+                    alert(data.error || 'Fehler beim Speichern');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        // ============================================
+        // TOPICS
+        // ============================================
+
+        async function loadTopics() {
+            const categoryId = document.getElementById('filter-category').value;
+            const tbody = document.getElementById('topics-table');
+
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>';
+
+            try {
+                let url = `${API_BASE}/forum-topics.php?limit=50`;
+                if (categoryId) url += `&category=${categoryId}`;
+
+                const res = await fetch(url, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                const topics = data.topics || [];
+
+                if (topics.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-text-muted);">Keine Themen</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = topics.map(topic => {
+                    let statusBadges = '';
+                    if (topic.is_sticky) statusBadges += '<span class="badge badge-warning">Angepinnt</span> ';
+                    if (topic.is_locked) statusBadges += '<span class="badge badge-danger">Gesperrt</span>';
+                    if (!statusBadges) statusBadges = '<span class="badge badge-success">Aktiv</span>';
+
+                    return `
+                        <tr>
+                            <td><a href="../forum.html?topic=${topic.id}" target="_blank" style="color: var(--color-text-primary);">${escapeHtml(topic.title)}</a></td>
+                            <td style="color: var(--color-text-muted);">${escapeHtml(topic.category_name || '-')}</td>
+                            <td>${escapeHtml(topic.author_display_name || topic.author_name || 'Unbekannt')}</td>
+                            <td>${topic.post_count || 0}</td>
+                            <td>${statusBadges}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-sm btn-secondary" onclick="toggleSticky(${topic.id}, ${!topic.is_sticky})">${topic.is_sticky ? 'Lösen' : 'Anpinnen'}</button>
+                                    <button class="btn-sm btn-secondary" onclick="toggleLock(${topic.id}, ${!topic.is_locked})">${topic.is_locked ? 'Entsperren' : 'Sperren'}</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteTopic(${topic.id})">Löschen</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error('Error loading topics:', e);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-primary);">Fehler beim Laden</td></tr>';
+            }
+        }
+
+        async function toggleSticky(topicId, sticky) {
+            await adminAction('sticky_topic', { id: topicId, sticky });
+            loadTopics();
+        }
+
+        async function toggleLock(topicId, locked) {
+            await adminAction('lock_topic', { id: topicId, locked });
+            loadTopics();
+        }
+
+        async function deleteTopic(topicId) {
+            if (!confirm('Thema wirklich löschen? Alle Beiträge werden ebenfalls gelöscht.')) return;
+            await adminAction('delete_topic', { id: topicId });
+            loadTopics();
+            loadStats();
+        }
+
+        async function adminAction(action, params) {
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ action, ...params, csrf_token: csrfToken })
+                });
+                const data = await res.json();
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                if (!data.success) alert(data.error || 'Fehler');
+                return data;
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // LIGA-INTEGRATION
+        // ============================================
+
+        async function loadLeagues() {
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php?action=leagues`, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                leagues = data.leagues || [];
+
+                // Liga-Select befüllen
+                const select = document.getElementById('league-select');
+                select.innerHTML = '<option value="">-- Liga wählen --</option>' +
+                    leagues.map(l => `<option value="${l.id}">${escapeHtml(l.name || l.file)}</option>`).join('');
+
+                // Alle Ligen Tabelle
+                renderAllLeaguesTable();
+
+            } catch (e) {
+                console.error('Error loading leagues:', e);
+            }
+        }
+
+        function renderAllLeaguesTable() {
+            const tbody = document.getElementById('all-leagues-table');
+
+            if (leagues.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Keine Ligen</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = leagues.map(league => {
+                const hasCat = league.category_id ? true : false;
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(league.name || league.file)}</strong></td>
+                        <td>${hasCat ? `<span class="badge badge-success">${escapeHtml(league.category_name)}</span>` : '<span class="badge badge-muted">Keine</span>'}</td>
+                        <td>${league.topic_count || 0}</td>
+                        <td>${league.post_count || 0}</td>
+                        <td>
+                            <div class="action-btns">
+                                ${!hasCat ? `<button class="btn-sm btn-success" onclick="createLeagueCategoryFor(${league.id})">Kategorie erstellen</button>` : ''}
+                                <button class="btn-sm btn-secondary" onclick="selectLeague(${league.id})">Details</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function selectLeague(leagueId) {
+            document.getElementById('league-select').value = leagueId;
+            loadLeagueDetails();
+            // Scroll to top of tab
+            document.getElementById('tab-leagues').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function loadLeagueDetails() {
+            selectedLeagueId = parseInt(document.getElementById('league-select').value) || null;
+            const details = document.getElementById('league-details');
+            const tbody = document.getElementById('league-topics-table');
+
+            if (!selectedLeagueId) {
+                details.classList.add('hidden');
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Keine Liga ausgewählt</td></tr>';
+                return;
+            }
+
+            details.classList.remove('hidden');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Laden...</td></tr>';
+
+            try {
+                // Liga-Topics laden
+                const res = await fetch(`${API_BASE}/match-forum.php?action=league_topics&league_id=${selectedLeagueId}`, { credentials: 'include' });
+                const data = await res.json();
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+
+                const topics = data.topics || [];
+                const links = data.links || [];
+
+                // Statistiken
+                document.getElementById('league-stat-topics').textContent = topics.length;
+
+                // Liga-Daten aus leagues Array
+                const league = leagues.find(l => l.id === selectedLeagueId);
+                if (league) {
+                    // Spieltage und Spiele aus DB laden wäre besser, aber erstmal schätzen
+                    document.getElementById('league-stat-rounds').textContent = '?';
+                    document.getElementById('league-stat-matches').textContent = '?';
+                }
+
+                // Topics-Tabelle
+                if (topics.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-text-muted);">Keine verknüpften Topics</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = topics.map(topic => {
+                    const typeBadge = getTopicTypeBadge(topic.topic_type);
+                    return `
+                        <tr>
+                            <td>${topic.round_nr ? topic.round_nr + '. Spieltag' : '-'}</td>
+                            <td><a href="../forum.html?topic=${topic.id}" target="_blank" style="color: var(--color-text-primary);">${escapeHtml(topic.title)}</a></td>
+                            <td>${typeBadge}</td>
+                            <td>${topic.post_count || 0}</td>
+                            <td>
+                                <button class="btn-sm btn-secondary" onclick="window.open('../forum.html?topic=${topic.id}', '_blank')">Öffnen</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error('Error loading league details:', e);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-primary);">Fehler beim Laden</td></tr>';
+            }
+        }
+
+        function getTopicTypeBadge(type) {
+            switch (type) {
+                case 'matchday': return '<span class="badge badge-info">Spieltag</span>';
+                case 'report': return '<span class="badge badge-success">Bericht</span>';
+                case 'preview': return '<span class="badge badge-warning">Vorschau</span>';
+                default: return '<span class="badge badge-muted">Diskussion</span>';
+            }
+        }
+
+        async function createLeagueCategory() {
+            if (!selectedLeagueId) {
+                alert('Bitte erst eine Liga auswählen');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        action: 'create_league_category',
+                        league_id: selectedLeagueId,
+                        csrf_token: csrfToken
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    alert(data.message || 'Kategorie erstellt');
+                    loadLeagues();
+                    loadCategories();
+                } else {
+                    alert(data.error || 'Fehler');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        async function createLeagueCategoryFor(leagueId) {
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        action: 'create_league_category',
+                        league_id: leagueId,
+                        csrf_token: csrfToken
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    loadLeagues();
+                    loadCategories();
+                } else {
+                    alert(data.error || 'Fehler');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        function showBulkTopicsModal() {
+            if (!selectedLeagueId) {
+                alert('Bitte erst eine Liga auswählen');
+                return;
+            }
+
+            const league = leagues.find(l => l.id === selectedLeagueId);
+            document.getElementById('bulk-topics-league-id').value = selectedLeagueId;
+            document.getElementById('bulk-topics-league-name').textContent = `Liga: ${league?.name || league?.file || 'Unbekannt'}`;
+
+            document.getElementById('bulk-topics-modal').classList.add('active');
+        }
+
+        function closeBulkTopicsModal() {
+            document.getElementById('bulk-topics-modal').classList.remove('active');
+        }
+
+        async function createBulkTopics(event) {
+            event.preventDefault();
+
+            const leagueId = parseInt(document.getElementById('bulk-topics-league-id').value);
+            const fromRound = parseInt(document.getElementById('bulk-topics-from').value) || 1;
+            const toRound = parseInt(document.getElementById('bulk-topics-to').value) || 34;
+
+            if (!leagueId) {
+                alert('Keine Liga ausgewählt');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        action: 'bulk_create_matchday_topics',
+                        league_id: leagueId,
+                        from_round: fromRound,
+                        to_round: toRound,
+                        csrf_token: csrfToken
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    alert(data.message || `${data.created} Topics erstellt`);
+                    closeBulkTopicsModal();
+                    loadLeagueDetails();
+                } else {
+                    alert(data.error || 'Fehler');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        function showMatchReportModal(matchId, homeTeam, guestTeam) {
+            document.getElementById('report-match-id').value = matchId;
+            document.getElementById('report-title').value = `${homeTeam} vs ${guestTeam}`;
+            document.getElementById('report-content').value = '';
+            document.getElementById('match-report-modal').classList.add('active');
+        }
+
+        function closeMatchReportModal() {
+            document.getElementById('match-report-modal').classList.remove('active');
+        }
+
+        async function createMatchReport(event) {
+            event.preventDefault();
+
+            const matchId = parseInt(document.getElementById('report-match-id').value);
+            const title = document.getElementById('report-title').value.trim();
+            const content = document.getElementById('report-content').value.trim();
+
+            if (!matchId || !title || !content) {
+                alert('Bitte alle Felder ausfüllen');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        action: 'create_report_topic',
+                        match_id: matchId,
+                        title: title,
+                        content: content,
+                        csrf_token: csrfToken
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    alert('Spielbericht erstellt');
+                    closeMatchReportModal();
+                    // Öffne das neue Topic
+                    window.open(`../forum.html?topic=${data.topic_id}`, '_blank');
+                } else {
+                    alert(data.error || 'Fehler');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+    </script>
+</body>
+</html>
