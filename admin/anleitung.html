@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin-Anleitung - HAFO LMO</title>
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-primary-light: rgba(226, 0, 26, 0.1);
+            --color-bg-dark: #0D0D0D;
+            --color-bg-card: #1A1F1A;
+            --color-bg-elevated: #1E231E;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #A0A0A0;
+            --color-text-muted: #666666;
+            --color-success: #28a745;
+            --color-warning: #ffc107;
+            --color-info: #17a2b8;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, var(--color-primary), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--color-text-secondary);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Navigation */
+        .toc {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        .toc h2 {
+            margin: 0 0 16px 0;
+            font-size: 1.2rem;
+            color: var(--color-text-secondary);
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .toc a {
+            display: block;
+            padding: 12px 16px;
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-md);
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .toc a:hover {
+            background: var(--color-primary);
+            transform: translateY(-2px);
+        }
+
+        .toc a span {
+            margin-right: 8px;
+        }
+
+        /* Sections */
+        .section {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 24px 0;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 1.5rem;
+        }
+
+        .section h2 .icon {
+            font-size: 1.8rem;
+        }
+
+        .section h3 {
+            color: var(--color-primary);
+            margin: 32px 0 16px 0;
+            font-size: 1.15rem;
+        }
+
+        .section h3:first-of-type {
+            margin-top: 0;
+        }
+
+        .section p {
+            color: var(--color-text-secondary);
+            margin: 0 0 16px 0;
+        }
+
+        .section ul, .section ol {
+            color: var(--color-text-secondary);
+            padding-left: 24px;
+            margin: 0 0 16px 0;
+        }
+
+        .section li {
+            margin-bottom: 8px;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .feature-card h4 {
+            margin: 0 0 8px 0;
+            color: var(--color-text-primary);
+            font-size: 1rem;
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .steps li {
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .steps li strong {
+            color: var(--color-text-primary);
+        }
+
+        /* Code/Path */
+        code {
+            background: var(--color-bg-elevated);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--color-primary);
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin: 20px 0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .info-box.tip {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .info-box.warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .info-box.info {
+            background: rgba(23, 162, 184, 0.1);
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+
+        .info-box .icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            color: var(--color-text-secondary);
+        }
+
+        td code {
+            font-size: 0.85em;
+        }
+
+        /* Keyboard Shortcuts */
+        kbd {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: inherit;
+            font-size: 0.85em;
+            box-shadow: 0 2px 0 var(--color-border);
+        }
+
+        /* Screenshot placeholder */
+        .screenshot {
+            background: var(--color-bg-elevated);
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 40px;
+            text-align: center;
+            color: var(--color-text-muted);
+            margin: 20px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .toc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Zurueck zum Admin-Dashboard</a>
+
+        <header class="header">
+            <h1>HAFO Admin-Anleitung</h1>
+            <p>Vollstaendige Dokumentation aller Funktionen des Liga-Manager Online</p>
+        </header>
+
+        <!-- Inhaltsverzeichnis -->
+        <nav class="toc">
+            <h2>Inhaltsverzeichnis</h2>
+            <div class="toc-grid">
+                <a href="#uebersicht"><span>1.</span> Uebersicht</a>
+                <a href="#login"><span>2.</span> Anmeldung</a>
+                <a href="#liga-editor"><span>3.</span> Liga-Editor</a>
+                <a href="#news"><span>4.</span> News & Berichte</a>
+                <a href="#forum"><span>5.</span> Forum</a>
+                <a href="#teams"><span>6.</span> Teams</a>
+                <a href="#korrekturen"><span>7.</span> Punktekorrekturen</a>
+                <a href="#benutzer"><span>8.</span> Benutzerverwaltung</a>
+                <a href="#tipps"><span>9.</span> Tipps & Tricks</a>
+            </div>
+        </nav>
+
+        <!-- 1. Uebersicht -->
+        <section class="section" id="uebersicht">
+            <h2><span class="icon">📋</span> 1. Uebersicht</h2>
+
+            <p>Das HAFO Admin-Panel ermoeglicht die vollstaendige Verwaltung des Liga-Managers. Hier koennen Spielergebnisse eingetragen, News veroeffentlicht, das Forum moderiert und Benutzer verwaltet werden.</p>
+
+            <h3>Verfuegbare Module</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Liga-Editor</h4>
+                    <p>Ergebnisse eintragen, Spieltage bearbeiten, Spielnotizen hinzufuegen</p>
+                </div>
+                <div class="feature-card">
+                    <h4>News & Berichte</h4>
+                    <p>Spielberichte erstellen, bearbeiten und mit Spielen verknuepfen</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Forum</h4>
+                    <p>Kategorien verwalten, Beitraege moderieren, Liga-Integration</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Teams</h4>
+                    <p>Mannschaften bearbeiten, Logos zuweisen, Namen aendern</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Punktekorrekturen</h4>
+                    <p>Punktabzuege oder Bonuspunkte fuer Teams eintragen</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Benutzer</h4>
+                    <p>Benutzerkonten verwalten, Rollen zuweisen</p>
+                </div>
+            </div>
+
+            <h3>Schnellzugriff</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bereich</th>
+                        <th>URL</th>
+                        <th>Beschreibung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dashboard</td>
+                        <td><code>/admin/index.html</code></td>
+                        <td>Hauptuebersicht, Teams, Benutzer</td>
+                    </tr>
+                    <tr>
+                        <td>Liga-Editor</td>
+                        <td><code>/admin/edit.html</code></td>
+                        <td>Ergebnisse und Spieltage bearbeiten</td>
+                    </tr>
+                    <tr>
+                        <td>News</td>
+                        <td><code>/admin/news.html</code></td>
+                        <td>Spielberichte verwalten</td>
+                    </tr>
+                    <tr>
+                        <td>Forum</td>
+                        <td><code>/admin/forum.html</code></td>
+                        <td>Forum-Moderation</td>
+                    </tr>
+                    <tr>
+                        <td>Design</td>
+                        <td><code>/admin/design.html</code></td>
+                        <td>Farben und Aussehen anpassen</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 2. Anmeldung -->
+        <section class="section" id="login">
+            <h2><span class="icon">🔐</span> 2. Anmeldung</h2>
+
+            <p>Um auf den Admin-Bereich zugreifen zu koennen, ist eine Anmeldung erforderlich.</p>
+
+            <h3>So melden Sie sich an</h3>
+            <ol class="steps">
+                <li><strong>Admin-Seite oeffnen:</strong> Navigieren Sie zu <code>/admin/</code></li>
+                <li><strong>Zugangsdaten eingeben:</strong> Benutzername und Passwort eintragen</li>
+                <li><strong>Anmelden klicken:</strong> Sie werden zum Dashboard weitergeleitet</li>
+            </ol>
+
+            <h3>Benutzerrollen</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rolle</th>
+                        <th>Berechtigung</th>
+                        <th>Beschreibung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Admin</strong></td>
+                        <td>Stufe 3</td>
+                        <td>Vollzugriff auf alle Funktionen inkl. Benutzerverwaltung</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Editor</strong></td>
+                        <td>Stufe 2</td>
+                        <td>Ergebnisse, News und Forum bearbeiten</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Registriert</strong></td>
+                        <td>Stufe 1</td>
+                        <td>Forum-Beitraege schreiben</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gast</strong></td>
+                        <td>Stufe 0</td>
+                        <td>Nur Lesen</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>Sicherheitshinweis:</strong> Melden Sie sich nach der Arbeit immer ab. Die Session laeuft nach 2 Stunden Inaktivitaet automatisch ab.</p>
+            </div>
+        </section>
+
+        <!-- 3. Liga-Editor -->
+        <section class="section" id="liga-editor">
+            <h2><span class="icon">⚽</span> 3. Liga-Editor</h2>
+
+            <p>Der Liga-Editor ist das Herzstck des Systems. Hier werden alle Spielergebnisse eingetragen und verwaltet.</p>
+
+            <h3>Ergebnisse eintragen</h3>
+            <ol class="steps">
+                <li><strong>Liga auswaehlen:</strong> Waehlen Sie oben links die gewuenschte Liga aus dem Dropdown</li>
+                <li><strong>Spieltag waehlen:</strong> Navigieren Sie zum entsprechenden Spieltag</li>
+                <li><strong>Ergebnisse eingeben:</strong> Klicken Sie in die Ergebnis-Felder und tragen Sie die Tore ein</li>
+                <li><strong>Speichern:</strong> Klicken Sie auf "Spieltag speichern" oder druecken Sie <kbd>Strg</kbd>+<kbd>S</kbd></li>
+            </ol>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Tipp:</strong> Mit <kbd>Tab</kbd> springen Sie schnell zum naechsten Eingabefeld. Das beschleunigt die Eingabe erheblich!</p>
+            </div>
+
+            <h3>Spielnotizen hinzufuegen</h3>
+            <p>Fuer jedes Spiel koennen zusaetzliche Informationen hinterlegt werden:</p>
+            <ul>
+                <li><strong>Notiz:</strong> Kurze Info wie "Verlegt" oder "Abgesagt"</li>
+                <li><strong>Datum/Uhrzeit:</strong> Anstoßzeit aendern</li>
+                <li><strong>Spielbericht:</strong> Link zu einem externen Bericht</li>
+            </ul>
+
+            <p>Klicken Sie auf das Info-Symbol neben einem Spiel, um das Notiz-Fenster zu oeffnen.</p>
+
+            <h3>Tabelle</h3>
+            <p>Die Tabelle wird automatisch berechnet basierend auf:</p>
+            <ul>
+                <li>3 Punkte fuer einen Sieg</li>
+                <li>1 Punkt fuer ein Unentschieden</li>
+                <li>0 Punkte fuer eine Niederlage</li>
+                <li>Sortierung: Punkte → Tordifferenz → Tore</li>
+            </ul>
+
+            <h3>Tastenkuerzel</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tastenkombination</th>
+                        <th>Funktion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><kbd>Strg</kbd>+<kbd>S</kbd></td>
+                        <td>Spieltag speichern</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Tab</kbd></td>
+                        <td>Zum naechsten Feld springen</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>←</kbd> <kbd>→</kbd></td>
+                        <td>Spieltag wechseln (in der Navigation)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 4. News & Berichte -->
+        <section class="section" id="news">
+            <h2><span class="icon">📰</span> 4. News & Spielberichte</h2>
+
+            <p>Verwalten Sie hier alle Spielberichte und Neuigkeiten. News koennen mit Spielen verknuepft werden, sodass sie direkt beim jeweiligen Spiel angezeigt werden.</p>
+
+            <h3>Neue News erstellen</h3>
+            <ol class="steps">
+                <li><strong>News-Bereich oeffnen:</strong> Gehen Sie zu <code>/admin/news.html</code></li>
+                <li><strong>"+ Neue News" klicken:</strong> Das Editor-Fenster oeffnet sich</li>
+                <li><strong>Titel eingeben:</strong> Aussagekraeftiger Titel fuer den Bericht</li>
+                <li><strong>Autor angeben:</strong> Name des Verfassers</li>
+                <li><strong>Kurztext schreiben:</strong> Wird als Vorschau angezeigt (2-3 Saetze)</li>
+                <li><strong>Volltext verfassen:</strong> Der komplette Spielbericht</li>
+                <li><strong>Speichern:</strong> Klicken Sie auf "Speichern"</li>
+            </ol>
+
+            <h3>News mit Spielen verknuepfen</h3>
+            <p>Damit ein Spielbericht direkt beim Spiel erscheint:</p>
+            <ol class="steps">
+                <li><strong>News bearbeiten:</strong> Oeffnen Sie die entsprechende News</li>
+                <li><strong>Spiel suchen:</strong> Im Bereich "Verknuepfte Spiele" Team oder Datum eingeben</li>
+                <li><strong>Spiel auswaehlen:</strong> Klicken Sie auf das gewuenschte Spiel</li>
+                <li><strong>Speichern:</strong> Die Verknuepfung wird gespeichert</li>
+            </ol>
+
+            <div class="info-box info">
+                <span class="icon">ℹ️</span>
+                <p>Eine News kann mit mehreren Spielen verknuepft werden (z.B. Saisonrueckblick).</p>
+            </div>
+
+            <h3>Text formatieren</h3>
+            <p>Die Editor-Toolbar bietet folgende Formatierungen:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Button</th>
+                        <th>Funktion</th>
+                        <th>HTML</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>B</strong></td>
+                        <td>Fett</td>
+                        <td><code>&lt;b&gt;Text&lt;/b&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><em>I</em></td>
+                        <td>Kursiv</td>
+                        <td><code>&lt;i&gt;Text&lt;/i&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td>H3</td>
+                        <td>Zwischenueberschrift</td>
+                        <td><code>&lt;h3&gt;Text&lt;/h3&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td>Absatz</td>
+                        <td>Neuer Absatz</td>
+                        <td><code>&lt;p&gt;Text&lt;/p&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td>Link</td>
+                        <td>Hyperlink einfuegen</td>
+                        <td><code>&lt;a href="..."&gt;Text&lt;/a&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td>Umbruch</td>
+                        <td>Zeilenumbruch</td>
+                        <td><code>&lt;br&gt;</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Suche und Filter</h3>
+            <p>Nutzen Sie das Suchfeld oben, um nach Titel, Inhalt oder Autor zu suchen. Die Ergebnisse werden paginiert angezeigt (20 pro Seite).</p>
+        </section>
+
+        <!-- 5. Forum -->
+        <section class="section" id="forum">
+            <h2><span class="icon">💬</span> 5. Forum-Verwaltung</h2>
+
+            <p>Das Forum ermoeglicht Diskussionen zwischen Benutzern. Administratoren koennen Kategorien anlegen, Beitraege moderieren und das Forum mit Ligen verknuepfen.</p>
+
+            <h3>Kategorien verwalten</h3>
+            <ol class="steps">
+                <li><strong>Forum-Admin oeffnen:</strong> Gehen Sie zu <code>/admin/forum.html</code></li>
+                <li><strong>Tab "Kategorien" waehlen:</strong> Alle Kategorien werden angezeigt</li>
+                <li><strong>Neue Kategorie:</strong> Klicken Sie auf "+ Neue Kategorie"</li>
+                <li><strong>Name und Beschreibung eingeben</strong></li>
+                <li><strong>Berechtigungen setzen:</strong> Wer darf lesen/schreiben?</li>
+                <li><strong>Speichern</strong></li>
+            </ol>
+
+            <h3>Berechtigungsstufen</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stufe</th>
+                        <th>Wer kann zugreifen?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Oeffentlich (0)</td>
+                        <td>Alle, auch Gaeste</td>
+                    </tr>
+                    <tr>
+                        <td>Registriert (1)</td>
+                        <td>Nur eingeloggte Benutzer</td>
+                    </tr>
+                    <tr>
+                        <td>Editor (2)</td>
+                        <td>Nur Editoren und Admins</td>
+                    </tr>
+                    <tr>
+                        <td>Admin (3)</td>
+                        <td>Nur Administratoren</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Beitraege moderieren</h3>
+            <ul>
+                <li><strong>Bearbeiten:</strong> Inhalt eines Beitrags aendern</li>
+                <li><strong>Loeschen:</strong> Beitrag entfernen (unwiderruflich)</li>
+                <li><strong>Topic sperren:</strong> Keine neuen Antworten moeglich</li>
+                <li><strong>Topic anpinnen:</strong> Erscheint immer oben in der Liste</li>
+            </ul>
+
+            <h3>Liga-Integration</h3>
+            <p>Im Tab "Liga-Integration" koennen automatisch Spieltags-Topics erstellt werden:</p>
+            <ol class="steps">
+                <li><strong>Liga auswaehlen</strong></li>
+                <li><strong>Liga-Kategorie erstellen:</strong> Falls noch nicht vorhanden</li>
+                <li><strong>Spieltags-Topics erstellen:</strong> Bulk-Erstellung fuer alle Spieltage</li>
+            </ol>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Tipp:</strong> Die erstellten Topics werden automatisch mit dem jeweiligen Spieltag verknuepft und erscheinen im Liga-Editor.</p>
+            </div>
+        </section>
+
+        <!-- 6. Teams -->
+        <section class="section" id="teams">
+            <h2><span class="icon">👥</span> 6. Teams verwalten</h2>
+
+            <p>Hier koennen Mannschaftsnamen geaendert und Logos zugewiesen werden.</p>
+
+            <h3>Team bearbeiten</h3>
+            <ol class="steps">
+                <li><strong>Dashboard oeffnen:</strong> <code>/admin/index.html</code></li>
+                <li><strong>Tab "Teams" waehlen</strong></li>
+                <li><strong>Liga auswaehlen:</strong> Im Dropdown oben</li>
+                <li><strong>Team anklicken:</strong> Bearbeitungs-Dialog oeffnet sich</li>
+                <li><strong>Aenderungen vornehmen:</strong> Name, Kurzname, Logo</li>
+                <li><strong>Speichern</strong></li>
+            </ol>
+
+            <h3>Verfuegbare Felder</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feld</th>
+                        <th>Beschreibung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Name</td>
+                        <td>Vollstaendiger Vereinsname (z.B. "FC St. Pauli")</td>
+                    </tr>
+                    <tr>
+                        <td>Kurzname</td>
+                        <td>Abkuerzung fuer enge Darstellungen (z.B. "St. Pauli")</td>
+                    </tr>
+                    <tr>
+                        <td>Logo</td>
+                        <td>Dateiname des Logos im Ordner <code>/icons/</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>Achtung:</strong> Wenn ein Team Spiele hat, kann es nicht geloescht werden. Aendern Sie stattdessen den Namen.</p>
+            </div>
+        </section>
+
+        <!-- 7. Punktekorrekturen -->
+        <section class="section" id="korrekturen">
+            <h2><span class="icon">📊</span> 7. Punktekorrekturen</h2>
+
+            <p>Manchmal muessen Punkte korrigiert werden, z.B. bei Lizenzentzug oder Regelverstoessen.</p>
+
+            <h3>Korrektur eintragen</h3>
+            <ol class="steps">
+                <li><strong>Dashboard oeffnen</strong></li>
+                <li><strong>Tab "Punktekorrekturen" waehlen</strong></li>
+                <li><strong>Liga auswaehlen</strong></li>
+                <li><strong>"+ Korrektur hinzufuegen" klicken</strong></li>
+                <li><strong>Team waehlen:</strong> Welches Team betroffen ist</li>
+                <li><strong>Punkte eingeben:</strong> Negativ fuer Abzug, positiv fuer Bonus</li>
+                <li><strong>Grund angeben:</strong> Z.B. "Spielereinsatz ohne Spielberechtigung"</li>
+                <li><strong>Speichern</strong></li>
+            </ol>
+
+            <h3>Beispiele</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Situation</th>
+                        <th>Punkte</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>3 Punkte Abzug wegen Regelverstoß</td>
+                        <td><code>-3</code></td>
+                    </tr>
+                    <tr>
+                        <td>1 Punkt Abzug wegen Ordnungswidrigkeit</td>
+                        <td><code>-1</code></td>
+                    </tr>
+                    <tr>
+                        <td>Spielwertung 3:0 (3 Punkte gutgeschrieben)</td>
+                        <td><code>+3</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box info">
+                <span class="icon">ℹ️</span>
+                <p>In der Tabelle werden Teams mit Punktekorrekturen mit einem Hinweis gekennzeichnet.</p>
+            </div>
+        </section>
+
+        <!-- 8. Benutzer -->
+        <section class="section" id="benutzer">
+            <h2><span class="icon">🔐</span> 8. Benutzerverwaltung</h2>
+
+            <p>Verwalten Sie hier alle registrierten Benutzer und deren Berechtigungen.</p>
+
+            <h3>Benutzer bearbeiten</h3>
+            <ol class="steps">
+                <li><strong>Dashboard oeffnen</strong></li>
+                <li><strong>Tab "Benutzer" waehlen</strong></li>
+                <li><strong>Benutzer in der Liste finden</strong></li>
+                <li><strong>Rolle aendern:</strong> Im Dropdown die neue Rolle waehlen</li>
+            </ol>
+
+            <h3>Neuen Benutzer anlegen</h3>
+            <p>Benutzer registrieren sich selbst ueber die Login-Seite. Danach kann ein Admin die Rolle hochstufen.</p>
+
+            <h3>Passwort zuruecksetzen</h3>
+            <p>Aktuell muss ein neues Passwort direkt in der Datenbank gesetzt werden. Funktion zur Passwort-Reset kommt in einer zukuenftigen Version.</p>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>Wichtig:</strong> Geben Sie Admin-Rechte nur vertrauenswuerdigen Personen. Admins haben vollen Zugriff auf alle Daten.</p>
+            </div>
+        </section>
+
+        <!-- 9. Tipps -->
+        <section class="section" id="tipps">
+            <h2><span class="icon">💡</span> 9. Tipps & Tricks</h2>
+
+            <h3>Allgemeine Tipps</h3>
+            <ul>
+                <li><strong>Browser-Cache leeren:</strong> Bei Anzeigeproblemen <kbd>Strg</kbd>+<kbd>F5</kbd> druecken</li>
+                <li><strong>Mehrere Tabs:</strong> Sie koennen mehrere Admin-Bereiche gleichzeitig offen haben</li>
+                <li><strong>Mobil nutzbar:</strong> Das Admin-Panel funktioniert auch auf Tablets</li>
+            </ul>
+
+            <h3>Performance</h3>
+            <ul>
+                <li>Die API nutzt Caching - Aenderungen koennen bis zu 5 Minuten brauchen, bis sie oeffentlich sichtbar sind</li>
+                <li>Bei vielen gleichzeitigen Aenderungen: Zwischendurch speichern</li>
+            </ul>
+
+            <h3>Fehlerbehebung</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Problem</th>
+                        <th>Loesung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Seite laedt nicht</td>
+                        <td>Browser-Cache leeren, Seite neu laden</td>
+                    </tr>
+                    <tr>
+                        <td>Aenderungen werden nicht gespeichert</td>
+                        <td>Session abgelaufen - neu einloggen</td>
+                    </tr>
+                    <tr>
+                        <td>"Keine Berechtigung" Fehler</td>
+                        <td>Benutzerrolle pruefen, ggf. Admin kontaktieren</td>
+                    </tr>
+                    <tr>
+                        <td>Tabelle zeigt falsche Punkte</td>
+                        <td>Punktekorrekturen pruefen</td>
+                    </tr>
+                    <tr>
+                        <td>News erscheint nicht beim Spiel</td>
+                        <td>Spielverknuepfung in der News pruefen</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Backup</h3>
+            <p>Die Datenbank liegt unter <code>/data/lmo.sqlite</code>. Regelmaessige Backups dieser Datei werden empfohlen.</p>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Profi-Tipp:</strong> Legen Sie vor groesseren Aenderungen immer ein Backup der SQLite-Datenbank an!</p>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>HAFO Liga-Manager Online &bull; Version 2.6 &bull; &copy; 2025</p>
+            <p>Bei Fragen oder Problemen: <a href="mailto:admin@hafo.de">admin@hafo.de</a></p>
+        </footer>
+    </div>
+</body>
+
+</html>

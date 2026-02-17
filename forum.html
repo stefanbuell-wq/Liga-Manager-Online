@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum - HAFO.de</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/portal.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <!-- Theme Loader -->
+    <script>
+        (function() {
+            const cached = localStorage.getItem('hafo_theme');
+            if (cached) {
+                try {
+                    const theme = JSON.parse(cached);
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                } catch(e) {}
+            }
+            fetch('api/theme.php')
+                .then(r => r.json())
+                .then(theme => {
+                    localStorage.setItem('hafo_theme', JSON.stringify(theme));
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                })
+                .catch(() => {});
+        })();
+    </script>
+
+    <style>
+        /* Forum-spezifische Styles */
+        .forum-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+        }
+        .forum-breadcrumb a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .forum-breadcrumb a:hover {
+            color: var(--color-primary);
+        }
+        .forum-breadcrumb span {
+            color: var(--color-text-muted);
+        }
+
+        .category-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-md);
+            transition: all 0.2s ease;
+        }
+        .category-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-lg);
+            cursor: pointer;
+        }
+        .category-info {
+            flex: 1;
+        }
+        .category-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        .category-description {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+        }
+        .category-stats {
+            display: flex;
+            gap: var(--spacing-xl);
+            text-align: center;
+        }
+        .category-stat {
+            display: flex;
+            flex-direction: column;
+        }
+        .category-stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+        .category-stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+        }
+
+        .topic-list {
+            background: var(--color-bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .topic-row {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s ease;
+        }
+        .topic-row:last-child {
+            border-bottom: none;
+        }
+        .topic-row:hover {
+            background: var(--color-bg-elevated);
+        }
+        .topic-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--color-bg-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: var(--spacing-md);
+            flex-shrink: 0;
+        }
+        .topic-icon.sticky {
+            background: var(--color-warning);
+            color: white;
+        }
+        .topic-icon.locked {
+            background: var(--color-text-muted);
+            color: white;
+        }
+        .topic-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .topic-title {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--spacing-xs);
+            display: block;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .topic-title:hover {
+            color: var(--color-primary);
+        }
+        .topic-meta {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+        .topic-stats {
+            display: flex;
+            gap: var(--spacing-lg);
+            margin-left: var(--spacing-lg);
+        }
+        .topic-stat {
+            text-align: center;
+            min-width: 60px;
+        }
+        .topic-stat-value {
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        .topic-stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .post-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-md);
+            overflow: hidden;
+        }
+        .post-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: var(--color-bg-elevated);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .post-author-name {
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        .post-date {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+        .post-content {
+            padding: var(--spacing-lg);
+            line-height: 1.7;
+            color: var(--color-text-secondary);
+        }
+        .post-content p {
+            margin-bottom: var(--spacing-md);
+        }
+        .post-content p:last-child {
+            margin-bottom: 0;
+        }
+        .post-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+        }
+        .post-first {
+            border-left: 3px solid var(--color-primary);
+        }
+        .post-edited {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            font-style: italic;
+            margin-top: var(--spacing-sm);
+        }
+
+        .reply-form {
+            background: var(--color-bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+        .reply-form h3 {
+            margin-bottom: var(--spacing-md);
+        }
+        .reply-form textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: var(--spacing-md);
+        }
+        .reply-form textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .new-topic-form {
+            background: var(--color-bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--color-text-primary);
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .forum-stats-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--color-bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        .forum-stats {
+            display: flex;
+            gap: var(--spacing-xl);
+        }
+        .forum-stat {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .forum-stat-icon {
+            font-size: 1.2rem;
+        }
+        .forum-stat-value {
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+        .forum-stat-label {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-lg);
+        }
+        .pagination-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--color-bg-card);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination-btn.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xxl);
+            color: var(--color-text-muted);
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .login-prompt {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            margin-top: var(--spacing-lg);
+        }
+
+        @media (max-width: 768px) {
+            .category-stats {
+                display: none;
+            }
+            .topic-stats {
+                display: none;
+            }
+            .forum-stats {
+                flex-wrap: wrap;
+                gap: var(--spacing-md);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                </a>
+
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link active">Forum</a>
+                </nav>
+
+                <div class="header-actions">
+                    <span id="user-status"></span>
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <nav class="mobile-nav">
+                <a href="index.html" class="mobile-nav-link" onclick="toggleMobileMenu()">Home</a>
+                <a href="index.html#league-section" class="mobile-nav-link" onclick="toggleMobileMenu()">Ligen</a>
+                <a href="index.html#news-section" class="mobile-nav-link" onclick="toggleMobileMenu()">News</a>
+                <a href="forum.html" class="mobile-nav-link active" onclick="toggleMobileMenu()">Forum</a>
+            </nav>
+        </div>
+    </div>
+
+    <main>
+        <!-- Forum Content -->
+        <section class="section" style="padding-top: var(--spacing-xl);">
+            <div class="container">
+                <!-- Breadcrumb -->
+                <nav class="forum-breadcrumb" id="forum-breadcrumb">
+                    <a href="forum.html">Forum</a>
+                </nav>
+
+                <!-- Page Title -->
+                <div class="section-header" style="margin-bottom: var(--spacing-lg);">
+                    <h1 class="section-title" id="forum-title">Community <span>Forum</span></h1>
+                    <button class="btn btn-primary" id="new-topic-btn" style="display: none;" onclick="showNewTopicForm()">
+                        + Neues Thema
+                    </button>
+                </div>
+
+                <!-- Forum Stats Bar -->
+                <div class="forum-stats-bar" id="forum-stats-bar">
+                    <div class="forum-stats">
+                        <div class="forum-stat">
+                            <span class="forum-stat-icon">📁</span>
+                            <span class="forum-stat-value" id="stat-categories">0</span>
+                            <span class="forum-stat-label">Kategorien</span>
+                        </div>
+                        <div class="forum-stat">
+                            <span class="forum-stat-icon">💬</span>
+                            <span class="forum-stat-value" id="stat-topics">0</span>
+                            <span class="forum-stat-label">Themen</span>
+                        </div>
+                        <div class="forum-stat">
+                            <span class="forum-stat-icon">📝</span>
+                            <span class="forum-stat-value" id="stat-posts">0</span>
+                            <span class="forum-stat-label">Beiträge</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div id="forum-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <p>Forum wird geladen...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination-container"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon">⚽</div>
+                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    </a>
+                    <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Forum</h4>
+                    <div class="footer-links">
+                        <a href="forum.html">Übersicht</a>
+                        <a href="javascript:void(0)">Regeln</a>
+                        <a href="javascript:void(0)">FAQ</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Service</h4>
+                    <div class="footer-links">
+                        <a href="index.html#news-section">Spielberichte</a>
+                        <a href="index.html#league-section">Statistiken</a>
+                        <a href="javascript:void(0)">Kontakt</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Rechtliches</h4>
+                    <div class="footer-links">
+                        <a href="impressum.html">Impressum</a>
+                        <a href="datenschutz.html">Datenschutz</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/forum.js"></script>
+</body>
+
+</html>
