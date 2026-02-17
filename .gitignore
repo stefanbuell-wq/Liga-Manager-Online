@@ -37,6 +37,23 @@ css/portal.css
 impressum.html
 datenschutz.html
 
-# Cache
+# Cache & Data
 data/cache/
-config/auth.php
+config/
+data/login.override
+data/ratelimit.off
+
+# Debug & Dev tools
+api/benchmark.php
+api/clear_rate_limits.php
+api/debug-login.php
+api/whatsapp-webhook.php
+index2.html
+code.html
+
+# Build artifacts
+lmo26.zip
+nul
+
+# Claude Code
+.claude/
