@@ -49,12 +49,21 @@ try {
 
     // GET: Korrekturen einer Liga abrufen
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['liga'])) {
+        $ligaFile = basename($_GET['liga']);
+        if (!preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $ligaFile)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid league file format']);
+            exit;
+        }
+        
         $stmt = $pdo->prepare("SELECT id FROM leagues WHERE file = ?");
-        $stmt->execute([$_GET['liga']]);
+        $stmt->execute([$ligaFile]);
         $leagueId = $stmt->fetchColumn();
 
         if (!$leagueId) {
-            throw new Exception('Liga nicht gefunden');
+            http_response_code(404);
+            echo json_encode(['error' => 'Liga nicht gefunden']);
+            exit;
         }
 
         $stmt = $pdo->prepare("

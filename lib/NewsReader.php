@@ -73,10 +73,20 @@ class NewsReader
         if (!is_dir($this->newsDir))
             return [];
 
+        // Validate directory path to prevent traversal
+        $realDir = realpath($this->newsDir);
+        if ($realDir === false) {
+            return [];
+        }
+
         $dir = opendir($this->newsDir);
         while (($file = readdir($dir)) !== false) {
             if (preg_match('/^news\.(\d+)\.php$/', $file, $matches)) {
-                $files[(int) $matches[1]] = $this->newsDir . DIRECTORY_SEPARATOR . $file;
+                $fullPath = $this->newsDir . DIRECTORY_SEPARATOR . $file;
+                // Ensure the file is within our news directory
+                if (strpos(realpath($fullPath), $realDir) === 0) {
+                    $files[(int) $matches[1]] = $fullPath;
+                }
             }
         }
         closedir($dir);

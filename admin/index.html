@@ -450,8 +450,11 @@
             <a class="nav-item active" onclick="switchTab('dashboard')">🏠 Dashboard (Ligen)</a>
             <a class="nav-item" onclick="switchTab('teams')">👥 Teams</a>
             <a class="nav-item" onclick="switchTab('corrections')">📊 Punktekorrekturen</a>
-            <a class="nav-item" onclick="switchTab('news')">📰 News Manager</a>
+            <a class="nav-item" href="news.html">📰 News & Berichte</a>
             <a class="nav-item" onclick="switchTab('users')">🔐 Benutzer</a>
+            <a class="nav-item" href="forum.html">💬 Forum</a>
+            <a class="nav-item" href="design.html">🎨 Design Editor</a>
+            <a class="nav-item" href="anleitung.html">📖 Anleitung</a>
         </nav>
         <div style="padding: 20px;">
             <button onclick="doLogout()" class="btn-secondary" style="width:100%">Abmelden</button>
@@ -469,6 +472,14 @@
 
             <!-- VIEW: Dashboard (League List) -->
             <div id="view-dashboard" class="view-section">
+                <div class="card">
+                    <h3>Setup & Diagnose</h3>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                        <button class="btn-secondary" onclick="runServerCheck()">Server-Check</button>
+                        <button onclick="runMigration()">Datenbank initialisieren & importieren</button>
+                    </div>
+                    <pre id="setup-output" style="background: var(--color-bg-elevated); border:1px solid var(--color-border); padding:12px; border-radius: var(--radius-md); max-height: 260px; overflow:auto; white-space: pre-wrap;">Bereit.</pre>
+                </div>
                 <div class="card">
                     <h3>Verfügbare Ligen</h3>
                     <div id="league-list-container">Lade...</div>
@@ -684,7 +695,8 @@
     </main>
 
     <script>
-        const API_BASE = '../api';
+        // Determine API base path dynamically
+        const API_BASE = window.location.pathname.replace(/\/admin\/?.*$/, '') + '/api';
 
         // State
         let currentLeagueData = null;
@@ -697,6 +709,7 @@
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(payload)
             });
             const result = await res.json();
@@ -724,6 +737,7 @@
                 const res = await fetch(`${API_BASE}/login.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({ username: u, password: p })
                 });
                 const d = await res.json();
@@ -754,7 +768,7 @@
 
         async function checkAuth() {
             try {
-                const data = await (await fetch(`${API_BASE}/check-auth.php`)).json();
+                const data = await (await fetch(`${API_BASE}/check-auth.php`, { credentials: 'include' })).json();
                 // Store CSRF token
                 if (data.csrf_token) {
                     csrfToken = data.csrf_token;
@@ -764,7 +778,7 @@
         }
 
         async function doLogout() {
-            await fetch(`${API_BASE}/logout.php`);
+            await fetch(`${API_BASE}/logout.php`, { credentials: 'include' });
             location.reload();
         }
 
@@ -822,6 +836,32 @@
                     <span style="color:#666; font-size:0.9rem;">${l.file} &rarr;</span>
                 </div>
             `).join('');
+        }
+
+        async function runServerCheck() {
+            const out = document.getElementById('setup-output');
+            out.textContent = 'Starte Server-Check...\n';
+            try {
+                const res = await fetch(`${API_BASE}/server-check.php`, { credentials: 'include' });
+                const text = await res.text();
+                out.textContent = text;
+            } catch (e) {
+                out.textContent = 'Fehler beim Server-Check: ' + (e && e.message ? e.message : e);
+            }
+        }
+
+        async function runMigration() {
+            const out = document.getElementById('setup-output');
+            out.textContent = 'Migration wird ausgeführt...\nDies kann einige Minuten dauern.\n';
+            try {
+                const res = await fetch(`${API_BASE}/migrate-to-sqlite.php`, { credentials: 'include' });
+                const text = await res.text();
+                out.textContent = text;
+                // Nach erfolgreicher Migration Dashboard neu laden
+                loadDashboard();
+            } catch (e) {
+                out.textContent = 'Fehler bei der Migration: ' + (e && e.message ? e.message : e);
+            }
         }
 
         // -- LEAGUE EDITOR LOGIC --

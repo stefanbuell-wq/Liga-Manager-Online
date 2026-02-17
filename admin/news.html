@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMO News Admin</title>
+    <title>News Verwaltung - HAFO Admin</title>
     <link rel="stylesheet" href="../css/league-modern.css">
     <style>
         :root {
@@ -18,6 +18,8 @@
             --color-text-primary: #FFFFFF;
             --color-text-secondary: #A0A0A0;
             --color-text-muted: #666666;
+            --color-success: #28a745;
+            --color-danger: #dc3545;
             --radius-md: 12px;
             --radius-lg: 16px;
         }
@@ -32,20 +34,18 @@
             min-height: 100vh;
         }
 
-        a {
-            color: var(--color-primary);
-            text-decoration: none;
-        }
+        a { color: var(--color-primary); text-decoration: none; }
+        a:hover { color: var(--color-primary-hover); }
 
         .admin-container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 30px 20px;
         }
 
         .card {
             background: var(--color-bg-card);
-            padding: 30px;
+            padding: 24px;
             border-radius: var(--radius-lg);
             border: 1px solid var(--color-border);
             margin-bottom: 24px;
@@ -56,6 +56,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .header h1, .header h2 {
@@ -63,18 +65,24 @@
             font-weight: 700;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
         .btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: var(--color-primary);
             color: white;
             border: none;
             border-radius: var(--radius-md);
             cursor: pointer;
-            text-decoration: none;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             transition: all 0.2s ease;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn:hover {
@@ -93,100 +101,264 @@
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: var(--color-danger);
         }
 
         .btn-danger:hover {
             background: #c82333;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 16px;
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        th {
-            font-weight: 600;
-            color: var(--color-text-muted);
+        .btn-sm {
+            padding: 6px 12px;
             font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            background: var(--color-bg-elevated);
         }
 
-        tr:hover {
-            background-color: var(--color-bg-elevated);
+        .btn-success {
+            background: var(--color-success);
         }
 
-        .editor-toolbar {
-            margin-bottom: 0;
-            border: 1px solid var(--color-border);
-            border-bottom: none;
-            padding: 10px;
-            border-radius: var(--radius-md) var(--radius-md) 0 0;
-            background: var(--color-bg-elevated);
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-
-        .editor-toolbar button {
-            margin-right: 6px;
-            cursor: pointer;
+        .weight-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 8px 0 16px 0;
+            align-items: center;
+        }
+        .preset-bar {
+            display: flex;
+            gap: 10px;
+            margin: 0 0 16px 0;
+            align-items: center;
+        }
+        .preset-bar select {
             padding: 8px 12px;
             border: 1px solid var(--color-border);
-            background: var(--color-bg-card);
-            color: var(--color-text-primary);
-            border-radius: 6px;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-
-        .editor-toolbar button:hover {
-            background: var(--color-primary);
-            border-color: var(--color-primary);
-        }
-
-        textarea#content-editor {
-            width: 100%;
-            height: 350px;
-            padding: 16px;
-            border: 1px solid var(--color-border);
-            border-radius: 0 0 var(--radius-md) var(--radius-md);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            border-radius: var(--radius-md);
             background: var(--color-bg-elevated);
             color: var(--color-text-primary);
-            font-size: 0.95rem;
-            resize: vertical;
         }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--color-primary);
+        .weight-item {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            font-size: 0.85rem;
         }
-
-        input[type="text"], input[type="date"], select {
+        .weight-row {
+            display: grid;
+            grid-template-columns: auto 1fr 40px;
+            gap: 8px;
+            align-items: center;
+        }
+        .weight-row input[type="range"] {
             width: 100%;
+        }
+
+        .search-bar input {
+            flex: 1;
             padding: 12px 16px;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
-            box-sizing: border-box;
-            margin-bottom: 16px;
             background: var(--color-bg-elevated);
             color: var(--color-text-primary);
-            font-family: inherit;
             font-size: 0.95rem;
         }
 
-        input:focus, select:focus {
+        .search-bar input:focus {
             outline: none;
             border-color: var(--color-primary);
         }
 
-        label {
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+
+        /* News List */
+        .news-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 16px;
+            border-bottom: 1px solid var(--color-border);
+            gap: 16px;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-item:hover {
+            background: var(--color-bg-elevated);
+        }
+
+        .news-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .news-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+
+        .news-title:hover {
+            color: var(--color-primary);
+        }
+
+        .news-meta {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .news-preview {
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            margin-top: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            background: var(--color-bg-elevated);
+            color: var(--color-text-secondary);
+            border: 1px solid var(--color-border);
+        }
+
+        .badge-linked {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--color-success);
+            border-color: var(--color-success);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .pagination-info {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .modal-content {
+            background: var(--color-bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            width: 100%;
+            max-width: 900px;
+            margin: 40px 0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--color-text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
@@ -194,16 +366,171 @@
             font-size: 0.9rem;
         }
 
-        .hidden {
-            display: none;
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
         }
 
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A0A0A0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group textarea.large {
+            min-height: 250px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Editor Toolbar */
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 10px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-bottom: none;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+        }
+
+        .editor-toolbar button {
+            padding: 6px 12px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .editor-toolbar button:hover {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .form-group textarea.with-toolbar {
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+        }
+
+        /* Match Links Section */
+        .match-links-section {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .match-links-section h4 {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            color: var(--color-text-secondary);
+        }
+
+        .linked-match {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--color-bg-card);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .linked-match:last-child {
+            margin-bottom: 0;
+        }
+
+        .match-search-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .match-search-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-bg-card);
+            color: var(--color-text-primary);
+            font-size: 0.9rem;
+        }
+
+        .match-search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .match-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--color-bg-card);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .match-result:hover {
+            background: var(--color-primary);
+        }
+
+        .match-result.is-linked {
+            border: 1px solid var(--color-success);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .form-actions .btn-danger {
+            margin-left: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-muted);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-muted);
         }
 
         ::-webkit-scrollbar { width: 8px; }
@@ -213,171 +540,562 @@
 </head>
 
 <body>
-
     <div class="admin-container">
-        <!-- Dashboard Header -->
+        <!-- Header -->
         <div class="header">
-            <h1>News Verwaltung</h1>
-            <div>
-                <a href="index.html" class="btn btn-secondary">Zurück</a>
+            <h1>News & Spielberichte</h1>
+            <div class="header-actions">
+                <button onclick="showEditor()" class="btn">+ Neue News</button>
+                <a href="index.html" class="btn btn-secondary">Zurueck</a>
             </div>
         </div>
 
-        <!-- News List View -->
-        <div id="list-view" class="card">
-            <div class="header">
-                <h2>Alle Nachrichten</h2>
-                <button onclick="editNews(null)" class="btn">Neuer Beitrag</button>
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">-</div>
+                <div class="stat-label">Gesamt</div>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Titel</th>
-                        <th>Autor</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody id="news-table-body">
-                    <tr>
-                        <td colspan="4">Lade Nachrichten...</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-linked">-</div>
+                <div class="stat-label">Mit Spielverknuepfung</div>
+            </div>
         </div>
 
-        <!-- Edit View -->
-        <div id="edit-view" class="card hidden">
-            <h2 id="edit-title">Beitrag bearbeiten</h2>
-            <form id="edit-form">
-                <input type="hidden" id="news-id">
-
-                <label>Titel</label>
-                <input type="text" id="input-title" required>
-
-                <label>Autor</label>
-                <input type="text" id="input-author" value="Redaktion">
-
-                <label>Inhalt (HTML)</label>
-                <div class="editor-toolbar">
-                    <button type="button" onclick="format('b')"><b>B</b></button>
-                    <button type="button" onclick="format('i')"><i>I</i></button>
-                    <button type="button" onclick="format('h3')">H3</button>
-                    <button type="button" onclick="format('p')">P</button>
-                    <button type="button" onclick="format('a')">Link</button>
-                    <button type="button" onclick="format('br')">Zeilenumbruch</button>
+        <!-- Search -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Suche nach Titel, Inhalt oder Autor..." onkeyup="handleSearchKey(event)">
+            <button class="btn btn-secondary" onclick="loadNews(1)">Suchen</button>
+            <button class="btn btn-secondary" onclick="clearSearch()">Reset</button>
+        </div>
+        <div class="weight-bar">
+            <div class="weight-item">
+                <div class="weight-row">
+                    <span>Titel</span>
+                    <input type="range" id="wTitle" min="0" max="10" step="0.5" value="5">
+                    <span id="wTitleVal">5</span>
                 </div>
-                <textarea id="content-editor"></textarea>
-
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button type="submit" class="btn">Speichern</button>
-                    <button type="button" onclick="showList()" class="btn btn-secondary">Abbrechen</button>
+            </div>
+            <div class="weight-item">
+                <div class="weight-row">
+                    <span>Autor</span>
+                    <input type="range" id="wAuthor" min="0" max="10" step="0.5" value="3">
+                    <span id="wAuthorVal">3</span>
                 </div>
-            </form>
+            </div>
+            <div class="weight-item">
+                <div class="weight-row">
+                    <span>Kurz</span>
+                    <input type="range" id="wShort" min="0" max="10" step="0.5" value="2">
+                    <span id="wShortVal">2</span>
+                </div>
+            </div>
+            <div class="weight-item">
+                <div class="weight-row">
+                    <span>Inhalt</span>
+                    <input type="range" id="wContent" min="0" max="10" step="0.5" value="1">
+                    <span id="wContentVal">1</span>
+                </div>
+            </div>
+        </div>
+        <div class="preset-bar">
+            <select id="presetSelect">
+                <option value="balanced">Ausgewogen</option>
+                <option value="title">Titel fokussiert</option>
+                <option value="content">Inhalt fokussiert</option>
+                <option value="author">Autor fokussiert</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="applyPreset()">Übernehmen</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetWeights()">Zurücksetzen</button>
+        </div>
+
+        <!-- News List -->
+        <div class="card" id="newsListCard">
+            <div id="newsList" class="loading">Lade News...</div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <!-- Editor Modal -->
+    <div class="modal" id="editorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="editorTitle">News bearbeiten</h2>
+                <button class="modal-close" onclick="closeEditor()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editorForm" onsubmit="saveNews(event)">
+                    <input type="hidden" id="newsId">
+
+                    <div class="form-group">
+                        <label>Titel *</label>
+                        <input type="text" id="newsTitle" required placeholder="Titel der News">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Autor</label>
+                            <input type="text" id="newsAuthor" value="Redaktion" placeholder="Autor">
+                        </div>
+                        <div class="form-group">
+                            <label>Spieldatum</label>
+                            <input type="text" id="newsMatchDate" placeholder="TT.MM.JJJJ">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kurztext (Vorschau)</label>
+                        <textarea id="newsShortContent" placeholder="Kurze Zusammenfassung fuer die Vorschau..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vollstaendiger Inhalt</label>
+                        <div class="editor-toolbar">
+                            <button type="button" onclick="format('b')"><b>B</b></button>
+                            <button type="button" onclick="format('i')"><i>I</i></button>
+                            <button type="button" onclick="format('h3')">H3</button>
+                            <button type="button" onclick="format('p')">Absatz</button>
+                            <button type="button" onclick="format('a')">Link</button>
+                            <button type="button" onclick="format('br')">Umbruch</button>
+                        </div>
+                        <textarea id="newsContent" class="large with-toolbar" placeholder="Der vollstaendige Bericht..."></textarea>
+                    </div>
+
+                    <!-- Match Links -->
+                    <div class="match-links-section">
+                        <h4>Verknuepfte Spiele</h4>
+                        <div id="linkedMatchesList">
+                            <em style="color: var(--color-text-muted);">Keine Spiele verknuepft</em>
+                        </div>
+
+                        <div class="match-search-row">
+                            <input type="text" id="matchSearchQuery" placeholder="Team suchen...">
+                            <input type="text" id="matchSearchDate" placeholder="Datum (TT.MM.JJJJ)">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="searchMatches()">Suchen</button>
+                        </div>
+                        <div class="match-search-results" id="matchSearchResults"></div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Speichern</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditor()">Abbrechen</button>
+                        <button type="button" class="btn btn-danger" id="deleteBtn" onclick="deleteNews()" style="display: none;">Loeschen</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = '../api';
-        let csrfToken = null;
+        let currentPage = 1;
+        let csrfToken = '';
+        let linkedMatchIds = [];
+        let linkedMatchesData = [];
 
-        // Helper: POST with CSRF token
-        async function postWithCsrf(url, data) {
-            const payload = { ...data, csrf_token: csrfToken };
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await res.json();
-            if (result.csrf_token) csrfToken = result.csrf_token;
-            return result;
-        }
-
+        // Init
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth
-            const res = await fetch(`${API_BASE}/check-auth.php`);
-            const auth = await res.json();
-            if (auth.csrf_token) csrfToken = auth.csrf_token;
-            if (!auth.authenticated) {
-                window.location.href = 'index.html'; // Redirect to login
-                return;
+            try {
+                const res = await fetch('../api/check-auth.php');
+                const auth = await res.json();
+                csrfToken = auth.csrf_token || '';
+                if (!auth.authenticated) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+            } catch (e) {
+                console.error('Auth check failed');
             }
-            loadNewsList();
+            initWeights();
+            loadNews(1);
+            loadStats();
         });
 
-        async function loadNewsList() {
-            const res = await fetch(`${API_BASE}/get-news-list.php`);
-            const data = await res.json();
-            const tbody = document.getElementById('news-table-body');
+        // Load news list
+        async function loadNews(page = 1) {
+            currentPage = page;
+            const search = document.getElementById('searchInput').value;
+            const list = document.getElementById('newsList');
 
-            if (!data.news || data.news.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">Keine Nachrichten gefunden.</td></tr>';
+            list.innerHTML = '<div class="loading">Lade News...</div>';
+
+            try {
+                const params = new URLSearchParams({
+                    action: 'list',
+                    page: page,
+                    limit: 20
+                });
+                if (search) params.append('search', search);
+                const w = getWeights();
+                params.append('w_title', w.title.toString());
+                params.append('w_author', w.author.toString());
+                params.append('w_short', w.short.toString());
+                params.append('w_content', w.content.toString());
+
+                const resp = await fetch('../api/news-admin.php?' + params);
+                const data = await resp.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Fehler beim Laden');
+                }
+
+                document.getElementById('stat-total').textContent = data.total;
+                renderNewsList(data.news);
+                renderPagination(data.page, data.pages, data.total);
+
+            } catch (e) {
+                list.innerHTML = '<div class="empty-state">Fehler: ' + e.message + '</div>';
+            }
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                // Count linked news
+                const resp = await fetch('../api/news-admin.php?action=list&limit=1');
+                const data = await resp.json();
+                // We'd need a separate endpoint for this, for now just show total
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
+        }
+
+        // Render news list
+        function renderNewsList(news) {
+            const list = document.getElementById('newsList');
+            const q = document.getElementById('searchInput').value.trim();
+
+            if (!news || news.length === 0) {
+                list.innerHTML = '<div class="empty-state">Keine News gefunden</div>';
                 return;
             }
 
-            tbody.innerHTML = data.news.map(n => `
-                <tr>
-                    <td>${new Date(n.timestamp * 1000).toLocaleDateString()}</td>
-                    <td>${n.title}</td>
-                    <td>${n.author || '-'}</td>
-                    <td>
-                        <button onclick="editNews(${n.id})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8em;">Bearbeiten</button>
-                    </td>
-                </tr>
+            list.innerHTML = news.map(n => `
+                <div class="news-item">
+                    <div class="news-info">
+                        <div class="news-title" onclick="editNews(${n.id})">${q ? highlight(escapeHtml(n.title), q) : escapeHtml(n.title)}</div>
+                        <div class="news-meta">
+                            <span>${n.date_formatted}</span>
+                            <span>${q ? highlight(escapeHtml(n.author || 'Unbekannt'), q) : escapeHtml(n.author || 'Unbekannt')}</span>
+                        </div>
+                        <div class="news-preview">${q ? highlight(escapeHtml(n.short_content || ''), q) : escapeHtml(n.short_content || '')}</div>
+                    </div>
+                    <div class="news-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editNews(${n.id})">Bearbeiten</button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${n.id}, '${escapeJs(n.title)}')">Loeschen</button>
+                    </div>
+                </div>
             `).join('');
         }
 
-        async function editNews(id) {
-            document.getElementById('list-view').classList.add('hidden');
-            document.getElementById('edit-view').classList.remove('hidden');
+        // Render pagination
+        function renderPagination(page, pages, total) {
+            const pag = document.getElementById('pagination');
 
-            document.getElementById('news-id').value = id || '';
-            document.getElementById('edit-title').textContent = id ? 'Beitrag bearbeiten' : 'Neuer Beitrag';
+            if (pages <= 1) {
+                pag.innerHTML = '';
+                return;
+            }
 
-            if (id) {
-                // Load details (reuse get-news-list data? actually safer to fetch fresh single item)
-                // We reuse the public news.php API for fetching!
-                const res = await fetch(`${API_BASE}/news.php?id=${id}`);
-                const data = await res.json();
-                document.getElementById('input-title').value = data.title;
-                document.getElementById('input-author').value = data.author;
-                document.getElementById('content-editor').value = data.content;
-            } else {
-                document.getElementById('input-title').value = '';
-                document.getElementById('input-author').value = 'Redaktion';
-                document.getElementById('content-editor').value = '';
+            let html = '';
+
+            if (page > 1) {
+                html += `<button class="btn btn-secondary btn-sm" onclick="loadNews(${page - 1})">Zurueck</button>`;
+            }
+
+            html += `<span class="pagination-info">Seite ${page} von ${pages} (${total} News)</span>`;
+
+            if (page < pages) {
+                html += `<button class="btn btn-secondary btn-sm" onclick="loadNews(${page + 1})">Weiter</button>`;
+            }
+
+            pag.innerHTML = html;
+        }
+
+        // Search handlers
+        function handleSearchKey(event) {
+            if (event.key === 'Enter') {
+                loadNews(1);
             }
         }
 
-        function showList() {
-            document.getElementById('edit-view').classList.add('hidden');
-            document.getElementById('list-view').classList.remove('hidden');
-            loadNewsList();
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            loadNews(1);
         }
 
-        document.getElementById('edit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Show editor (new)
+        function showEditor() {
+            document.getElementById('editorTitle').textContent = 'Neue News erstellen';
+            document.getElementById('newsId').value = '';
+            document.getElementById('newsTitle').value = '';
+            document.getElementById('newsAuthor').value = 'Redaktion';
+            document.getElementById('newsMatchDate').value = '';
+            document.getElementById('newsShortContent').value = '';
+            document.getElementById('newsContent').value = '';
+            document.getElementById('deleteBtn').style.display = 'none';
+
+            linkedMatchIds = [];
+            linkedMatchesData = [];
+            renderLinkedMatches([]);
+            document.getElementById('matchSearchResults').innerHTML = '';
+
+            document.getElementById('editorModal').classList.add('show');
+        }
+
+        // Edit existing news
+        async function editNews(id) {
+            try {
+                const resp = await fetch('../api/news-admin.php?action=get&id=' + id);
+                const data = await resp.json();
+
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+
+                const news = data.news;
+
+                document.getElementById('editorTitle').textContent = 'News bearbeiten';
+                document.getElementById('newsId').value = news.id;
+                document.getElementById('newsTitle').value = news.title || '';
+                document.getElementById('newsAuthor').value = news.author || 'Redaktion';
+                document.getElementById('newsMatchDate').value = news.match_date || '';
+                document.getElementById('newsShortContent').value = news.short_content || '';
+                document.getElementById('newsContent').value = news.content || '';
+                document.getElementById('deleteBtn').style.display = 'block';
+
+                linkedMatchIds = (news.linked_matches || []).map(m => m.id);
+                linkedMatchesData = news.linked_matches || [];
+                renderLinkedMatches(linkedMatchesData);
+                document.getElementById('matchSearchResults').innerHTML = '';
+
+                document.getElementById('editorModal').classList.add('show');
+
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Close editor
+        function closeEditor() {
+            document.getElementById('editorModal').classList.remove('show');
+        }
+
+        // Save news
+        async function saveNews(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('newsId').value;
             const data = {
-                id: document.getElementById('news-id').value || null,
-                title: document.getElementById('input-title').value,
-                author: document.getElementById('input-author').value,
-                content: document.getElementById('content-editor').value
+                action: id ? 'update' : 'create',
+                csrf_token: csrfToken,
+                id: id ? parseInt(id) : null,
+                title: document.getElementById('newsTitle').value,
+                author: document.getElementById('newsAuthor').value,
+                match_date: document.getElementById('newsMatchDate').value || null,
+                short_content: document.getElementById('newsShortContent').value,
+                content: document.getElementById('newsContent').value,
+                match_ids: linkedMatchIds
             };
 
-            const result = await postWithCsrf(`${API_BASE}/save-news.php`, data);
+            try {
+                const resp = await fetch('../api/news-admin.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
 
-            if (result.success) {
-                alert('Gespeichert!');
-                showList();
-            } else {
-                alert('Fehler: ' + result.error);
+                const result = await resp.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                closeEditor();
+                loadNews(currentPage);
+
+            } catch (e) {
+                alert('Fehler: ' + e.message);
             }
-        });
+        }
 
-        // Simple Editor Tools
+        // Delete news
+        async function deleteNews() {
+            const id = document.getElementById('newsId').value;
+            if (!id) return;
+
+            if (!confirm('Diese News wirklich loeschen?')) return;
+
+            try {
+                const resp = await fetch('../api/news-admin.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        csrf_token: csrfToken,
+                        id: parseInt(id)
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                closeEditor();
+                loadNews(currentPage);
+
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Confirm delete from list
+        async function confirmDelete(id, title) {
+            if (!confirm(`"${title}" wirklich loeschen?`)) return;
+
+            try {
+                const resp = await fetch('../api/news-admin.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        csrf_token: csrfToken,
+                        id: id
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                loadNews(currentPage);
+
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Render linked matches
+        function renderLinkedMatches(matches) {
+            const container = document.getElementById('linkedMatchesList');
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<em style="color: var(--color-text-muted);">Keine Spiele verknuepft</em>';
+                return;
+            }
+
+            container.innerHTML = matches.map(m => `
+                <div class="linked-match">
+                    <span>${m.match_date || '?'}: ${escapeHtml(m.home)} - ${escapeHtml(m.guest)}</span>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="unlinkMatch(${m.id})">Entfernen</button>
+                </div>
+            `).join('');
+        }
+
+        // Unlink match
+        function unlinkMatch(matchId) {
+            linkedMatchIds = linkedMatchIds.filter(id => id !== matchId);
+            linkedMatchesData = linkedMatchesData.filter(m => m.id !== matchId);
+            renderLinkedMatches(linkedMatchesData);
+        }
+
+        // Search matches
+        async function searchMatches() {
+            const query = document.getElementById('matchSearchQuery').value;
+            const date = document.getElementById('matchSearchDate').value;
+
+            if (!query && !date) {
+                alert('Bitte Team oder Datum eingeben');
+                return;
+            }
+
+            const params = new URLSearchParams({ action: 'search_matches' });
+            if (query) params.append('query', query);
+            if (date) params.append('date', date);
+
+            try {
+                const resp = await fetch('../api/news-admin.php?' + params);
+                const data = await resp.json();
+
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+
+                renderMatchResults(data.matches);
+
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Render match search results
+        function renderMatchResults(matches) {
+            const container = document.getElementById('matchSearchResults');
+            const q = document.getElementById('matchSearchQuery').value.trim();
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<em style="color: var(--color-text-muted); padding: 10px;">Keine Spiele gefunden</em>';
+                return;
+            }
+
+            container.innerHTML = matches.map(m => {
+                const isLinked = linkedMatchIds.includes(m.id);
+                return `
+                    <div class="match-result ${isLinked ? 'is-linked' : ''}" onclick="toggleMatchLink(${m.id}, '${m.match_date || ''}', '${escapeJs(m.home)}', '${escapeJs(m.guest)}')">
+                        <span>${m.match_date || '?'}: ${q ? highlight(escapeHtml(m.home), q) : escapeHtml(m.home)} - ${q ? highlight(escapeHtml(m.guest), q) : escapeHtml(m.guest)}</span>
+                        <span class="badge ${isLinked ? 'badge-linked' : ''}">${isLinked ? 'Verknuepft' : 'Hinzufuegen'}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle match link
+        function toggleMatchLink(matchId, date, home, guest) {
+            const idx = linkedMatchIds.indexOf(matchId);
+
+            if (idx >= 0) {
+                // Remove
+                linkedMatchIds.splice(idx, 1);
+                linkedMatchesData = linkedMatchesData.filter(m => m.id !== matchId);
+            } else {
+                // Add
+                linkedMatchIds.push(matchId);
+                linkedMatchesData.push({
+                    id: matchId,
+                    match_date: date,
+                    home: home,
+                    guest: guest
+                });
+            }
+
+            renderLinkedMatches(linkedMatchesData);
+
+            // Re-render search results to update badges
+            const resultsContainer = document.getElementById('matchSearchResults');
+            if (resultsContainer.children.length > 0) {
+                // Re-trigger visual update
+                const results = resultsContainer.querySelectorAll('.match-result');
+                results.forEach(el => {
+                    const onclick = el.getAttribute('onclick');
+                    const match = onclick.match(/toggleMatchLink\((\d+),/);
+                    if (match) {
+                        const id = parseInt(match[1]);
+                        const isLinked = linkedMatchIds.includes(id);
+                        el.classList.toggle('is-linked', isLinked);
+                        el.querySelector('.badge').textContent = isLinked ? 'Verknuepft' : 'Hinzufuegen';
+                        el.querySelector('.badge').classList.toggle('badge-linked', isLinked);
+                    }
+                });
+            }
+        }
+
+        // Editor format helper
         function format(tag) {
-            const editor = document.getElementById('content-editor');
+            const editor = document.getElementById('newsContent');
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             const text = editor.value;
@@ -388,7 +1106,7 @@
             if (tag === 'i') insertion = `<i>${selected}</i>`;
             if (tag === 'h3') insertion = `<h3>${selected}</h3>`;
             if (tag === 'p') insertion = `<p>${selected}</p>`;
-            if (tag === 'br') insertion = `<br>`;
+            if (tag === 'br') insertion = `<br>\n`;
             if (tag === 'a') {
                 const url = prompt('URL eingeben:', 'https://');
                 if (url) insertion = `<a href="${url}" target="_blank">${selected || url}</a>`;
@@ -396,7 +1114,114 @@
 
             if (insertion) {
                 editor.value = text.substring(0, start) + insertion + text.substring(end);
+                editor.focus();
+                editor.selectionStart = editor.selectionEnd = start + insertion.length;
             }
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeJs(text) {
+            if (!text) return '';
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function highlight(htmlEscapedText, query) {
+            if (!query) return htmlEscapedText;
+            const terms = query.trim().split(/\s+/).filter(Boolean).map(t => escapeRegex(t));
+            if (terms.length === 0) return htmlEscapedText;
+            const pattern = new RegExp('(' + terms.join('|') + ')', 'gi');
+            return htmlEscapedText.replace(pattern, '<mark>$1</mark>');
+        }
+
+        function escapeRegex(s) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Modal handlers
+        document.getElementById('editorModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditor();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeEditor();
+        });
+        function getWeights() {
+            const w = {
+                title: parseFloat(document.getElementById('wTitle').value),
+                author: parseFloat(document.getElementById('wAuthor').value),
+                short: parseFloat(document.getElementById('wShort').value),
+                content: parseFloat(document.getElementById('wContent').value),
+            };
+            return w;
+        }
+        function initWeights() {
+            const ids = ['wTitle','wAuthor','wShort','wContent'];
+            ids.forEach(id => {
+                const saved = localStorage.getItem(id);
+                if (saved !== null) document.getElementById(id).value = saved;
+            });
+            updateWeightLabels();
+            ids.forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    localStorage.setItem(id, document.getElementById(id).value);
+                    updateWeightLabels();
+                    syncPresetSelect();
+                });
+                document.getElementById(id).addEventListener('change', () => loadNews(1));
+            });
+            syncPresetSelect();
+        }
+        function updateWeightLabels() {
+            document.getElementById('wTitleVal').textContent = document.getElementById('wTitle').value;
+            document.getElementById('wAuthorVal').textContent = document.getElementById('wAuthor').value;
+            document.getElementById('wShortVal').textContent = document.getElementById('wShort').value;
+            document.getElementById('wContentVal').textContent = document.getElementById('wContent').value;
+        }
+        function resetWeights() {
+            document.getElementById('wTitle').value = 5;
+            document.getElementById('wAuthor').value = 3;
+            document.getElementById('wShort').value = 2;
+            document.getElementById('wContent').value = 1;
+            localStorage.setItem('wTitle','5');
+            localStorage.setItem('wAuthor','3');
+            localStorage.setItem('wShort','2');
+            localStorage.setItem('wContent','1');
+            updateWeightLabels();
+            syncPresetSelect();
+            loadNews(1);
+        }
+        function applyPreset() {
+            const p = document.getElementById('presetSelect').value;
+            let v = {title:5,author:3,short:2,content:1};
+            if (p === 'title') v = {title:8,author:2,short:1,content:0.5};
+            if (p === 'content') v = {title:3,author:2,short:6,content:4};
+            if (p === 'author') v = {title:4,author:6,short:2,content:1};
+            document.getElementById('wTitle').value = v.title;
+            document.getElementById('wAuthor').value = v.author;
+            document.getElementById('wShort').value = v.short;
+            document.getElementById('wContent').value = v.content;
+            localStorage.setItem('wTitle', String(v.title));
+            localStorage.setItem('wAuthor', String(v.author));
+            localStorage.setItem('wShort', String(v.short));
+            localStorage.setItem('wContent', String(v.content));
+            updateWeightLabels();
+            loadNews(1);
+        }
+        function syncPresetSelect() {
+            const cur = getWeights();
+            const eq = (a,b)=>Math.abs(a-b)<1e-9;
+            let val = 'balanced';
+            if (eq(cur.title,8)&&eq(cur.author,2)&&eq(cur.short,1)&&eq(cur.content,0.5)) val='title';
+            if (eq(cur.title,3)&&eq(cur.author,2)&&eq(cur.short,6)&&eq(cur.content,4)) val='content';
+            if (eq(cur.title,4)&&eq(cur.author,6)&&eq(cur.short,2)&&eq(cur.content,1)) val='author';
+            document.getElementById('presetSelect').value = val;
         }
     </script>
 </body>

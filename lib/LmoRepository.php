@@ -79,6 +79,7 @@ class LmoRepository
             $played = ($m['home_goals'] !== null && $m['guest_goals'] !== null && $m['home_goals'] >= 0);
 
             $matchesOut[$r][] = [
+                'id' => $m['id'],
                 'home_id' => $teamLookup[$m['home_team_id']]['id'],
                 'guest_id' => $teamLookup[$m['guest_team_id']]['id'],
                 'home' => $m['home_name'],
@@ -141,6 +142,7 @@ class LmoRepository
         $table = $this->calculateTable($teamsOut, $matchesOut, $corrections);
 
         return [
+            'league_id' => $league['id'],
             'options' => $league['options'],
             'teams' => $teamsOut,
             'matches' => $matchesOut,
