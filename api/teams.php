@@ -50,7 +50,14 @@ try {
 
     // GET: Teams einer Liga abrufen
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['liga'])) {
-        $league = $repo->getLeagueByFile($_GET['liga']);
+        $ligaFile = basename($_GET['liga']);
+        if (!preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $ligaFile)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid league file format']);
+            exit;
+        }
+        
+        $league = $repo->getLeagueByFile($ligaFile);
         $teams = $repo->getTeamsForAdmin($league['id']);
 
         echo json_encode([

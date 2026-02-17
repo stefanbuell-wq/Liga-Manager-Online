@@ -30,3 +30,13 @@ composer.lock
 .env
 .env.local
 *.local.php
+
+# HAFO.de Portal (separate website, not part of Liga Manager)
+portal.html
+css/portal.css
+impressum.html
+datenschutz.html
+
+# Cache
+data/cache/
+config/auth.php

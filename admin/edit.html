@@ -183,10 +183,14 @@
         </div>
 
         <div class="card">
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+            <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <label>Spieltag:</label>
                 <select id="round-select"
                     style="padding: 8px; font-size: 1rem; border-radius: 6px; border: 1px solid #ddd;"></select>
+                <div id="forum-buttons" style="margin-left: auto; display: flex; gap: 8px;">
+                    <button id="btn-forum-topic" onclick="openForumTopic()" style="padding: 8px 12px; background: #3B82F6; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.9rem;" title="Forum-Diskussion öffnen">Forum</button>
+                    <button id="btn-create-topic" onclick="createMatchdayTopic()" style="padding: 8px 12px; background: #10B981; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.9rem;" title="Spieltag-Topic erstellen">+ Topic</button>
+                </div>
             </div>
 
             <div id="matches-list">
@@ -308,7 +312,7 @@
                 const gGoals = m.guest_goals !== null ? m.guest_goals : '';
 
                 html += `
-                <div class="match-row" data-idx="${index}">
+                <div class="match-row" data-idx="${index}" data-match-id="${m.id || ''}" style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--color-border);">
                     <div class="teams-display">
                         <span style="text-align: right; flex: 1;">${m.home}</span>
                         <span>-</span>
@@ -319,11 +323,224 @@
                         <span>:</span>
                         <input type="number" class="score-input input-guest" value="${gGoals}" placeholder="-">
                     </div>
+                    
+                    <!-- Match Events Section -->
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+                            <h4 style="margin: 0; flex: 1;">Ereignisse</h4>
+                            <button class="btn-event" onclick="openEventModal(${index}, '${m.home}', '${m.guest}', ${m.home_id}, ${m.guest_id})" style="padding: 6px 12px; font-size: 0.85rem; background: var(--color-primary); cursor: pointer; border: none; border-radius: 4px; color: white;">⚽ Tor/Karte</button>
+                        </div>
+                        <div class="events-list" data-match-idx="${index}" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; font-size: 0.9rem;">
+                            <!-- Events will be loaded here -->
+                            <span style="color: var(--color-text-secondary);">Keine Events</span>
+                        </div>
+                    </div>
                 </div>
             `;
             });
 
             container.innerHTML = html;
+            
+            // Load events for each match
+            matches.forEach((m, index) => {
+                if (m.id) {
+                    loadMatchEvents(m.id, index);
+                }
+            });
+        }
+
+        async function loadMatchEvents(matchId, matchIdx) {
+            try {
+                const res = await fetch(`${API_BASE}/save-match-events.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_match_events', match_id: matchId })
+                });
+                const data = await res.json();
+                
+                if (data.success && data.events.length > 0) {
+                    const listEl = document.querySelector(`.events-list[data-match-idx="${matchIdx}"]`);
+                    let html = '';
+                    
+                    data.events.forEach(e => {
+                        const icon = e.event_type === 'goal' ? '⚽' : e.event_type === 'yellow_card' ? '🟨' : e.event_type === 'red_card' ? '🟥' : '🎯';
+                        const name = e.name || e.player_name || 'Unbekannt';
+                        const minute = e.minute ? `${e.minute}'` : 'Keine Zeit';
+                        
+                        html += `
+                            <div style="display: flex; justify-content: space-between; padding: 8px; margin: 4px 0; background: rgba(255,255,255,0.05); border-radius: 3px; align-items: center;">
+                                <div>
+                                    <span style="font-weight: 600;">${icon}</span>
+                                    <span style="margin-left: 8px;">${name}</span>
+                                    <span style="font-size: 0.8rem; color: var(--color-text-secondary); margin-left: 8px;">${minute}</span>
+                                </div>
+                                <button onclick="deleteEvent(${e.id})" style="background: rgba(255,0,0,0.3); border: none; color: #ff6b6b; cursor: pointer; padding: 4px 8px; border-radius: 3px; font-size: 0.8rem;">✕</button>
+                            </div>
+                        `;
+                    });
+                    
+                    listEl.innerHTML = html;
+                }
+            } catch (e) {
+                console.error('Error loading match events:', e);
+            }
+        }
+
+        function openEventModal(matchIdx, homeTeam, awayTeam, homeId, awayId) {
+            const match = currentData.matches[currentRound][matchIdx];
+            if (!match.id) {
+                alert('Speichere erst die Ergebnisse, bevor du Events hinzufügst');
+                return;
+            }
+
+            const teams = [
+                { id: homeId, name: homeTeam },
+                { id: awayId, name: awayTeam }
+            ];
+
+            let html = `
+                <div style="padding: 20px;">
+                    <h3 style="margin-top: 0;">${homeTeam} vs ${awayTeam}</h3>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <h4>Event-Typ</h4>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="event-type-btn" onclick="selectEventType(this, 'goal')" style="padding: 10px 15px; background: rgba(0,255,136,0.2); border: 2px solid var(--color-live); color: var(--color-live); border-radius: 6px; cursor: pointer; font-weight: 600;">⚽ Tor</button>
+                            <button class="event-type-btn" onclick="selectEventType(this, 'yellow_card')" style="padding: 10px 15px; background: rgba(255,255,0,0.1); border: 2px solid transparent; color: white; border-radius: 6px; cursor: pointer;">🟨 Gelbe Karte</button>
+                            <button class="event-type-btn" onclick="selectEventType(this, 'red_card')" style="padding: 10px 15px; background: rgba(255,0,0,0.1); border: 2px solid transparent; color: white; border-radius: 6px; cursor: pointer;">🟥 Rote Karte</button>
+                            <button class="event-type-btn" onclick="selectEventType(this, 'assist')" style="padding: 10px 15px; background: rgba(100,200,255,0.1); border: 2px solid transparent; color: white; border-radius: 6px; cursor: pointer;">🎯 Assist</button>
+                        </div>
+                        <input type="hidden" id="modal-event-type" value="goal">
+                    </div>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <h4>Team</h4>
+                        <select id="modal-event-team" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: white; border-radius: 6px;">
+                            <option value="">Team wählen...</option>
+                            ${teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <h4>Spieler (optional)</h4>
+                        <input type="text" id="modal-player-name" placeholder="Spielername" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: white; border-radius: 6px; margin-bottom: 10px;">
+                        <label style="font-size: 0.9rem; color: var(--color-text-secondary);">Minute (optional)</label>
+                        <input type="number" id="modal-minute" placeholder="z.B. 45" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: white; border-radius: 6px;" min="0" max="120">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="saveMatchEvent(${match.id})" style="flex: 1; padding: 12px; background: var(--color-primary); border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Hinzufügen</button>
+                        <button onclick="closeModal('event-modal')" style="flex: 1; padding: 12px; background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: white; border-radius: 6px; cursor: pointer;">Abbrechen</button>
+                    </div>
+                </div>
+            `;
+
+            showModal('event-modal', html);
+        }
+
+        function selectEventType(btn, type) {
+            document.querySelectorAll('.event-type-btn').forEach(b => {
+                b.style.borderColor = 'transparent';
+                b.style.background = b.style.background.replace('0.2', '0.1');
+            });
+            btn.style.borderColor = window.getComputedStyle(btn).color;
+            btn.style.background = window.getComputedStyle(btn).color.replace('rgb', 'rgba').replace(')', ', 0.2)');
+            document.getElementById('modal-event-type').value = type;
+        }
+
+        function showModal(id, content) {
+            let modal = document.getElementById(id);
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = id;
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+                document.body.appendChild(modal);
+            }
+            
+            modal.innerHTML = `
+                <div style="background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    ${content}
+                </div>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function saveMatchEvent(matchId) {
+            const eventType = document.getElementById('modal-event-type').value;
+            const teamId = parseInt(document.getElementById('modal-event-team').value);
+            const playerName = document.getElementById('modal-player-name').value.trim();
+            const minute = document.getElementById('modal-minute').value;
+
+            if (!teamId) {
+                alert('Bitte Team wählen');
+                return;
+            }
+
+            try {
+                const action = eventType === 'assist' ? 'add_assist' : eventType === 'goal' ? 'add_goal' : 'add_card';
+                const payload = {
+                    action: action,
+                    match_id: matchId,
+                    team_id: teamId,
+                    player_name: playerName,
+                    csrf_token: csrfToken
+                };
+
+                if (minute) payload.minute = parseInt(minute);
+                if (eventType === 'red_card' || eventType === 'yellow_card') {
+                    payload.card_type = eventType;
+                }
+
+                const res = await fetch(`${API_BASE}/save-match-events.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeModal('event-modal');
+                    // Reload the match data to show new events
+                    const matches = currentData.matches[currentRound];
+                    const matchIdx = matches.findIndex(m => m.id === matchId);
+                    if (matchIdx >= 0) {
+                        loadMatchEvents(matchId, matchIdx);
+                    }
+                } else {
+                    alert('Fehler: ' + result.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Verbindungsfehler');
+            }
+        }
+
+        async function deleteEvent(eventId) {
+            if (!confirm('Event wirklich löschen?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/save-match-events.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete_event', event_id: eventId, csrf_token: csrfToken })
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    // Reload all matches to refresh
+                    renderMatches();
+                } else {
+                    alert('Fehler beim Löschen');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Fehler');
+            }
         }
 
         async function saveChanges() {
@@ -384,6 +601,102 @@
             btn.disabled = false;
             btn.textContent = 'Speichern';
         }
+
+        // ============================================
+        // FORUM INTEGRATION
+        // ============================================
+
+        let matchdayTopicId = null;
+        let leagueId = null;
+
+        async function loadForumInfo() {
+            if (!currentData || !currentData.league_id) return;
+
+            leagueId = currentData.league_id;
+
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php?action=round_topics&league_id=${leagueId}&round_nr=${currentRound}`);
+                const data = await res.json();
+
+                if (data.csrf_token) csrfToken = data.csrf_token;
+
+                // Prüfen ob Spieltag-Topic existiert
+                const matchdayTopic = (data.topics || []).find(t => t.topic_type === 'matchday');
+                matchdayTopicId = matchdayTopic ? matchdayTopic.id : null;
+
+                updateForumButtons();
+
+            } catch (e) {
+                console.error('Error loading forum info:', e);
+            }
+        }
+
+        function updateForumButtons() {
+            const forumBtn = document.getElementById('btn-forum-topic');
+            const createBtn = document.getElementById('btn-create-topic');
+
+            if (matchdayTopicId) {
+                forumBtn.style.display = 'inline-block';
+                createBtn.style.display = 'none';
+            } else {
+                forumBtn.style.display = 'none';
+                createBtn.style.display = 'inline-block';
+            }
+        }
+
+        function openForumTopic() {
+            if (matchdayTopicId) {
+                window.open(`../forum.html?topic=${matchdayTopicId}`, '_blank');
+            }
+        }
+
+        async function createMatchdayTopic() {
+            if (!leagueId) {
+                alert('Liga-Daten nicht geladen');
+                return;
+            }
+
+            if (!confirm(`Spieltag-Topic für "${currentData.options?.Name || 'Liga'}" - Spieltag ${currentRound} erstellen?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/match-forum.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        action: 'create_matchday_topic',
+                        league_id: leagueId,
+                        round_nr: currentRound,
+                        csrf_token: csrfToken
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.csrf_token) csrfToken = data.csrf_token;
+                    matchdayTopicId = data.topic_id;
+                    updateForumButtons();
+
+                    if (confirm('Spieltag-Topic erstellt! Jetzt öffnen?')) {
+                        window.open(`../forum.html?topic=${data.topic_id}`, '_blank');
+                    }
+                } else {
+                    alert(data.error || 'Fehler beim Erstellen');
+                }
+            } catch (e) {
+                alert('Netzwerkfehler');
+            }
+        }
+
+        // Extend renderMatches to reload forum info
+        const originalRenderMatches = renderMatches;
+        renderMatches = function() {
+            originalRenderMatches();
+            loadForumInfo();
+        };
     </script>
 
 </body>

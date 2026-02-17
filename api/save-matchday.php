@@ -25,13 +25,26 @@ Security::requireCsrf();
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (!$data) {
+    http_response_code(400);
     echo json_encode(['error' => 'No data']);
     exit;
 }
 
-$ligaFile = $data['liga'];
-$round = $data['round'];
-$matches = $data['matches'];
+$ligaFile = basename($data['liga'] ?? ''); // Sanitize filename
+if (empty($ligaFile) || !preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $ligaFile)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid league file format']);
+    exit;
+}
+
+$round = (int) ($data['round'] ?? 0);
+if ($round <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid round number']);
+    exit;
+}
+
+$matches = $data['matches'] ?? [];
 
 try {
     $pdo = LmoDatabase::getInstance();

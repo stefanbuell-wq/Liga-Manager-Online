@@ -14,7 +14,13 @@ class LmoParser
 
     public function load($ligaFile)
     {
-        $filePath = $this->ligaDir . '/' . basename($ligaFile);
+        // Sanitize filename to prevent path traversal
+        $ligaFile = basename($ligaFile);
+        if (!preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $ligaFile)) {
+            throw new Exception("Invalid league file format: $ligaFile");
+        }
+        
+        $filePath = $this->ligaDir . '/' . $ligaFile;
 
         if (!file_exists($filePath)) {
             throw new Exception("Liga file not found: $filePath");
@@ -109,7 +115,6 @@ class LmoParser
                             'guest' => $this->teams[$guestIdx]['name'] ?? "Team $guestIdx",
                             'home_goals' => $played ? $homeGoals : null,
                             'guest_goals' => $played ? $guestGoals : null,
-                            'played' => $played,
                             'played' => $played,
                             'date' => $matchDate,
                             'time' => $matchTime,

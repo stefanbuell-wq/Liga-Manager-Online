@@ -4,334 +4,1224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liga Manager Online</title>
-    <link rel="stylesheet" href="css/league-modern.css">
+    <title>HAFO.de - Hamburger Fußball Online</title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Force Critical Layout Styles inline to bypass cache issues */
-        .match-row {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            width: 100% !important;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@600;700;800&display=swap" rel="stylesheet">
 
-        .match-info {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            flex: 1 !important;
-            justify-content: center !important;
-        }
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/newsprint.css">
 
-        .team-home,
-        .team-guest {
-            flex: 1 !important;
-            font-weight: 600;
-            font-size: 1.05rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
 
-        .team-home {
-            text-align: right !important;
-        }
-
-        .team-guest {
-            text-align: left !important;
-        }
-
-        .team-logo {
-            height: 30px !important;
-            width: auto !important;
-            margin: 0 10px !important;
-            flex-shrink: 0 !important;
-        }
-
-        .score-box {
-            background: #333;
-            color: #fff;
-            padding: 5px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            min-width: 40px;
-            text-align: center;
-            margin: 0 5px;
-            white-space: nowrap !important;
-            flex-shrink: 0 !important;
-        }
-
-        .score-box.pending {
-            background: #eee;
-            color: #888;
-        }
-
-        .news-link {
-            font-size: 0.85rem;
-            color: #EF403C;
-            text-decoration: none;
-            margin-left: 15px;
-            white-space: nowrap !important;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-        }
-
-        /* News Modal */
-        .news-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-        }
-        .news-modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-        }
-        .news-modal-content {
-            position: relative;
-            background: white;
-            max-width: 900px;
-            width: 95%;
-            max-height: 90vh;
-            margin: 2vh auto;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .news-modal-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            background: none;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            color: #666;
-            z-index: 10;
-        }
-        .news-modal-close:hover { color: #000; }
-        #news-modal-body {
-            padding: 30px;
-            overflow-y: auto;
-            line-height: 1.7;
-        }
-        .news-header {
-            border-bottom: 2px solid #eee;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        .news-meta {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-        .news-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #222;
-            margin: 0;
-        }
-        .news-content {
-            font-size: 1rem;
-            color: #333;
-        }
-        .news-content b { color: #000; }
-        .news-content br + br { margin-bottom: 1em; display: block; content: ""; }
-
-        /* News Card in Archive */
-        .news-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .news-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .news-card-date {
-            font-size: 0.85rem;
-            color: #888;
-        }
-        .news-card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #222;
-            margin: 8px 0;
-        }
-        .news-card-preview {
-            font-size: 0.95rem;
-            color: #555;
-            line-height: 1.5;
-        }
-
-        /* Match News Button */
-        .match-news-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            background: #EF403C;
-            color: white !important;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .match-news-btn:hover {
-            background: #d63530;
-        }
-
-        /* Inline Notiz */
-        .match-note-inline {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
-            color: #856404;
-            font-size: 0.8rem;
-            padding: 4px 12px;
-            border-radius: 4px;
-            margin-top: 6px;
-            text-align: center;
-            border-left: 3px solid #ffc107;
-            font-weight: 500;
-        }
-
-        /* Match Extras */
-        .match-extras {
-            margin-top: 8px;
-            font-size: 0.9em;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .match-link {
-            text-decoration: none;
-            color: #666;
-        }
-        .match-link:hover {
-            color: #333;
-        }
-    </style>
+    <!-- Theme Loader - Loads custom colors from backend -->
+    <script>
+        (function() {
+            // Try to load cached theme first for instant rendering
+            const cached = localStorage.getItem('hafo_theme');
+            if (cached) {
+                try {
+                    const theme = JSON.parse(cached);
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                } catch(e) {}
+            }
+            // Then fetch fresh theme
+            fetch('api/theme.php')
+                .then(r => r.json())
+                .then(theme => {
+                    localStorage.setItem('hafo_theme', JSON.stringify(theme));
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                    // Update site name if changed
+                    if (theme.siteName) {
+                        document.title = theme.siteName + ' - ' + (theme.siteTagline || 'Hamburger Fußball Online');
+                    }
+                })
+                .catch(() => {});
+        })();
+    </script>
 </head>
 
 <body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="portal.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                </a>
 
-    <div class="container" id="app">
-        <h1>Liga Manager Online</h1>
+                <nav class="nav">
+                    <a href="#news-section" class="nav-link active">News</a>
+                    <a href="javascript:void(0)" onclick="goToTab('overview')" class="nav-link">Ligen</a>
+                    <a href="#live-section" class="nav-link">Spiele</a>
+                    <a href="javascript:void(0)" onclick="goToTab('table')" class="nav-link">Tabelle</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                </nav>
 
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="tab-overview">Aktuell</button>
-            <button class="tab-btn" data-tab="tab-schedule">Spielplan</button>
-            <button class="tab-btn" data-tab="tab-crosstable">Kreuztabelle</button>
-            <button class="tab-btn" data-tab="tab-stats">Fieberkurve</button>
-            <button class="tab-btn" data-tab="tab-news">Spielberichte</button>
+                <div class="header-actions">
+                    <a href="admin/index.html" class="btn btn-primary">Login</a>
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
+    </header>
 
-        <!-- Overview Tab (Existing) -->
-        <div id="tab-overview" class="tab-content active">
-            <header>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <select id="league-select"
-                        style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; max-width: 200px;">
-                        <option disabled selected>Liga wechseln...</option>
-                    </select>
-                    <div id="round-nav" class="round-nav">
-                        <!-- Nav populated by JS -->
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <nav class="mobile-nav">
+                <a href="#news-section" class="mobile-nav-link active" onclick="toggleMobileMenu()">News</a>
+                <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('overview')">Ligen</a>
+                <a href="#live-section" class="mobile-nav-link" onclick="toggleMobileMenu()">Spiele</a>
+                <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('table')">Tabelle</a>
+                <a href="forum.html" class="mobile-nav-link" onclick="toggleMobileMenu()">Forum</a>
+            </nav>
+        </div>
+    </div>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-grid">
+                    <!-- Main Hero -->
+                    <div class="hero-main">
+                        <img src="img/news/match-1.svg" alt="Hero" class="hero-main-image">
+                        <div class="hero-main-overlay">
+                            <div class="hero-main-content animate-fade-in">
+                                <span class="hero-badge">⚡ Breaking</span>
+                                <h1 class="hero-title">Hamburg-Oberliga: Spannender Titelkampf geht in die heiße Phase</h1>
+                                <p class="hero-meta">vor 2 Stunden • von Redaktion</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Cards -->
+                    <div class="hero-sidebar stagger">
+                        <a href="#news-section" class="hero-card animate-fade-in" style="opacity: 0;">
+                            <img src="img/news/match-2.svg" alt="" class="hero-card-image">
+                            <div class="hero-card-content">
+                                <h3 class="hero-card-title">TuS Dassendorf bleibt Spitzenreiter</h3>
+                                <span class="hero-card-meta">vor 5 Stunden</span>
+                            </div>
+                        </a>
+                        <a href="#news-section" class="hero-card animate-fade-in" style="opacity: 0;">
+                            <img src="img/news/match-3.svg" alt="" class="hero-card-image">
+                            <div class="hero-card-content">
+                                <h3 class="hero-card-title">Altona 93 mit wichtigem Heimsieg</h3>
+                                <span class="hero-card-meta">vor 8 Stunden</span>
+                            </div>
+                        </a>
+                        <a href="#news-section" class="hero-card animate-fade-in" style="opacity: 0;">
+                            <img src="img/news/match-4.svg" alt="" class="hero-card-image">
+                            <div class="hero-card-content">
+                                <h3 class="hero-card-title">Nachwuchstalent wechselt zum HSV</h3>
+                                <span class="hero-card-meta">gestern</span>
+                            </div>
+                        </a>
                     </div>
                 </div>
-                <a href="admin/index.html" class="btn" style="background:var(--primary-color); color:white;">Login</a>
-            </header>
+            </div>
+        </section>
 
-            <div class="grid-layout">
-                <div id="matches-container">
-                    <!-- Matches populated by JS (Left Column) -->
+        <!-- Live Ticker -->
+        <section class="live-ticker" id="live-section">
+            <div class="container">
+                <div class="live-ticker-header">
+                    <div class="live-ticker-title">
+                        <span class="live-indicator">
+                            <span class="live-dot"></span>
+                            Live
+                        </span>
+                        Aktuelle Spiele
+                    </div>
+                    <a href="javascript:void(0)" onclick="goToTab('schedule')" class="btn btn-ghost">Alle Spiele →</a>
                 </div>
 
-                <div class="table-wrapper">
-                    <h3>TABELLE</h3>
-                    <table id="league-table">
+                <div class="live-ticker-scroll" id="live-ticker">
+                    <!-- Match Cards will be populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Forum Teaser -->
+        <section class="section" id="forum-teaser" style="background: var(--color-bg-elevated); padding: var(--spacing-xl) 0;">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Community <span>Forum</span></h2>
+                    <a href="forum.html" class="btn btn-secondary">Alle Themen →</a>
+                </div>
+                <div id="forum-topics-preview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-md);">
+                    <!-- Forum topics loaded by JS -->
+                    <div class="table-card" style="padding: var(--spacing-lg); text-align: center; color: var(--color-text-muted);">
+                        Forum wird geladen...
+                    </div>
+                </div>
+                <style>
+                    #forum-topics-preview .table-card:hover {
+                        border-color: var(--color-primary);
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    }
+                </style>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <section class="section" id="league-section">
+            <div class="container">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="overview">Übersicht</button>
+                    <button class="tab-btn" data-tab="schedule">Spielplan</button>
+                    <button class="tab-btn" data-tab="table">Tabelle</button>
+                    <button class="tab-btn" data-tab="stats">Statistiken</button>
+                    <button class="tab-btn" data-tab="news">Spielberichte</button>
+                </div>
+
+                <!-- Liga Selector -->
+                <div class="section-header">
+                    <h2 class="section-title" id="league-title">Hamburg <span>Oberliga</span></h2>
+                    <select id="league-select" class="btn btn-secondary" style="padding-right: 32px;">
+                        <option>Liga wählen...</option>
+                    </select>
+                </div>
+
+                <!-- Tab: Übersicht -->
+                <div id="tab-overview" class="tab-content active">
+                    <div class="content-grid">
+                        <div>
+                            <div id="matches-display">
+                                <!-- Matches loaded by JS -->
+                            </div>
+                        </div>
+                        <aside>
+                            <div class="table-card">
+                                <div class="table-header">
+                                    <h3>Tabelle</h3>
+                                    <a href="javascript:void(0)" onclick="switchTab('table')" class="btn btn-ghost" style="font-size: 0.85rem;">Vollständig &rarr;</a>
+                                </div>
+                                <table class="league-table" id="league-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Team</th>
+                                            <th style="text-align: center;">Sp</th>
+                                            <th style="text-align: center;">TD</th>
+                                            <th style="text-align: center;">Pkt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <!-- Newsprint Sportticket Modul -->
+                            <div class="newsprint-module" style="margin-top: 1.5rem;">
+                                <div class="newsprint-surface">
+                                    <header class="newsprint-header" style="padding: 1rem;">
+                                        <div class="newsprint-masthead" style="font-size: 1.8rem;">LIVE</div>
+                                        <div class="newsprint-edition" style="font-size: 0.6rem;">
+                                            HAMBURG<br>
+                                            LIVE
+                                        </div>
+                                    </header>
+
+                                    <div class="newsprint-ticker">
+                                        <div class="newsprint-ticker-track">
+                                            <div class="newsprint-ticker-item"><span>●</span> Live-Spiele</div>
+                                            <div class="newsprint-ticker-item"><span>●</span> Ergebnisse</div>
+                                            <div class="newsprint-ticker-item"><span>●</span> Tabellen</div>
+                                            <div class="newsprint-ticker-item"><span>●</span> Live-Spiele</div>
+                                            <div class="newsprint-ticker-item"><span>●</span> Ergebnisse</div>
+                                            <div class="newsprint-ticker-item"><span>●</span> Tabellen</div>
+                                        </div>
+                                    </div>
+
+                                    <main class="newsprint-main" id="newsprint-matches-sidebar" style="max-height: 300px;">
+                                        <div class="newsprint-section-label">Aktuelle Spiele</div>
+                                        <div class="newsprint-match-row" style="padding: 0.8rem 1rem;">
+                                            <div class="newsprint-match-meta" style="font-size: 0.65rem;">
+                                                <span>28.01.</span>
+                                                <span class="newsprint-status-live">● LIVE</span>
+                                            </div>
+                                            <div class="newsprint-match-teams" style="font-size: 1rem;">
+                                                <div style="font-size: 0.9rem;">HAMBURG SV</div>
+                                                <div class="newsprint-score" style="font-size: 0.85rem;">2:1</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="newsprint-match-row" style="padding: 0.8rem 1rem;">
+                                            <div class="newsprint-match-meta" style="font-size: 0.65rem;">
+                                                <span>28.01.</span>
+                                                <span>✓ BEENDET</span>
+                                            </div>
+                                            <div class="newsprint-match-teams" style="font-size: 1rem;">
+                                                <div style="font-size: 0.9rem;">ALTONA 93</div>
+                                                <div class="newsprint-score" style="font-size: 0.85rem;">3:2</div>
+                                            </div>
+                                        </div>
+                                    </main>
+
+                                    <footer class="newsprint-footer" style="padding: 0.5rem 1rem; font-size: 0.55rem;">
+                                        <div>HAFO</div>
+                                        <div>LIVE</div>
+                                    </footer>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+
+                <!-- Tab: Spielplan -->
+                <div id="tab-schedule" class="tab-content">
+                    <div id="schedule-display">
+                        <!-- All matchdays loaded by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab: Tabelle -->
+                <div id="tab-table" class="tab-content">
+                    <div class="table-card" style="max-width: 900px;">
+                        <table class="league-table" id="full-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Team</th>
+                                    <th style="text-align: center;">Sp</th>
+                                    <th style="text-align: center;">S</th>
+                                    <th style="text-align: center;">U</th>
+                                    <th style="text-align: center;">N</th>
+                                    <th style="text-align: center;">Tore</th>
+                                    <th style="text-align: center;">TD</th>
+                                    <th style="text-align: center;">Pkt</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab: Statistiken -->
+                <div id="tab-stats" class="tab-content">
+                    <div id="stats-display">
+                        <p class="text-muted">Statistiken werden geladen...</p>
+                    </div>
+                </div>
+
+                <!-- Tab: Spielberichte -->
+                <div id="tab-news" class="tab-content">
+                    <div id="reports-grid" class="news-grid">
+                        <!-- News loaded by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- News Section -->
+        <section class="section" id="news-section" style="background: var(--color-bg-elevated);">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Aktuelle <span>News</span></h2>
+                    <a href="javascript:void(0)" onclick="goToTab('news')" class="btn btn-secondary">Alle News →</a>
+                </div>
+
+                <div class="news-grid" id="news-grid">
+                    <!-- News cards will be loaded by JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="portal.html" class="logo">
+                        <div class="logo-icon">⚽</div>
+                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    </a>
+                    <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Ligen</h4>
+                    <div class="footer-links">
+                        <a href="#league-section">Oberliga Hamburg</a>
+                        <a href="#league-section">Landesliga</a>
+                        <a href="#league-section">Bezirksliga</a>
+                        <a href="#league-section">Kreisliga</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Community</h4>
+                    <div class="footer-links">
+                        <a href="forum.html">Forum</a>
+                        <a href="forum.html">Diskussionen</a>
+                        <a href="javascript:void(0)">Kontakt</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Rechtliches</h4>
+                    <div class="footer-links">
+                        <a href="impressum.html">Impressum</a>
+                        <a href="datenschutz.html">Datenschutz</a>
+                        <a href="javascript:void(0)">Nutzungsbedingungen</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+                <div class="footer-social">
+                    <a href="https://facebook.com" target="_blank" rel="noopener" title="Facebook">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener" title="Twitter/X">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" title="Instagram">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- News Modal -->
+    <div id="news-modal" class="mobile-menu" style="display: none;" onclick="if(event.target === this) closeNewsModal()">
+        <div class="mobile-menu-content" style="width: 90%; max-width: 800px; left: 50%; right: auto; transform: translateX(-50%); border-radius: var(--radius-xl); max-height: 90vh; overflow-y: auto; position: relative;">
+            <!-- Close Button -->
+            <button onclick="closeNewsModal()" style="position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; background: var(--color-bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--color-text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;" onmouseover="this.style.background='var(--color-primary)'" onmouseout="this.style.background='var(--color-bg-elevated)'">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div id="news-modal-body" style="padding-top: var(--spacing-xl);"></div>
+        </div>
+    </div>
+
+    <!-- H2H Comparison Modal -->
+    <div id="h2h-modal" class="modal" onclick="if (event.target === this) closeModal('h2h-modal')">
+        <div class="modal-content" style="max-width: 900px;">
+            <button class="modal-close" onclick="closeModal('h2h-modal')">&times;</button>
+            <div id="h2h-modal-body" style="padding-top: var(--spacing-xl);"></div>
+        </div>
+    </div>
+
+    <script src="js/player-stats.js?v=20260216"></script>
+    <script>
+        // ============================================
+        // HAFO.de Portal JavaScript
+        // ============================================
+
+        const API_BASE = 'api';
+        let leagueData = null;
+        let currentRound = 1;
+
+        // === INITIALIZATION ===
+        document.addEventListener('DOMContentLoaded', () => {
+            initLeagueSelector();
+            initTabs();
+            loadLiveMatches();
+            loadNews();
+            loadForumPreview();
+        });
+
+        // === MOBILE MENU ===
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        }
+
+        // === FORUM PREVIEW ===
+        async function loadForumPreview() {
+            const container = document.getElementById('forum-topics-preview');
+            if (!container) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/forum-topics.php?limit=6&homepage=1`);
+                const data = await res.json();
+
+                if (!data.topics || data.topics.length === 0) {
+                    container.innerHTML = `
+                        <div class="table-card" style="padding: var(--spacing-lg); text-align: center; grid-column: 1 / -1;">
+                            <p style="color: var(--color-text-muted);">Keine Forenthemen vorhanden.</p>
+                            <a href="forum.html" class="btn btn-primary" style="margin-top: var(--spacing-md);">Forum besuchen</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.topics.map(topic => `
+                    <a href="forum.html?topic=${topic.id}" class="table-card" style="padding: var(--spacing-md); display: block; text-decoration: none; transition: all 0.2s ease;">
+                        <div style="display: flex; align-items: flex-start; gap: var(--spacing-md);">
+                            <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: ${topic.is_sticky ? 'var(--color-warning)' : 'var(--color-bg-elevated)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                ${topic.is_sticky ? '📌' : topic.is_locked ? '🔒' : '💬'}
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--spacing-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${topic.title}
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--color-text-muted); display: flex; gap: var(--spacing-md);">
+                                    <span>${topic.author_name || 'Gast'}</span>
+                                    <span>•</span>
+                                    <span>${topic.post_count || 0} Antworten</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                `).join('');
+            } catch (e) {
+                console.warn('Forum preview could not be loaded:', e);
+                container.innerHTML = `
+                    <div class="table-card" style="padding: var(--spacing-lg); text-align: center; grid-column: 1 / -1;">
+                        <p style="color: var(--color-text-muted);">Forum konnte nicht geladen werden.</p>
+                        <a href="forum.html" class="btn btn-secondary" style="margin-top: var(--spacing-md);">Forum öffnen</a>
+                    </div>
+                `;
+            }
+        }
+
+        // === LEAGUE SELECTOR ===
+        async function initLeagueSelector() {
+            const select = document.getElementById('league-select');
+            try {
+                const res = await fetch(`${API_BASE}/list-leagues.php`);
+                const data = await res.json();
+                if (data.leagues && data.leagues.length > 0) {
+                    select.innerHTML = data.leagues.map(l =>
+                        `<option value="${l.file}" ${l.file === 'hhoberliga2425.l98' ? 'selected' : ''}>${l.name}</option>`
+                    ).join('');
+
+                    // Load default league
+                    loadLeague(select.value);
+                } else {
+                    select.innerHTML = '<option>Keine Ligen gefunden</option>';
+                    document.getElementById('matches-display').innerHTML = '<p class="text-muted">Keine Ligen verfügbar. Bitte prüfen Sie die Konfiguration.</p>';
+                }
+            } catch (e) {
+                console.error('Could not load leagues:', e);
+                select.innerHTML = '<option>Fehler beim Laden</option>';
+                document.getElementById('matches-display').innerHTML = `<p class="text-muted">API nicht erreichbar. Server läuft unter: <code>${API_BASE}/list-leagues.php</code></p>`;
+            }
+
+            select.addEventListener('change', (e) => loadLeague(e.target.value));
+        }
+
+        // === LOAD LEAGUE DATA ===
+        async function loadLeague(ligaFile) {
+            try {
+                const res = await fetch(`${API_BASE}/get-league-data.php?liga=${ligaFile}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+
+                leagueData = data;
+                currentRound = parseInt(data.options.Actual) || 1;
+
+                // Update title
+                const title = data.options.Name || 'Liga';
+                const titleEl = document.getElementById('league-title');
+                if (titleEl) {
+                    titleEl.innerHTML = title.replace(/(\S+)$/, '<span>$1</span>');
+                }
+
+                // Render all views
+                renderTable(data.table);
+                renderMatches();
+
+                // Update other tabs if they're active
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab) {
+                    const tabId = activeTab.id.replace('tab-', '');
+                    if (tabId === 'table') renderFullTable();
+                    if (tabId === 'schedule') renderSchedule();
+                    if (tabId === 'stats') renderStats();
+                }
+            } catch (e) {
+                console.error('Error loading league:', e);
+            }
+        }
+
+        // === RENDER TABLE ===
+        function renderTable(table) {
+            const tbody = document.querySelector('#league-table tbody');
+            tbody.innerHTML = table.slice(0, 8).map((team, idx) => {
+                const rank = idx + 1;
+                let rankClass = '';
+                if (rank <= 2) rankClass = 'promotion';
+                else if (rank >= table.length - 2) rankClass = 'relegation';
+
+                return `
+                    <tr>
+                        <td class="table-rank ${rankClass}">${rank}</td>
+                        <td class="table-team">
+                            <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                 onerror="this.src='img/teams/blank.png'" alt="">
+                            ${team.name.length > 18 ? team.name.substring(0, 16) + '...' : team.name}
+                        </td>
+                        <td class="table-stats">${team.played}</td>
+                        <td class="table-stats">${team.diff > 0 ? '+' : ''}${team.diff}</td>
+                        <td class="table-points">${team.points}${team.correction ? ` (${team.correction > 0 ? '+' : ''}${team.correction})` : ''}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // === RENDER MATCHES ===
+        function renderMatches() {
+            const container = document.getElementById('matches-display');
+            const totalRounds = parseInt(leagueData.options.Rounds);
+
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+                    <button class="btn btn-secondary" onclick="changeRound(-1)" ${currentRound <= 1 ? 'disabled style="opacity:0.5"' : ''}>
+                        ← Vorher
+                    </button>
+                    <select class="btn btn-secondary" onchange="currentRound = parseInt(this.value); renderMatches();">
+                        ${Array.from({length: totalRounds}, (_, i) => i + 1).map(r =>
+                            `<option value="${r}" ${r === currentRound ? 'selected' : ''}>Spieltag ${r}</option>`
+                        ).join('')}
+                    </select>
+                    <button class="btn btn-secondary" onclick="changeRound(1)" ${currentRound >= totalRounds ? 'disabled style="opacity:0.5"' : ''}>
+                        Weiter →
+                    </button>
+                </div>
+            `;
+
+            const matches = leagueData.matches[currentRound] || [];
+
+            if (matches.length === 0) {
+                html += '<p class="text-muted text-center">Keine Spiele gefunden.</p>';
+            } else {
+                html += '<div style="display: flex; flex-direction: column; gap: var(--spacing-md);">';
+                matches.forEach(m => {
+                    const played = m.played;
+                    const homeWin = played && m.home_goals > m.guest_goals;
+                    const guestWin = played && m.guest_goals > m.home_goals;
+
+                    html += `
+                        <div class="match-card" style="width: 100%;">
+                            <div class="match-card-header">
+                                <span>${m.date || 'TBD'} ${m.time ? '• ' + m.time : ''}</span>
+                                <span class="match-status ${played ? 'finished' : 'upcoming'}">${played ? 'Beendet' : 'Geplant'}</span>
+                            </div>
+                            <div class="match-teams">
+                                <div class="match-team">
+                                    <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                         onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
+                                    <span class="team-name">${m.home}</span>
+                                    <span class="team-score ${homeWin ? 'winner' : ''}">${played ? m.home_goals : '-'}</span>
+                                </div>
+                                <div class="match-team">
+                                    <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                         onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
+                                    <span class="team-name">${m.guest}</span>
+                                    <span class="team-score ${guestWin ? 'winner' : ''}">${played ? m.guest_goals : '-'}</span>
+                                </div>
+                            </div>
+                            ${m.match_note ? `<div style="margin-top: var(--spacing-sm); padding: var(--spacing-xs) var(--spacing-sm); background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-size: 0.8rem; border-radius: var(--radius-sm);">📝 ${m.match_note}</div>` : ''}
+                            ${m.has_news ? `<button onclick="showNews(${m.news_id})" class="btn btn-ghost" style="margin-top: var(--spacing-sm); width: 100%; font-size: 0.85rem;">📰 Spielbericht lesen</button>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function changeRound(delta) {
+            const totalRounds = parseInt(leagueData.options.Rounds);
+            const newRound = currentRound + delta;
+            if (newRound >= 1 && newRound <= totalRounds) {
+                currentRound = newRound;
+                renderMatches();
+            }
+        }
+
+        // === LIVE MATCHES ===
+        function loadLiveMatches() {
+            // Demo data for live ticker
+            const liveMatches = [
+                { home: 'TuS Dassendorf', guest: 'SC Victoria', homeGoals: 2, guestGoals: 1, status: 'live', time: "67'" },
+                { home: 'Altona 93', guest: 'Concordia', homeGoals: 0, guestGoals: 0, status: 'live', time: "34'" },
+                { home: 'HSV III', guest: 'Bramfelder SV', homeGoals: 3, guestGoals: 2, status: 'finished', time: 'Ende' },
+                { home: 'Barsbütteler SV', guest: 'Niendorfer TSV', homeGoals: null, guestGoals: null, status: 'upcoming', time: '15:00' },
+                { home: 'FC Türkiye', guest: 'HEBC', homeGoals: 1, guestGoals: 1, status: 'live', time: "78'" },
+            ];
+
+            const container = document.getElementById('live-ticker');
+            container.innerHTML = liveMatches.map(m => `
+                <div class="match-card ${m.status === 'live' ? 'live' : ''}">
+                    <div class="match-card-header">
+                        <span>${m.time}</span>
+                        <span class="match-status ${m.status}">${m.status === 'live' ? 'LIVE' : m.status === 'finished' ? 'Ende' : 'Bald'}</span>
+                    </div>
+                    <div class="match-teams">
+                        <div class="match-team">
+                            <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                 onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
+                            <span class="team-name">${m.home}</span>
+                            <span class="team-score ${m.homeGoals > m.guestGoals ? 'winner' : ''}">${m.homeGoals ?? '-'}</span>
+                        </div>
+                        <div class="match-team">
+                            <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                 onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
+                            <span class="team-name">${m.guest}</span>
+                            <span class="team-score ${m.guestGoals > m.homeGoals ? 'winner' : ''}">${m.guestGoals ?? '-'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // === NEWS ===
+        async function loadNews() {
+            try {
+                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=6`);
+                const data = await res.json();
+
+                const container = document.getElementById('news-grid');
+                if (!data.news || data.news.length === 0) {
+                    container.innerHTML = '<p class="text-muted">Keine News vorhanden.</p>';
+                    return;
+                }
+
+                // Local SVG images for news cards
+                const newsImages = [
+                    'img/news/match-1.svg', 'img/news/match-2.svg', 'img/news/match-3.svg',
+                    'img/news/match-4.svg', 'img/news/match-5.svg', 'img/news/match-6.svg'
+                ];
+                container.innerHTML = data.news.map((n, idx) => `
+                    <a href="javascript:void(0)" onclick="showNews(${n.id})" class="news-card animate-fade-in" style="opacity: 0; animation-delay: ${idx * 0.1}s;">
+                        <div class="news-card-image">
+                            <img src="${newsImages[idx % newsImages.length]}" alt="">
+                        </div>
+                        <div class="news-card-content">
+                            <span class="news-card-category">Spielbericht</span>
+                            <h3 class="news-card-title">${n.title}</h3>
+                            <span class="news-card-meta">${n.date_formatted || 'Datum unbekannt'} • ${n.author || 'Redaktion'}</span>
+                        </div>
+                    </a>
+                `).join('');
+            } catch (e) {
+                console.warn('Could not load news');
+            }
+        }
+
+        async function showNews(newsId) {
+            try {
+                const res = await fetch(`${API_BASE}/get-news.php?id=${newsId}`);
+                const data = await res.json();
+
+                if (!data.news) {
+                    alert('News nicht gefunden');
+                    return;
+                }
+
+                const modal = document.getElementById('news-modal');
+                const body = document.getElementById('news-modal-body');
+
+                body.innerHTML = `
+                    <div style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: var(--spacing-md);">
+                        ${data.news.date_formatted || ''} • ${data.news.author || 'Redaktion'}
+                    </div>
+                    <h2 style="margin-bottom: var(--spacing-lg);">${data.news.title}</h2>
+                    <div style="line-height: 1.8; color: var(--color-text-secondary);">
+                        ${data.news.content || data.news.short_content || ''}
+                    </div>
+                `;
+
+                modal.style.display = 'block';
+                setTimeout(() => modal.classList.add('active'), 10);
+            } catch (e) {
+                console.error('Error loading news:', e);
+            }
+        }
+
+        function closeNewsModal() {
+            const modal = document.getElementById('news-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        // === TABS ===
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+        }
+
+        function switchTab(tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-tab="${tabName}"]`)?.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`)?.classList.add('active');
+
+            // Load content if needed
+            if (tabName === 'table') renderFullTable();
+            if (tabName === 'schedule') renderSchedule();
+            if (tabName === 'stats') renderStats();
+            if (tabName === 'news') renderReports();
+        }
+
+        function goToTab(tabName) {
+            // Scroll to league section
+            document.getElementById('league-section')?.scrollIntoView({ behavior: 'smooth' });
+            // Switch tab after short delay for smooth UX
+            setTimeout(() => switchTab(tabName), 300);
+        }
+
+        // === FULL TABLE ===
+        function renderFullTable() {
+            if (!leagueData || !leagueData.table) return;
+
+            const tbody = document.querySelector('#full-table tbody');
+            tbody.innerHTML = leagueData.table.map((team, idx) => {
+                const rank = idx + 1;
+                let rankClass = '';
+                if (rank <= 2) rankClass = 'promotion';
+                else if (rank >= leagueData.table.length - 2) rankClass = 'relegation';
+
+                return `
+                    <tr>
+                        <td class="table-rank ${rankClass}">${rank}</td>
+                        <td class="table-team">
+                            <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                 onerror="this.src='img/teams/blank.png'" alt="">
+                            ${team.name}
+                        </td>
+                        <td class="table-stats">${team.played}</td>
+                        <td class="table-stats">${team.won}</td>
+                        <td class="table-stats">${team.draw}</td>
+                        <td class="table-stats">${team.lost}</td>
+                        <td class="table-stats">${team.goals_for}:${team.goals_against}</td>
+                        <td class="table-stats">${team.diff > 0 ? '+' : ''}${team.diff}</td>
+                        <td class="table-points">${team.points}${team.correction ? ` (${team.correction > 0 ? '+' : ''}${team.correction})` : ''}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // === SCHEDULE (All Matchdays) ===
+        function renderSchedule() {
+            if (!leagueData || !leagueData.matches) return;
+
+            const container = document.getElementById('schedule-display');
+            const totalRounds = parseInt(leagueData.options.Rounds) || 1;
+            let html = '';
+
+            for (let round = 1; round <= totalRounds; round++) {
+                const matches = leagueData.matches[round] || [];
+                if (matches.length === 0) continue;
+
+                html += `
+                    <div class="table-card" style="margin-bottom: var(--spacing-lg);">
+                        <div class="table-header">
+                            <h3>Spieltag ${round}</h3>
+                        </div>
+                        <div style="padding: var(--spacing-md);">
+                `;
+
+                matches.forEach(m => {
+                    const played = m.played;
+                    html += `
+                        <div style="display: flex; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
+                            <span style="flex: 1; text-align: right; padding-right: var(--spacing-md);">${m.home}</span>
+                            <span style="min-width: 60px; text-align: center; font-weight: 700; background: var(--color-bg-elevated); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-sm);">
+                                ${played ? m.home_goals + ' : ' + m.guest_goals : '- : -'}
+                            </span>
+                            <span style="flex: 1; padding-left: var(--spacing-md);">${m.guest}</span>
+                            <span style="min-width: 80px; text-align: right; color: var(--color-text-muted); font-size: 0.85rem;">${m.date || ''}</span>
+                        </div>
+                    `;
+                });
+
+                html += '</div></div>';
+            }
+
+            container.innerHTML = html || '<p class="text-muted">Kein Spielplan vorhanden.</p>';
+        }
+
+        // === STATS ===
+        function renderStats() {
+            const container = document.getElementById('stats-display');
+
+            if (!leagueData || !leagueData.table) {
+                container.innerHTML = '<p class="text-muted">Keine Statistiken verfügbar.</p>';
+                return;
+            }
+
+            // Calculate stats
+            let totalGoals = 0;
+            let totalMatches = 0;
+            let homeWins = 0, awayWins = 0, draws = 0;
+
+            leagueData.table.forEach(t => {
+                totalGoals += t.goals_for;
+                totalMatches += t.played;
+                homeWins += t.won || 0;
+                draws += t.draw || 0;
+            });
+            totalMatches = totalMatches / 2;
+            homeWins = homeWins / 2;
+            draws = draws / 2;
+            awayWins = totalMatches - homeWins - draws;
+
+            const avgGoals = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(2) : 0;
+            const maxGoals = Math.max(...leagueData.table.map(t => t.goals_for));
+            const maxAgainst = Math.max(...leagueData.table.map(t => t.goals_against));
+            const maxPoints = Math.max(...leagueData.table.map(t => t.points));
+
+            // Sort teams for charts
+            const byOffense = [...leagueData.table].sort((a, b) => b.goals_for - a.goals_for).slice(0, 8);
+            const byDefense = [...leagueData.table].sort((a, b) => a.goals_against - b.goals_against).slice(0, 8);
+            const byPoints = [...leagueData.table].slice(0, 8);
+
+            container.innerHTML = `
+                <!-- Stats Overview Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-xl);">
+                    <div class="table-card" style="padding: var(--spacing-lg); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary); line-height: 1;">${totalMatches}</div>
+                        <div style="color: var(--color-text-muted); font-size: 0.85rem; margin-top: var(--spacing-xs);">Spiele gespielt</div>
+                        <div style="margin-top: var(--spacing-md); height: 4px; background: var(--color-bg-elevated); border-radius: 2px; overflow: hidden;">
+                            <div style="height: 100%; width: ${(totalMatches / (leagueData.table.length * (leagueData.table.length - 1))) * 100}%; background: var(--color-primary); border-radius: 2px;"></div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: var(--spacing-xs);">der Saison</div>
+                    </div>
+                    <div class="table-card" style="padding: var(--spacing-lg); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-live); line-height: 1;">${totalGoals}</div>
+                        <div style="color: var(--color-text-muted); font-size: 0.85rem; margin-top: var(--spacing-xs);">Tore gesamt</div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                            <span style="font-size: 1.5rem;">&#9917;</span>
+                            <span style="font-size: 0.9rem; color: var(--color-text-secondary);">${avgGoals} pro Spiel</span>
+                        </div>
+                    </div>
+                    <div class="table-card" style="padding: var(--spacing-lg); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-warning); line-height: 1;">${leagueData.table.length}</div>
+                        <div style="color: var(--color-text-muted); font-size: 0.85rem; margin-top: var(--spacing-xs);">Teams</div>
+                        <div style="display: flex; justify-content: center; gap: 2px; margin-top: var(--spacing-md); flex-wrap: wrap;">
+                            ${leagueData.table.slice(0, 12).map(() => '<div style="width: 8px; height: 8px; background: var(--color-warning); border-radius: 2px;"></div>').join('')}
+                        </div>
+                    </div>
+                    <div class="table-card" style="padding: var(--spacing-lg); text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-text-primary); line-height: 1;">${currentRound}</div>
+                        <div style="color: var(--color-text-muted); font-size: 0.85rem; margin-top: var(--spacing-xs);">Aktueller Spieltag</div>
+                        <div style="margin-top: var(--spacing-md); font-size: 0.85rem; color: var(--color-text-secondary);">
+                            von ${leagueData.options.Rounds || '?'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div>
+                        <!-- Tore pro Team - Bar Chart -->
+                        <div class="table-card" style="margin-bottom: var(--spacing-lg);">
+                            <div class="table-header">
+                                <h3>&#127942; Tore pro Team</h3>
+                            </div>
+                            <div style="padding: var(--spacing-lg);">
+                                ${byOffense.map((t, i) => `
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                                        <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</div>
+                                            <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${(t.goals_for / maxGoals) * 100}%; background: linear-gradient(90deg, var(--color-live), #00cc6a); border-radius: 4px; transition: width 0.5s ease;"></div>
+                                            </div>
+                                        </div>
+                                        <div style="font-weight: 700; min-width: 36px; text-align: right;">${t.goals_for}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Gegentore pro Team - Bar Chart -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>&#128737; Gegentore pro Team</h3>
+                            </div>
+                            <div style="padding: var(--spacing-lg);">
+                                ${byDefense.map((t, i) => `
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                                        <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</div>
+                                            <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${(t.goals_against / maxAgainst) * 100}%; background: linear-gradient(90deg, #0066cc, #004499); border-radius: 4px; transition: width 0.5s ease;"></div>
+                                            </div>
+                                        </div>
+                                        <div style="font-weight: 700; min-width: 36px; text-align: right;">${t.goals_against}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- Punkte Chart -->
+                        <div class="table-card" style="margin-bottom: var(--spacing-lg);">
+                            <div class="table-header">
+                                <h3>&#128200; Punktestand</h3>
+                            </div>
+                            <div style="padding: var(--spacing-lg);">
+                                ${byPoints.map((t, i) => `
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                                        <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 2 ? 'var(--color-live)' : i >= leagueData.table.length - 3 ? 'var(--color-primary)' : 'var(--color-text-muted)'};">${i + 1}</div>
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</div>
+                                            <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${(t.points / maxPoints) * 100}%; background: linear-gradient(90deg, var(--color-primary), #ff4d6a); border-radius: 4px; transition: width 0.5s ease;"></div>
+                                            </div>
+                                        </div>
+                                        <div style="font-weight: 700; min-width: 36px; text-align: right;">${t.points}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Bilanz Donut Chart -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>&#128202; Spielbilanz</h3>
+                            </div>
+                            <div style="padding: var(--spacing-lg);">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: var(--spacing-xl);">
+                                    <!-- Simple Donut using conic-gradient -->
+                                    <div style="position: relative; width: 140px; height: 140px;">
+                                        <div style="width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(
+                                            var(--color-live) 0deg ${(homeWins / totalMatches) * 360}deg,
+                                            var(--color-text-muted) ${(homeWins / totalMatches) * 360}deg ${((homeWins + draws) / totalMatches) * 360}deg,
+                                            var(--color-primary) ${((homeWins + draws) / totalMatches) * 360}deg 360deg
+                                        );"></div>
+                                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; background: var(--color-bg-card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <div style="font-size: 1.5rem; font-weight: 800;">${totalMatches}</div>
+                                            <div style="font-size: 0.7rem; color: var(--color-text-muted);">Spiele</div>
+                                        </div>
+                                    </div>
+                                    <!-- Legend -->
+                                    <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                            <div style="width: 16px; height: 16px; background: var(--color-live); border-radius: 4px;"></div>
+                                            <div>
+                                                <div style="font-weight: 600;">${Math.round(homeWins)}</div>
+                                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">Heimsiege</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                            <div style="width: 16px; height: 16px; background: var(--color-text-muted); border-radius: 4px;"></div>
+                                            <div>
+                                                <div style="font-weight: 600;">${Math.round(draws)}</div>
+                                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">Unentschieden</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                            <div style="width: 16px; height: 16px; background: var(--color-primary); border-radius: 4px;"></div>
+                                            <div>
+                                                <div style="font-weight: 600;">${Math.round(awayWins)}</div>
+                                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">Auswartssiege</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detaillierte Tabellen -->
+                <h3 style="margin-top: var(--spacing-xl); margin-bottom: var(--spacing-lg);">Detaillierte Ranglisten</h3>
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Beste Offensive</h3>
+                        </div>
+                        <table class="league-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Team</th>
+                                    <th style="text-align: center;">Sp</th>
+                                    <th style="text-align: center;">Tore</th>
+                                    <th style="text-align: center;">&#8709;/Spiel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${[...leagueData.table].sort((a, b) => b.goals_for - a.goals_for).map((t, i) => `
+                                    <tr>
+                                        <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
+                                        <td class="table-team">
+                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                                            ${t.name}
+                                        </td>
+                                        <td class="table-stats">${t.played}</td>
+                                        <td class="table-points">${t.goals_for}</td>
+                                        <td class="table-stats">${t.played > 0 ? (t.goals_for / t.played).toFixed(2) : '0.00'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Beste Defensive</h3>
+                        </div>
+                        <table class="league-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Team</th>
+                                    <th style="text-align: center;">Sp</th>
+                                    <th style="text-align: center;">Gegentore</th>
+                                    <th style="text-align: center;">&#8709;/Spiel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${[...leagueData.table].sort((a, b) => a.goals_against - b.goals_against).map((t, i) => `
+                                    <tr>
+                                        <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
+                                        <td class="table-team">
+                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                                            ${t.name}
+                                        </td>
+                                        <td class="table-stats">${t.played}</td>
+                                        <td class="table-points">${t.goals_against}</td>
+                                        <td class="table-stats">${t.played > 0 ? (t.goals_against / t.played).toFixed(2) : '0.00'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Form-Tabelle -->
+                <h3 style="margin-top: var(--spacing-xl); margin-bottom: var(--spacing-lg);">Tordifferenz</h3>
+                <div class="table-card" style="max-width: 900px;">
+                    <table class="league-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px;">PL.</th>
-                                <th>TEAM</th>
-                                <th>SP.</th>
-                                <th>DIFF.</th>
-                                <th>PKT.</th>
+                                <th>#</th>
+                                <th>Team</th>
+                                <th style="text-align: center;">Tore</th>
+                                <th style="text-align: center;">Gegentore</th>
+                                <th style="text-align: center;">Differenz</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Populated by JS -->
+                            ${[...leagueData.table].sort((a, b) => b.diff - a.diff).map((t, i) => `
+                                <tr>
+                                    <td class="table-rank ${i < 3 ? 'promotion' : i >= leagueData.table.length - 3 ? 'relegation' : ''}">${i + 1}</td>
+                                    <td class="table-team">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                                        ${t.name}
+                                    </td>
+                                    <td class="table-stats">${t.goals_for}</td>
+                                    <td class="table-stats">${t.goals_against}</td>
+                                    <td class="table-points" style="color: ${t.diff > 0 ? 'var(--color-live)' : t.diff < 0 ? 'var(--color-primary)' : 'var(--color-text-muted)'};">
+                                        ${t.diff > 0 ? '+' : ''}${t.diff}
+                                    </td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            `;
+        }
 
-        <!-- Schedule Tab -->
-        <div id="tab-schedule" class="tab-content">
-            <div id="full-schedule">
-                <div style="text-align: center; padding: 20px;">Lade Spielplan...</div>
-            </div>
-        </div>
+        // === REPORTS (Spielberichte) ===
+        async function renderReports() {
+            const container = document.getElementById('reports-grid');
 
-        <!-- CrossTable Tab -->
-        <div id="tab-crosstable" class="tab-content">
-            <div class="table-wrapper box-scroll">
-                <table id="cross-table">
-                    <!-- Populated by JS -->
-                </table>
-            </div>
-        </div>
+            try {
+                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=12`);
+                const data = await res.json();
 
-        <!-- Stats Tab -->
-        <div id="tab-stats" class="tab-content">
-            <div class="chart-container" id="fever-chart">
-                <!-- SVG Chart -->
-            </div>
-        </div>
+                if (!data.news || data.news.length === 0) {
+                    container.innerHTML = '<p class="text-muted">Keine Spielberichte vorhanden.</p>';
+                    return;
+                }
 
-        <!-- News/Spielberichte Tab -->
-        <div id="tab-news" class="tab-content">
-            <div id="news-archive" style="max-width:900px; margin:0 auto;">
-                <div style="text-align: center; padding: 40px;">Lade Spielberichte...</div>
-            </div>
-        </div>
+                const newsImages = [
+                    'img/news/match-1.svg', 'img/news/match-2.svg', 'img/news/match-3.svg',
+                    'img/news/match-4.svg', 'img/news/match-5.svg', 'img/news/match-6.svg'
+                ];
 
-        <!-- News Modal Container -->
-        <div id="news-modal" class="news-modal" style="display:none;">
-            <div class="news-modal-overlay" onclick="app.closeNewsModal()"></div>
-            <div class="news-modal-content">
-                <button class="news-modal-close" onclick="app.closeNewsModal()">&times;</button>
-                <div id="news-modal-body"></div>
-            </div>
-        </div>
+                container.innerHTML = data.news.map((n, idx) => `
+                    <a href="javascript:void(0)" onclick="showNews(${n.id})" class="news-card">
+                        <div class="news-card-image">
+                            <img src="${newsImages[idx % newsImages.length]}" alt="">
+                        </div>
+                        <div class="news-card-content">
+                            <span class="news-card-category">Spielbericht</span>
+                            <h3 class="news-card-title">${n.title}</h3>
+                            <span class="news-card-meta">${n.date_formatted || 'Datum unbekannt'} &bull; ${n.author || 'Redaktion'}</span>
+                        </div>
+                    </a>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-muted">Fehler beim Laden der Spielberichte.</p>';
+            }
+        }
 
-        <footer>
-            <p>&copy; 2026 Liga Manager Online Modernized</p>
-        </footer>
-    </div>
-
-    <script src="js/league-viewer.js?v=0128"></script>
-
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeNewsModal();
+                document.getElementById('mobile-menu').classList.remove('active');
+            }
+        });
+    </script>
+    <script src="js/newsprint.js"></script>
 </body>
 
 </html>

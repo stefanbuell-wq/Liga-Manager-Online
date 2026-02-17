@@ -28,12 +28,13 @@ if (!$input) {
 }
 
 $id = $input['id'] ?? null;
-$title = $input['title'] ?? '';
-$content = $input['content'] ?? '';
-$author = $input['author'] ?? 'Admin';
+$title = trim($input['title'] ?? '');
+$content = trim($input['content'] ?? '');
+$author = trim($input['author'] ?? 'Admin');
 $timestamp = time(); // Update timestamp on save? Or keep original? Let's update for now so it bumps up.
 
 if (empty($title) || empty($content)) {
+    http_response_code(400);
     echo json_encode(['error' => 'Title and Content are required']);
     exit;
 }

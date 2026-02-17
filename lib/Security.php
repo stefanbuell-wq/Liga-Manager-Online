@@ -14,6 +14,67 @@ class Security {
     // Password Policy
     const MIN_PASSWORD_LENGTH = 8;
 
+    // Role hierarchy
+    const ROLES = [
+        'guest' => 0,
+        'user' => 1,
+        'editor' => 2,
+        'admin' => 3
+    ];
+
+    /**
+     * Check if user is logged in
+     */
+    public static function isLoggedIn() {
+        self::initSession();
+        return isset($_SESSION['lmo26_admin']) && $_SESSION['lmo26_admin'] === true;
+    }
+
+    /**
+     * Get current user's role
+     */
+    public static function getUserRole() {
+        if (!self::isLoggedIn()) {
+            return 'guest';
+        }
+        return $_SESSION['lmo26_user_role'] ?? 'user';
+    }
+
+    /**
+     * Get current user's role level (numeric)
+     */
+    public static function getRoleLevel($role = null) {
+        if ($role === null) {
+            $role = self::getUserRole();
+        }
+        return self::ROLES[$role] ?? 0;
+    }
+
+    /**
+     * Check if user has required permission level
+     * @param string $requiredRole - 'guest', 'user', 'editor', 'admin'
+     * @return bool
+     */
+    public function requirePermission($requiredRole) {
+        self::initSession();
+
+        if (!self::isLoggedIn()) {
+            return false;
+        }
+
+        $userLevel = self::getRoleLevel();
+        $requiredLevel = self::ROLES[$requiredRole] ?? 0;
+
+        return $userLevel >= $requiredLevel;
+    }
+
+    /**
+     * Validate CSRF token from request
+     */
+    public function validateCsrfToken($token) {
+        return self::verifyCsrfToken($token);
+    }
+
     /**
      * Initialize secure session
      */
@@ -97,6 +158,15 @@ class Security {
      * Returns: true if allowed, false if blocked
      */
     public static function checkRateLimit($identifier) {
+        // Temporary bypass via env or toggle file to assist recovery
+        if (getenv('LMO26_RL_OFF') === '1') {
+            return ['allowed' => true];
+        }
+        $toggleFile = __DIR__ . '/../data/ratelimit.off';
+        if (file_exists($toggleFile)) {
+            return ['allowed' => true];
+        }
+
         $pdo = self::getRateLimitDb();
 
         // Clean old entries
