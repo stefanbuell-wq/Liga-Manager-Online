@@ -536,6 +536,263 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--color-bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--color-bg-elevated); border-radius: 4px; }
+
+        /* Template Tabs */
+        .template-tabs {
+            display: flex;
+            gap: 2px;
+            padding: 16px 24px 0;
+            border-bottom: 1px solid var(--color-border);
+            overflow-x: auto;
+        }
+
+        .template-tab {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .template-tab:hover {
+            color: var(--color-text-secondary);
+        }
+
+        .template-tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .template-container {
+            display: none;
+        }
+
+        .template-container.active {
+            display: block;
+        }
+
+        /* Template form specifics */
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-row-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row-score input[type="number"] {
+            width: 70px;
+            text-align: center;
+            -moz-appearance: textfield;
+        }
+
+        .form-row-score input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .form-row-score .score-sep {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-text-secondary);
+        }
+
+        .form-row-score .score-label {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-left: 4px;
+        }
+
+        /* Repeater (Stimmen, Spiele) */
+        .repeater-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .repeater-item {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            position: relative;
+        }
+
+        .repeater-item .form-row {
+            margin-bottom: 8px;
+        }
+
+        .repeater-item .form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .repeater-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--color-danger);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .repeater-add {
+            margin-top: 8px;
+        }
+
+        /* Team select with logo preview */
+        .team-select-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-select-row select {
+            flex: 1;
+        }
+
+        .team-select-row img {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background: var(--color-bg-elevated);
+        }
+
+        /* General news formatting buttons */
+        .simple-toolbar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .simple-toolbar button {
+            padding: 6px 14px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .simple-toolbar button:hover {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--color-border);
+            margin: 20px 0;
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+
+        /* Player Lineup Checkboxes */
+        .lineup-section {
+            margin-top: 8px;
+        }
+
+        .lineup-group {
+            margin-bottom: 8px;
+        }
+
+        .lineup-group-header {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--color-text-muted);
+            padding: 4px 0;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 6px;
+        }
+
+        .lineup-players {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .lineup-player {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 0.85rem;
+            user-select: none;
+        }
+
+        .lineup-player:hover {
+            border-color: var(--color-text-muted);
+        }
+
+        .lineup-player.checked {
+            background: rgba(226, 0, 26, 0.15);
+            border-color: var(--color-primary);
+            color: var(--color-text-primary);
+        }
+
+        .lineup-player input[type="checkbox"] {
+            margin: 0;
+            accent-color: var(--color-primary);
+        }
+
+        .lineup-player .player-num {
+            font-weight: 700;
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+            min-width: 16px;
+        }
+
+        .lineup-player.checked .player-num {
+            color: var(--color-primary);
+        }
+
+        .lineup-loading {
+            color: var(--color-text-muted);
+            font-size: 0.85rem;
+            padding: 8px 0;
+        }
+
+        @media (max-width: 600px) {
+            .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+            .template-tabs {
+                padding: 12px 16px 0;
+            }
+            .template-tab {
+                padding: 8px 12px;
+                font-size: 0.82rem;
+            }
+        }
     </style>
 </head>
 
@@ -623,10 +880,20 @@
                 <h2 id="editorTitle">News bearbeiten</h2>
                 <button class="modal-close" onclick="closeEditor()">&times;</button>
             </div>
+
+            <!-- Template Tabs -->
+            <div class="template-tabs">
+                <button class="template-tab active" data-template="html" onclick="switchTab('html')">HTML-Editor</button>
+                <button class="template-tab" data-template="match" onclick="switchTab('match')">Spielbericht</button>
+                <button class="template-tab" data-template="preview" onclick="switchTab('preview')">Vorschau</button>
+                <button class="template-tab" data-template="general" onclick="switchTab('general')">Allgemeine News</button>
+            </div>
+
             <div class="modal-body">
                 <form id="editorForm" onsubmit="saveNews(event)">
                     <input type="hidden" id="newsId">
 
+                    <!-- Shared: Title, Author, Date -->
                     <div class="form-group">
                         <label>Titel *</label>
                         <input type="text" id="newsTitle" required placeholder="Titel der News">
@@ -643,25 +910,201 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Kurztext (Vorschau)</label>
-                        <textarea id="newsShortContent" placeholder="Kurze Zusammenfassung fuer die Vorschau..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Vollstaendiger Inhalt</label>
-                        <div class="editor-toolbar">
-                            <button type="button" onclick="format('b')"><b>B</b></button>
-                            <button type="button" onclick="format('i')"><i>I</i></button>
-                            <button type="button" onclick="format('h3')">H3</button>
-                            <button type="button" onclick="format('p')">Absatz</button>
-                            <button type="button" onclick="format('a')">Link</button>
-                            <button type="button" onclick="format('br')">Umbruch</button>
+                    <!-- ===== TAB 1: HTML-Editor (bestehend) ===== -->
+                    <div class="template-container active" id="template-html">
+                        <div class="form-group">
+                            <label>Kurztext (Vorschau)</label>
+                            <textarea id="newsShortContent" placeholder="Kurze Zusammenfassung fuer die Vorschau..."></textarea>
                         </div>
-                        <textarea id="newsContent" class="large with-toolbar" placeholder="Der vollstaendige Bericht..."></textarea>
+
+                        <div class="form-group">
+                            <label>Vollstaendiger Inhalt</label>
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="format('b')"><b>B</b></button>
+                                <button type="button" onclick="format('i')"><i>I</i></button>
+                                <button type="button" onclick="format('h3')">H3</button>
+                                <button type="button" onclick="format('p')">Absatz</button>
+                                <button type="button" onclick="format('a')">Link</button>
+                                <button type="button" onclick="format('br')">Umbruch</button>
+                            </div>
+                            <textarea id="newsContent" class="large with-toolbar" placeholder="Der vollstaendige Bericht..."></textarea>
+                        </div>
                     </div>
 
-                    <!-- Match Links -->
+                    <!-- ===== TAB 2: Spielbericht ===== -->
+                    <div class="template-container" id="template-match">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Liga / Wettbewerb *</label>
+                                <select id="tplMatchLeague" onchange="loadTeamsForTemplate('match')">
+                                    <option value="">-- Liga waehlen --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Spieltag / Runde</label>
+                                <input type="text" id="tplMatchRound" placeholder="z.B. 20. Spieltag, Achtelfinale">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Heim-Team *</label>
+                                <div class="team-select-row">
+                                    <select id="tplMatchHome" onchange="updateTeamLogo('tplMatchHome', 'tplMatchHomeLogo'); loadLineupPlayers('home')">
+                                        <option value="">-- Team waehlen --</option>
+                                    </select>
+                                    <img id="tplMatchHomeLogo" src="about:blank" onerror="this.style.display='none'" onload="this.style.display='block'" style="display:none">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Gast-Team *</label>
+                                <div class="team-select-row">
+                                    <select id="tplMatchGuest" onchange="updateTeamLogo('tplMatchGuest', 'tplMatchGuestLogo'); loadLineupPlayers('guest')">
+                                        <option value="">-- Team waehlen --</option>
+                                    </select>
+                                    <img id="tplMatchGuestLogo" src="about:blank" onerror="this.style.display='none'" onload="this.style.display='block'" style="display:none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Ergebnis *</label>
+                                <div class="form-row-score">
+                                    <input type="number" id="tplMatchHomeGoals" min="0" placeholder="0">
+                                    <span class="score-sep">:</span>
+                                    <input type="number" id="tplMatchGuestGoals" min="0" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Halbzeit</label>
+                                <div class="form-row-score">
+                                    <input type="number" id="tplMatchHomeHalf" min="0" placeholder="0">
+                                    <span class="score-sep">:</span>
+                                    <input type="number" id="tplMatchGuestHalf" min="0" placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="section-divider">
+
+                        <div class="form-group">
+                            <label>Aufstellung Heim</label>
+                            <div class="lineup-section" id="lineupHomeCheckboxes"></div>
+                            <textarea id="tplMatchLineupHome" placeholder="Torwart - Spieler1, Spieler2 (ab 60. Einwechslung), ..."></textarea>
+                            <div class="form-hint">Spieler per Checkbox auswaehlen oder manuell eingeben. Teamname wird automatisch vorangestellt.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Aufstellung Gast</label>
+                            <div class="lineup-section" id="lineupGuestCheckboxes"></div>
+                            <textarea id="tplMatchLineupGuest" placeholder="Torwart - Spieler1, Spieler2, ..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tore</label>
+                            <textarea id="tplMatchGoals" placeholder="1:0 Harnik (18.), 1:1 Mueller (32.), 2:1 Harnik (78./FE)"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Gelb-Rot / Rot</label>
+                                <input type="text" id="tplMatchCards" placeholder="z.B. Asante (60./Altona)">
+                            </div>
+                            <div class="form-group">
+                                <label>Schiedsrichter</label>
+                                <input type="text" id="tplMatchReferee" placeholder="Name (Verein)">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Bester Spieler Heim</label>
+                                <input type="text" id="tplMatchBestHome" placeholder="Name">
+                            </div>
+                            <div class="form-group">
+                                <label>Bester Spieler Gast</label>
+                                <input type="text" id="tplMatchBestGuest" placeholder="Name">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Zuschauer</label>
+                            <input type="number" id="tplMatchSpectators" min="0" placeholder="z.B. 250">
+                        </div>
+
+                        <hr class="section-divider">
+
+                        <div class="form-group">
+                            <label>Spielbericht-Text</label>
+                            <textarea id="tplMatchReport" class="large" placeholder="Der Fliesstext des Berichts. Absaetze mit Leerzeile trennen."></textarea>
+                            <div class="form-hint">Leerzeilen werden automatisch zu Absaetzen. Kein HTML noetig.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Stimmen zum Spiel</label>
+                            <div class="repeater-list" id="tplMatchQuotes">
+                                <!-- dynamisch -->
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm repeater-add" onclick="addQuote()">+ Stimme hinzufuegen</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Statistik / Bilanz</label>
+                            <textarea id="tplMatchStats" placeholder="z.B. Bisherige Bilanz: 5 Siege Heim, 3 Unentschieden, 2 Siege Gast"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ===== TAB 3: Vorschau (Spieltag-Preview) ===== -->
+                    <div class="template-container" id="template-preview">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Liga / Wettbewerb</label>
+                                <select id="tplPreviewLeague" onchange="loadTeamsForTemplate('preview')">
+                                    <option value="">-- Liga waehlen --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Spieltag</label>
+                                <input type="text" id="tplPreviewRound" placeholder="z.B. 20. Spieltag">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Einleitung</label>
+                            <textarea id="tplPreviewIntro" placeholder="Einleitungstext vor den Spielen..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Spiele</label>
+                            <div class="repeater-list" id="tplPreviewGames">
+                                <!-- dynamisch -->
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm repeater-add" onclick="addPreviewGame()">+ Spiel hinzufuegen</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Schlusswort</label>
+                            <textarea id="tplPreviewOutro" placeholder="Abschlusstext nach den Spielen..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ===== TAB 4: Allgemeine News ===== -->
+                    <div class="template-container" id="template-general">
+                        <div class="form-group">
+                            <label>Nachrichtentext</label>
+                            <div class="simple-toolbar">
+                                <button type="button" onclick="simpleFormat('bold')"><b>Fett</b></button>
+                                <button type="button" onclick="simpleFormat('italic')"><i>Kursiv</i></button>
+                                <button type="button" onclick="simpleFormat('underline')"><u>Unterstrichen</u></button>
+                                <button type="button" onclick="simpleFormat('link')">Link</button>
+                            </div>
+                            <textarea id="tplGeneralText" class="large" placeholder="Schreibe deinen Text hier. Absaetze mit Leerzeile trennen. Kein HTML noetig."></textarea>
+                            <div class="form-hint">Leerzeilen = Absaetze. Fett/Kursiv ueber die Buttons oben oder *fett* und _kursiv_ im Text.</div>
+                        </div>
+                    </div>
+
+                    <!-- Match Links (shared, all tabs) -->
                     <div class="match-links-section">
                         <h4>Verknuepfte Spiele</h4>
                         <div id="linkedMatchesList">
@@ -840,6 +1283,12 @@
             renderLinkedMatches([]);
             document.getElementById('matchSearchResults').innerHTML = '';
 
+            // Reset to HTML tab and clear template fields
+            resetTemplateFields();
+            activeTab = 'html';
+            document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'html'));
+            document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
+
             document.getElementById('editorModal').classList.add('show');
         }
 
@@ -869,6 +1318,12 @@
                 renderLinkedMatches(linkedMatchesData);
                 document.getElementById('matchSearchResults').innerHTML = '';
 
+                // Reset to HTML tab when editing (reverse parsing not supported)
+                resetTemplateFields();
+                activeTab = 'html';
+                document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'html'));
+                document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
+
                 document.getElementById('editorModal').classList.add('show');
 
             } catch (e) {
@@ -884,6 +1339,9 @@
         // Save news
         async function saveNews(event) {
             event.preventDefault();
+
+            // Generate HTML from active template tab before saving
+            preSaveGenerate();
 
             const id = document.getElementById('newsId').value;
             const data = {
@@ -1142,6 +1600,642 @@
 
         function escapeRegex(s) {
             return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // ===== Template Tab System =====
+        let activeTab = 'html';
+        let leaguesCache = null;
+        let teamsCache = {}; // keyed by league file
+
+        function switchTab(tab) {
+            // When leaving a structured tab, generate HTML into the main fields
+            if (activeTab !== 'html' && tab === 'html') {
+                generateFromActiveTab();
+            }
+            if (activeTab === 'html' && tab !== 'html') {
+                // Warn if there's existing content
+                const content = document.getElementById('newsContent').value.trim();
+                if (content && !confirm('Der HTML-Editor hat Inhalt. Beim Wechsel zum Template wird dieser ueberschrieben wenn du dort Felder ausfuellst.\n\nFortfahren?')) {
+                    return;
+                }
+            }
+
+            activeTab = tab;
+            document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === tab));
+            document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-' + tab));
+
+            // Load leagues on first access
+            if ((tab === 'match' || tab === 'preview') && !leaguesCache) {
+                loadLeagues();
+            }
+        }
+
+        async function loadLeagues() {
+            try {
+                const resp = await fetch('../api/list-leagues.php');
+                const data = await resp.json();
+                leaguesCache = data.leagues || [];
+
+                const matchSel = document.getElementById('tplMatchLeague');
+                const previewSel = document.getElementById('tplPreviewLeague');
+
+                leaguesCache.forEach(l => {
+                    const opt1 = new Option(l.name, l.file);
+                    const opt2 = new Option(l.name, l.file);
+                    matchSel.appendChild(opt1);
+                    previewSel.appendChild(opt2);
+                });
+            } catch (e) {
+                console.error('Leagues load error:', e);
+            }
+        }
+
+        async function loadTeamsForTemplate(prefix) {
+            const selId = prefix === 'match' ? 'tplMatchLeague' : 'tplPreviewLeague';
+            const file = document.getElementById(selId).value;
+            if (!file) return;
+
+            if (teamsCache[file]) {
+                if (prefix === 'match') fillTeamDropdowns(teamsCache[file]);
+                return;
+            }
+
+            try {
+                const resp = await fetch('../api/get-league-data.php?liga=' + encodeURIComponent(file));
+                const data = await resp.json();
+
+                // Extract teams from the response
+                const teams = [];
+                if (data.teams) {
+                    for (const id in data.teams) {
+                        teams.push({ id: id, name: data.teams[id].name });
+                    }
+                    teams.sort((a, b) => a.name.localeCompare(b.name));
+                }
+                teamsCache[file] = teams;
+
+                if (prefix === 'match') fillTeamDropdowns(teams);
+            } catch (e) {
+                console.error('Teams load error:', e);
+            }
+        }
+
+        function fillTeamDropdowns(teams) {
+            const homeSel = document.getElementById('tplMatchHome');
+            const guestSel = document.getElementById('tplMatchGuest');
+
+            // Save current selections
+            const homeVal = homeSel.value;
+            const guestVal = guestSel.value;
+
+            homeSel.innerHTML = '<option value="">-- Team waehlen --</option>';
+            guestSel.innerHTML = '<option value="">-- Team waehlen --</option>';
+
+            teams.forEach(t => {
+                // Store team DB id as data attribute via value format "name|id"
+                const opt1 = new Option(t.name, t.name);
+                opt1.dataset.teamId = t.id;
+                const opt2 = new Option(t.name, t.name);
+                opt2.dataset.teamId = t.id;
+                homeSel.appendChild(opt1);
+                guestSel.appendChild(opt2);
+            });
+
+            // Restore if possible
+            if (homeVal) homeSel.value = homeVal;
+            if (guestVal) guestSel.value = guestVal;
+        }
+
+        // ===== Lineup Player Selection =====
+        let lineupPlayersCache = {}; // keyed by team_id
+
+        function getSelectedTeamId(side) {
+            const selId = side === 'home' ? 'tplMatchHome' : 'tplMatchGuest';
+            const sel = document.getElementById(selId);
+            const opt = sel.options[sel.selectedIndex];
+            return opt && opt.dataset && opt.dataset.teamId ? parseInt(opt.dataset.teamId) : null;
+        }
+
+        async function loadLineupPlayers(side) {
+            const containerId = side === 'home' ? 'lineupHomeCheckboxes' : 'lineupGuestCheckboxes';
+            const container = document.getElementById(containerId);
+            const teamId = getSelectedTeamId(side);
+
+            if (!teamId) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = '<div class="lineup-loading">Lade Kader...</div>';
+
+            // Check cache
+            if (lineupPlayersCache[teamId]) {
+                renderLineupCheckboxes(container, lineupPlayersCache[teamId], side);
+                return;
+            }
+
+            try {
+                const resp = await fetch('../api/get-players.php?team_id=' + teamId);
+                const data = await resp.json();
+                const players = data.players || [];
+                lineupPlayersCache[teamId] = players;
+                renderLineupCheckboxes(container, players, side);
+            } catch (e) {
+                container.innerHTML = '<div class="lineup-loading">Fehler beim Laden</div>';
+            }
+        }
+
+        function renderLineupCheckboxes(container, players, side) {
+            if (!players || players.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            // Group by position
+            const posOrder = ['Torwart', 'Abwehr', 'Mittelfeld', 'Sturm'];
+            const groups = {};
+            posOrder.forEach(p => groups[p] = []);
+            groups['Sonstige'] = [];
+
+            players.forEach(p => {
+                const pos = posOrder.includes(p.position) ? p.position : 'Sonstige';
+                groups[pos].push(p);
+            });
+
+            // Sort each group by number
+            Object.values(groups).forEach(g => g.sort((a, b) => (a.number || 99) - (b.number || 99)));
+
+            let html = '';
+            for (const pos of [...posOrder, 'Sonstige']) {
+                if (groups[pos].length === 0) continue;
+
+                html += `<div class="lineup-group">`;
+                html += `<div class="lineup-group-header">${escapeHtml(pos)}</div>`;
+                html += `<div class="lineup-players">`;
+
+                groups[pos].forEach(p => {
+                    html += `
+                        <label class="lineup-player" data-player-id="${p.id}" data-side="${side}">
+                            <input type="checkbox" onchange="toggleLineupPlayer(this, '${side}')">
+                            <span class="player-num">${p.number || '-'}</span>
+                            <span>${escapeHtml(p.name)}</span>
+                        </label>
+                    `;
+                });
+
+                html += `</div></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function toggleLineupPlayer(checkbox, side) {
+            // Toggle visual state
+            checkbox.closest('.lineup-player').classList.toggle('checked', checkbox.checked);
+            // Rebuild textarea from checked players
+            updateLineupTextarea(side);
+        }
+
+        function updateLineupTextarea(side) {
+            const containerId = side === 'home' ? 'lineupHomeCheckboxes' : 'lineupGuestCheckboxes';
+            const textareaId = side === 'home' ? 'tplMatchLineupHome' : 'tplMatchLineupGuest';
+
+            const container = document.getElementById(containerId);
+            const textarea = document.getElementById(textareaId);
+
+            const checked = container.querySelectorAll('input[type="checkbox"]:checked');
+            const names = [];
+            checked.forEach(cb => {
+                const label = cb.closest('.lineup-player');
+                const name = label.querySelector('span:last-child').textContent.trim();
+                names.push(name);
+            });
+
+            // Build lineup string: first player is typically the goalkeeper, separated by " - " then ", "
+            if (names.length > 0) {
+                // First name (Torwart) gets " - " separator, rest get ", "
+                textarea.value = names[0] + (names.length > 1 ? ' - ' + names.slice(1).join(', ') : '');
+            } else {
+                textarea.value = '';
+            }
+        }
+
+        function teamLogoPath(name) {
+            if (!name) return '';
+            return '../img/teams/' + name.replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+        }
+
+        function updateTeamLogo(selectId, imgId) {
+            const name = document.getElementById(selectId).value;
+            const img = document.getElementById(imgId);
+            if (name) {
+                img.src = teamLogoPath(name);
+            } else {
+                img.src = 'about:blank';
+                img.style.display = 'none';
+            }
+        }
+
+        // ===== Stimmen Repeater =====
+        let quoteCount = 0;
+
+        function addQuote() {
+            quoteCount++;
+            const container = document.getElementById('tplMatchQuotes');
+            const div = document.createElement('div');
+            div.className = 'repeater-item';
+            div.id = 'quote-' + quoteCount;
+            div.innerHTML = `
+                <button type="button" class="repeater-remove" onclick="this.parentElement.remove()">&times;</button>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:0">
+                        <input type="text" class="quote-name" placeholder="Name (z.B. Trainer Peter Mueller)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <textarea class="quote-text" style="min-height:60px" placeholder="Zitat..."></textarea>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        // ===== Vorschau-Spiele Repeater =====
+        let previewGameCount = 0;
+
+        function addPreviewGame() {
+            previewGameCount++;
+            const container = document.getElementById('tplPreviewGames');
+            const div = document.createElement('div');
+            div.className = 'repeater-item';
+            div.id = 'pgame-' + previewGameCount;
+
+            const file = document.getElementById('tplPreviewLeague').value;
+            const teams = file && teamsCache[file] ? teamsCache[file] : [];
+            const teamOpts = teams.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('');
+
+            div.innerHTML = `
+                <button type="button" class="repeater-remove" onclick="this.parentElement.remove()">&times;</button>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:8px">
+                        <select class="pgame-home">
+                            <option value="">Heim</option>
+                            ${teamOpts}
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px">
+                        <select class="pgame-guest">
+                            <option value="">Gast</option>
+                            ${teamOpts}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:8px">
+                        <input type="text" class="pgame-datetime" placeholder="Datum / Uhrzeit (z.B. Sa. 15:30)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px">
+                        <input type="text" class="pgame-venue" placeholder="Spielort">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:8px">
+                    <textarea class="pgame-text" style="min-height:60px" placeholder="Vorschautext zu diesem Spiel..."></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <input type="text" class="pgame-tip" placeholder="HAFO-Tipp (z.B. 2:1)">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        // ===== Simple Format (Allgemeine News) =====
+        function simpleFormat(type) {
+            const editor = document.getElementById('tplGeneralText');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            const selected = text.substring(start, end);
+
+            let before = '', after = '';
+            if (type === 'bold') { before = '*'; after = '*'; }
+            else if (type === 'italic') { before = '_'; after = '_'; }
+            else if (type === 'underline') { before = '~'; after = '~'; }
+            else if (type === 'link') {
+                const url = prompt('URL eingeben:', 'https://');
+                if (!url) return;
+                const insertion = '[' + (selected || 'Linktext') + '](' + url + ')';
+                editor.value = text.substring(0, start) + insertion + text.substring(end);
+                editor.focus();
+                editor.selectionStart = editor.selectionEnd = start + insertion.length;
+                return;
+            }
+
+            const insertion = before + (selected || '') + after;
+            editor.value = text.substring(0, start) + insertion + text.substring(end);
+            editor.focus();
+            if (!selected) {
+                editor.selectionStart = start + before.length;
+                editor.selectionEnd = start + before.length;
+            } else {
+                editor.selectionStart = editor.selectionEnd = start + insertion.length;
+            }
+        }
+
+        // ===== HTML Generation =====
+        function textToHtml(text) {
+            // Convert plain text to HTML: escape, convert double newlines to <br> <br>, single newlines to <br>
+            if (!text) return '';
+            let html = escapeHtml(text.trim());
+            // Double newlines → paragraph break
+            html = html.replace(/\n\s*\n/g, ' <br> <br>');
+            // Remaining single newlines → line break
+            html = html.replace(/\n/g, ' <br>');
+            return html;
+        }
+
+        function simpleTextToHtml(text) {
+            // Convert simple markup: *bold*, _italic_, ~underline~, [text](url)
+            if (!text) return '';
+            let html = escapeHtml(text.trim());
+
+            // Links: [text](url)
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            // Bold: *text*
+            html = html.replace(/\*([^*]+)\*/g, '<b>$1</b>');
+            // Italic: _text_
+            html = html.replace(/_([^_]+)_/g, '<i>$1</i>');
+            // Underline: ~text~
+            html = html.replace(/~([^~]+)~/g, '<u>$1</u>');
+            // Paragraphs
+            html = html.replace(/\n\s*\n/g, ' <br> <br>');
+            html = html.replace(/\n/g, ' <br>');
+
+            return html;
+        }
+
+        function generateMatchHTML() {
+            const home = document.getElementById('tplMatchHome').value;
+            const guest = document.getElementById('tplMatchGuest').value;
+            const homeGoals = document.getElementById('tplMatchHomeGoals').value;
+            const guestGoals = document.getElementById('tplMatchGuestGoals').value;
+            const homeHalf = document.getElementById('tplMatchHomeHalf').value;
+            const guestHalf = document.getElementById('tplMatchGuestHalf').value;
+
+            if (!home || !guest) return { title: '', short_content: '', content: '' };
+
+            const halfStr = (homeHalf !== '' && guestHalf !== '') ? ` (${homeHalf}:${guestHalf})` : '';
+            const scoreStr = (homeGoals !== '' && guestGoals !== '') ? ` ${homeGoals}:${guestGoals}` : '';
+            const round = document.getElementById('tplMatchRound').value.trim();
+
+            // Title
+            const title = home + ' – ' + guest + scoreStr;
+
+            // Short content
+            let shortParts = [];
+            if (round) shortParts.push(round + ':');
+            shortParts.push(home + ' – ' + guest + scoreStr + halfStr);
+            const short_content = shortParts.join(' ');
+
+            // Full content
+            let parts = [];
+
+            // Logos header
+            const homeLogo = 'img/teams/' + home.replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+            const guestLogo = 'img/teams/' + guest.replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+            parts.push(`<center><img src="${homeLogo}" onerror="this.style.display='none'"> &nbsp; vs. &nbsp; <img src="${guestLogo}" onerror="this.style.display='none'"></center>`);
+            parts.push('<br> <br>');
+
+            // Score line
+            parts.push(`<span><b>${escapeHtml(home)} \u2013 ${escapeHtml(guest)}${scoreStr}${halfStr}</b></span>`);
+            parts.push('<br> <br>');
+
+            // Lineups
+            const lineupHome = document.getElementById('tplMatchLineupHome').value.trim();
+            const lineupGuest = document.getElementById('tplMatchLineupGuest').value.trim();
+            if (lineupHome) {
+                parts.push(`<b>${escapeHtml(home)}:</b> ${escapeHtml(lineupHome)}`);
+            }
+            if (lineupGuest) {
+                parts.push(`<br><b>${escapeHtml(guest)}:</b> ${escapeHtml(lineupGuest)}`);
+            }
+
+            // Goals
+            const goals = document.getElementById('tplMatchGoals').value.trim();
+            if (goals) {
+                parts.push(`<br><b>Tore:</b> ${escapeHtml(goals)}`);
+            }
+
+            // Cards
+            const cards = document.getElementById('tplMatchCards').value.trim();
+            if (cards) {
+                parts.push(`<br><b>Gelb-rote Karte:</b> ${escapeHtml(cards)}`);
+            }
+
+            // Referee
+            const ref = document.getElementById('tplMatchReferee').value.trim();
+            if (ref) {
+                parts.push(`<br><b>Schiedsrichter:</b> ${escapeHtml(ref)}`);
+            }
+
+            // Best players
+            const bestHome = document.getElementById('tplMatchBestHome').value.trim();
+            const bestGuest = document.getElementById('tplMatchBestGuest').value.trim();
+            if (bestHome || bestGuest) {
+                const bestStr = [bestHome, bestGuest].filter(Boolean).join(' \u2013 ');
+                parts.push(`<br><b>Beste Spieler:</b> ${escapeHtml(bestStr)}`);
+            }
+
+            // Spectators
+            const spectators = document.getElementById('tplMatchSpectators').value.trim();
+            if (spectators) {
+                parts.push(`<br><b>Zuschauer:</b> ${escapeHtml(spectators)}`);
+            }
+
+            // Report text
+            const report = document.getElementById('tplMatchReport').value.trim();
+            if (report) {
+                parts.push('<br> <br>');
+                parts.push(textToHtml(report));
+            }
+
+            // Quotes
+            const quoteItems = document.querySelectorAll('#tplMatchQuotes .repeater-item');
+            if (quoteItems.length > 0) {
+                let hasQuotes = false;
+                let quoteParts = [];
+                quoteItems.forEach(item => {
+                    const name = item.querySelector('.quote-name').value.trim();
+                    const text = item.querySelector('.quote-text').value.trim();
+                    if (name && text) {
+                        hasQuotes = true;
+                        quoteParts.push(`<u>${escapeHtml(name)}:</u> <br>${textToHtml(text)}`);
+                    }
+                });
+                if (hasQuotes) {
+                    parts.push('<br> <br>');
+                    parts.push('<b>Stimmen zum Spiel:</b> <br> <br>');
+                    parts.push(quoteParts.join(' <br> <br>'));
+                }
+            }
+
+            // Stats
+            const stats = document.getElementById('tplMatchStats').value.trim();
+            if (stats) {
+                parts.push('<br> <br>');
+                parts.push(textToHtml(stats));
+            }
+
+            return { title, short_content, content: parts.join('') };
+        }
+
+        function generatePreviewHTML() {
+            const round = document.getElementById('tplPreviewRound').value.trim();
+            const intro = document.getElementById('tplPreviewIntro').value.trim();
+            const outro = document.getElementById('tplPreviewOutro').value.trim();
+            const league = document.getElementById('tplPreviewLeague');
+            const leagueName = league.options[league.selectedIndex] ? league.options[league.selectedIndex].text : '';
+
+            // Title
+            const title = (round ? round : 'Vorschau') + (leagueName && leagueName !== '-- Liga waehlen --' ? ' – ' + leagueName : '');
+
+            let parts = [];
+
+            // Intro
+            if (intro) {
+                parts.push(textToHtml(intro));
+                parts.push('<br> <br>');
+            }
+
+            // Games
+            const games = document.querySelectorAll('#tplPreviewGames .repeater-item');
+            games.forEach((game, idx) => {
+                const home = game.querySelector('.pgame-home').value;
+                const guest = game.querySelector('.pgame-guest').value;
+                const datetime = game.querySelector('.pgame-datetime').value.trim();
+                const venue = game.querySelector('.pgame-venue').value.trim();
+                const text = game.querySelector('.pgame-text').value.trim();
+                const tip = game.querySelector('.pgame-tip').value.trim();
+
+                if (!home && !guest) return;
+
+                if (idx > 0) parts.push('<br> <br>');
+
+                // Game header with logos
+                if (home && guest) {
+                    const homeLogo = 'img/teams/' + home.replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+                    const guestLogo = 'img/teams/' + guest.replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+                    parts.push(`<center><img src="${homeLogo}" onerror="this.style.display='none'"> &nbsp; <img src="${guestLogo}" onerror="this.style.display='none'"></center>`);
+                    parts.push('<br>');
+                }
+
+                parts.push(`<b>${escapeHtml(home || '?')} \u2013 ${escapeHtml(guest || '?')}</b>`);
+
+                const meta = [datetime, venue].filter(Boolean);
+                if (meta.length) {
+                    parts.push(` <br>${escapeHtml(meta.join(' | '))}`);
+                }
+
+                if (text) {
+                    parts.push(' <br> <br>');
+                    parts.push(textToHtml(text));
+                }
+
+                if (tip) {
+                    parts.push(` <br><b>HAFO-Tipp:</b> ${escapeHtml(tip)}`);
+                }
+            });
+
+            // Outro
+            if (outro) {
+                parts.push('<br> <br>');
+                parts.push(textToHtml(outro));
+            }
+
+            const short_content = round ? round + (leagueName && leagueName !== '-- Liga waehlen --' ? ' – ' + leagueName : '') : 'Spieltagsvorschau';
+
+            return { title, short_content, content: parts.join('') };
+        }
+
+        function generateGeneralHTML() {
+            const text = document.getElementById('tplGeneralText').value.trim();
+            if (!text) return { title: '', short_content: '', content: '' };
+
+            const content = simpleTextToHtml(text);
+
+            // Short content: first ~200 chars plain text
+            const plainPreview = text.replace(/\*([^*]+)\*/g, '$1').replace(/_([^_]+)_/g, '$1').replace(/~([^~]+)~/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+            const short_content = plainPreview.length > 200 ? plainPreview.substring(0, 200) + '...' : plainPreview;
+
+            return { title: '', short_content, content };
+        }
+
+        function generateFromActiveTab() {
+            let result = null;
+
+            if (activeTab === 'match') {
+                result = generateMatchHTML();
+            } else if (activeTab === 'preview') {
+                result = generatePreviewHTML();
+            } else if (activeTab === 'general') {
+                result = generateGeneralHTML();
+            }
+
+            if (result) {
+                if (result.title) document.getElementById('newsTitle').value = result.title;
+                if (result.short_content) document.getElementById('newsShortContent').value = result.short_content;
+                if (result.content) document.getElementById('newsContent').value = result.content;
+            }
+        }
+
+        // ===== Override saveNews to generate HTML first =====
+        const originalSaveHandler = saveNews;
+
+        // Wrap save: generate HTML from active tab before saving
+        function preSaveGenerate() {
+            if (activeTab !== 'html') {
+                generateFromActiveTab();
+            }
+        }
+
+        // ===== Reset template fields =====
+        function resetTemplateFields() {
+            // Match fields - reset selection but keep league options
+            document.getElementById('tplMatchLeague').selectedIndex = 0;
+            document.getElementById('tplMatchRound').value = '';
+            document.getElementById('tplMatchHome').innerHTML = '<option value="">-- Team waehlen --</option>';
+            document.getElementById('tplMatchGuest').innerHTML = '<option value="">-- Team waehlen --</option>';
+            document.getElementById('tplMatchHomeLogo').src = 'about:blank';
+            document.getElementById('tplMatchHomeLogo').style.display = 'none';
+            document.getElementById('tplMatchGuestLogo').src = 'about:blank';
+            document.getElementById('tplMatchGuestLogo').style.display = 'none';
+            document.getElementById('tplMatchHomeGoals').value = '';
+            document.getElementById('tplMatchGuestGoals').value = '';
+            document.getElementById('tplMatchHomeHalf').value = '';
+            document.getElementById('tplMatchGuestHalf').value = '';
+            document.getElementById('tplMatchLineupHome').value = '';
+            document.getElementById('tplMatchLineupGuest').value = '';
+            document.getElementById('lineupHomeCheckboxes').innerHTML = '';
+            document.getElementById('lineupGuestCheckboxes').innerHTML = '';
+            document.getElementById('tplMatchGoals').value = '';
+            document.getElementById('tplMatchCards').value = '';
+            document.getElementById('tplMatchReferee').value = '';
+            document.getElementById('tplMatchBestHome').value = '';
+            document.getElementById('tplMatchBestGuest').value = '';
+            document.getElementById('tplMatchSpectators').value = '';
+            document.getElementById('tplMatchReport').value = '';
+            document.getElementById('tplMatchQuotes').innerHTML = '';
+            document.getElementById('tplMatchStats').value = '';
+            quoteCount = 0;
+
+            // Preview fields - reset selection but keep league options
+            document.getElementById('tplPreviewLeague').selectedIndex = 0;
+            document.getElementById('tplPreviewRound').value = '';
+            document.getElementById('tplPreviewIntro').value = '';
+            document.getElementById('tplPreviewGames').innerHTML = '';
+            document.getElementById('tplPreviewOutro').value = '';
+            previewGameCount = 0;
+
+            // General fields
+            document.getElementById('tplGeneralText').value = '';
         }
 
         // Modal handlers

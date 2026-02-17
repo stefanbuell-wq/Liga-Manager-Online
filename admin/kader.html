@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaderverwaltung - HAFO Admin</title>
+    <link rel="stylesheet" href="../css/league-modern.css">
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-live: #00FF88;
+            --color-bg-dark: #0D0D0D;
+            --color-bg-card: #1A1F1A;
+            --color-bg-elevated: #1E231E;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --color-text-primary: #FFFFFF;
+            --color-text-secondary: #A0A0A0;
+            --color-text-muted: #666666;
+            --color-success: #28a745;
+            --color-danger: #dc3545;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        a { color: var(--color-primary); text-decoration: none; }
+        a:hover { color: var(--color-primary-hover); }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .card {
+            background: var(--color-bg-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header h1, .header h2 { margin: 0; font-weight: 700; }
+
+        .header-actions { display: flex; gap: 10px; }
+
+        .btn {
+            padding: 10px 20px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
+
+        .btn-secondary {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+        }
+
+        .btn-secondary:hover { background: var(--color-bg-card); }
+
+        .btn-danger { background: var(--color-danger); }
+        .btn-danger:hover { background: #c82333; }
+
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+
+        .btn-success { background: var(--color-success); }
+
+        .hidden { display: none !important; }
+
+        /* Team Grid */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .team-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .team-card:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+        }
+
+        .team-card.active {
+            border-color: var(--color-primary);
+            background: rgba(226, 0, 26, 0.1);
+        }
+
+        .team-card img {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+
+        .team-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .team-card-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .team-card-count {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Player Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--color-text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--color-bg-elevated);
+        }
+
+        tr:hover { background: var(--color-bg-elevated); }
+
+        .position-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .pos-torwart { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .pos-abwehr { background: rgba(0, 123, 255, 0.2); color: #3d8bfd; }
+        .pos-mittelfeld { background: rgba(0, 255, 136, 0.2); color: var(--color-live); }
+        .pos-sturm { background: rgba(226, 0, 26, 0.2); color: var(--color-primary); }
+
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .inline-form {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .inline-form h4 {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A0A0A0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--color-bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--color-bg-elevated); border-radius: 4px; }
+
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .team-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Kaderverwaltung</h1>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary">Zurueck</a>
+            </div>
+        </div>
+
+        <!-- Liga-Auswahl -->
+        <div class="card" id="leagueSelectCard">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Liga auswaehlen</label>
+                <select id="leagueSelect" onchange="onLeagueSelect()">
+                    <option value="">-- Liga waehlen --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Team Grid -->
+        <div class="card hidden" id="teamGridCard">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2 style="margin:0;" id="leagueName">Teams</h2>
+            </div>
+            <div class="team-grid" id="teamGrid"></div>
+        </div>
+
+        <!-- Player List for selected team -->
+        <div class="card hidden" id="playerCard">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                <h2 style="margin:0;" id="teamTitle">Kader</h2>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-sm" onclick="showAddForm()">+ Spieler</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAllPlayers()">Alle loeschen</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row" id="playerStats"></div>
+
+            <!-- Add/Edit Form -->
+            <div class="inline-form hidden" id="playerForm">
+                <h4 id="playerFormTitle">Spieler hinzufuegen</h4>
+                <input type="hidden" id="editPlayerId">
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Nr.</label>
+                        <input type="number" id="playerNumber" min="1" max="99" placeholder="#">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Name *</label>
+                        <input type="text" id="playerName" required placeholder="Spielername">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Position</label>
+                        <select id="playerPosition">
+                            <option value="">--</option>
+                            <option value="Torwart">Torwart</option>
+                            <option value="Abwehr">Abwehr</option>
+                            <option value="Mittelfeld">Mittelfeld</option>
+                            <option value="Sturm">Sturm</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                    <button class="btn btn-sm" onclick="savePlayer()">Speichern</button>
+                    <button class="btn btn-secondary btn-sm" onclick="hideAddForm()">Abbrechen</button>
+                </div>
+            </div>
+
+            <!-- Player Table -->
+            <div id="playerList">Waehle ein Team...</div>
+        </div>
+    </div>
+
+    <script>
+        let csrfToken = '';
+        let currentLeagueFile = '';
+        let currentTeamId = null;
+        let currentTeamName = '';
+        let leaguesCache = null;
+        let teamsCache = {};
+        let playerCountsCache = {};
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('../api/check-auth.php');
+                const auth = await res.json();
+                csrfToken = auth.csrf_token || '';
+                if (!auth.authenticated) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+            } catch (e) {
+                console.error('Auth check failed');
+            }
+            await loadLeagues();
+        });
+
+        async function loadLeagues() {
+            const resp = await fetch('../api/list-leagues.php');
+            const data = await resp.json();
+            leaguesCache = data.leagues || [];
+
+            const sel = document.getElementById('leagueSelect');
+            leaguesCache.forEach(l => {
+                sel.appendChild(new Option(l.name, l.file));
+            });
+        }
+
+        async function onLeagueSelect() {
+            const file = document.getElementById('leagueSelect').value;
+            if (!file) {
+                document.getElementById('teamGridCard').classList.add('hidden');
+                document.getElementById('playerCard').classList.add('hidden');
+                return;
+            }
+
+            currentLeagueFile = file;
+            document.getElementById('teamGridCard').classList.remove('hidden');
+            document.getElementById('playerCard').classList.add('hidden');
+
+            // Load teams
+            const resp = await fetch('../api/get-league-data.php?liga=' + encodeURIComponent(file));
+            const data = await resp.json();
+
+            const teams = [];
+            if (data.teams) {
+                for (const id in data.teams) {
+                    teams.push({ id: parseInt(id), name: data.teams[id].name });
+                }
+                teams.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            teamsCache[file] = teams;
+
+            const league = leaguesCache.find(l => l.file === file);
+            document.getElementById('leagueName').textContent = league ? league.name : file;
+
+            // Load player counts for all teams
+            await loadPlayerCounts(teams);
+            renderTeamGrid(teams);
+        }
+
+        async function loadPlayerCounts(teams) {
+            playerCountsCache = {};
+            const promises = teams.map(async (t) => {
+                try {
+                    const resp = await fetch('../api/get-players.php?team_id=' + t.id);
+                    const data = await resp.json();
+                    playerCountsCache[t.id] = data.players ? data.players.length : 0;
+                } catch (e) {
+                    playerCountsCache[t.id] = 0;
+                }
+            });
+            await Promise.all(promises);
+        }
+
+        function renderTeamGrid(teams) {
+            const grid = document.getElementById('teamGrid');
+            grid.innerHTML = teams.map(t => {
+                const logo = '../img/teams/' + t.name.replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+                const count = playerCountsCache[t.id] || 0;
+                return `
+                    <div class="team-card ${currentTeamId === t.id ? 'active' : ''}" onclick="selectTeam(${t.id}, '${escapeAttr(t.name)}')">
+                        <img src="${logo}" onerror="this.src='../img/teams/blank.png'" alt="">
+                        <div class="team-card-info">
+                            <div class="team-card-name">${escapeHtml(t.name)}</div>
+                            <div class="team-card-count">${count} Spieler</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectTeam(teamId, teamName) {
+            currentTeamId = teamId;
+            currentTeamName = teamName;
+
+            // Highlight active card
+            document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.getElementById('playerCard').classList.remove('hidden');
+            document.getElementById('teamTitle').textContent = 'Kader: ' + teamName;
+            hideAddForm();
+
+            await loadPlayers();
+        }
+
+        async function loadPlayers() {
+            const resp = await fetch('../api/get-players.php?team_id=' + currentTeamId);
+            const data = await resp.json();
+            const players = data.players || [];
+
+            // Stats
+            const positions = { Torwart: 0, Abwehr: 0, Mittelfeld: 0, Sturm: 0 };
+            players.forEach(p => {
+                if (positions[p.position] !== undefined) positions[p.position]++;
+            });
+
+            document.getElementById('playerStats').innerHTML = `
+                <div class="stat-card"><div class="stat-value">${players.length}</div><div class="stat-label">Gesamt</div></div>
+                <div class="stat-card"><div class="stat-value">${positions.Torwart}</div><div class="stat-label">Torwart</div></div>
+                <div class="stat-card"><div class="stat-value">${positions.Abwehr}</div><div class="stat-label">Abwehr</div></div>
+                <div class="stat-card"><div class="stat-value">${positions.Mittelfeld}</div><div class="stat-label">Mittelfeld</div></div>
+                <div class="stat-card"><div class="stat-value">${positions.Sturm}</div><div class="stat-label">Sturm</div></div>
+            `;
+
+            if (players.length === 0) {
+                document.getElementById('playerList').innerHTML = '<p style="color: var(--color-text-muted); text-align:center; padding:20px;">Kein Kader vorhanden</p>';
+                // Update team grid count
+                playerCountsCache[currentTeamId] = 0;
+                updateTeamCardCount(currentTeamId, 0);
+                return;
+            }
+
+            // Sort: Torwart, Abwehr, Mittelfeld, Sturm, then by number
+            const posOrder = { Torwart: 0, Abwehr: 1, Mittelfeld: 2, Sturm: 3 };
+            players.sort((a, b) => {
+                const pa = posOrder[a.position] ?? 4;
+                const pb = posOrder[b.position] ?? 4;
+                if (pa !== pb) return pa - pb;
+                return (a.number || 99) - (b.number || 99);
+            });
+
+            document.getElementById('playerList').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">Nr.</th>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th style="width:140px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${players.map(p => `
+                            <tr>
+                                <td style="font-weight:700; color:var(--color-text-secondary);">${p.number || '-'}</td>
+                                <td style="font-weight:600;">${escapeHtml(p.name)}</td>
+                                <td><span class="position-badge pos-${(p.position || '').toLowerCase()}">${escapeHtml(p.position || '-')}</span></td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-secondary btn-sm" onclick="editPlayer(${p.id}, '${escapeAttr(p.name)}', ${p.number || 'null'}, '${escapeAttr(p.position || '')}')">Bearbeiten</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deletePlayer(${p.id}, '${escapeAttr(p.name)}')">X</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            // Update counts
+            playerCountsCache[currentTeamId] = players.length;
+            updateTeamCardCount(currentTeamId, players.length);
+        }
+
+        function updateTeamCardCount(teamId, count) {
+            document.querySelectorAll('.team-card').forEach(card => {
+                if (card.onclick && card.onclick.toString().includes(teamId)) {
+                    const countEl = card.querySelector('.team-card-count');
+                    if (countEl) countEl.textContent = count + ' Spieler';
+                }
+            });
+        }
+
+        function showAddForm() {
+            document.getElementById('playerForm').classList.remove('hidden');
+            document.getElementById('playerFormTitle').textContent = 'Spieler hinzufuegen';
+            document.getElementById('editPlayerId').value = '';
+            document.getElementById('playerNumber').value = '';
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerPosition').value = '';
+            document.getElementById('playerName').focus();
+        }
+
+        function hideAddForm() {
+            document.getElementById('playerForm').classList.add('hidden');
+        }
+
+        function editPlayer(id, name, number, position) {
+            document.getElementById('playerForm').classList.remove('hidden');
+            document.getElementById('playerFormTitle').textContent = 'Spieler bearbeiten';
+            document.getElementById('editPlayerId').value = id;
+            document.getElementById('playerNumber').value = number || '';
+            document.getElementById('playerName').value = name;
+            document.getElementById('playerPosition').value = position;
+            document.getElementById('playerName').focus();
+        }
+
+        async function savePlayer() {
+            const playerId = document.getElementById('editPlayerId').value;
+            const name = document.getElementById('playerName').value.trim();
+            const number = document.getElementById('playerNumber').value;
+            const position = document.getElementById('playerPosition').value;
+
+            if (!name) {
+                alert('Name ist erforderlich');
+                return;
+            }
+
+            const payload = {
+                action: playerId ? 'update' : 'create',
+                csrf_token: csrfToken,
+                team_id: currentTeamId,
+                name: name,
+                number: number ? parseInt(number) : null,
+                position: position || null
+            };
+
+            if (playerId) {
+                payload.player_id = parseInt(playerId);
+            }
+
+            try {
+                const resp = await fetch('../api/get-players.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await resp.json();
+
+                if (result.error) throw new Error(result.error);
+
+                hideAddForm();
+                await loadPlayers();
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        async function deletePlayer(id, name) {
+            if (!confirm('Spieler "' + name + '" wirklich loeschen?')) return;
+
+            try {
+                const resp = await fetch('../api/get-players.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        csrf_token: csrfToken,
+                        player_id: id
+                    })
+                });
+                const result = await resp.json();
+                if (result.error) throw new Error(result.error);
+                await loadPlayers();
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        async function deleteAllPlayers() {
+            if (!confirm('Alle Spieler von "' + currentTeamName + '" wirklich loeschen?')) return;
+            if (!confirm('Wirklich ALLE Spieler loeschen? Das kann nicht rueckgaengig gemacht werden.')) return;
+
+            try {
+                // Get all players and delete one by one (no bulk delete endpoint)
+                const resp = await fetch('../api/get-players.php?team_id=' + currentTeamId);
+                const data = await resp.json();
+                const players = data.players || [];
+
+                for (const p of players) {
+                    await fetch('../api/get-players.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            csrf_token: csrfToken,
+                            player_id: p.id
+                        })
+                    });
+                }
+
+                await loadPlayers();
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            if (!text) return '';
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+    </script>
+</body>
+
+</html>
