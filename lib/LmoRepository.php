@@ -63,6 +63,7 @@ class LmoRepository
         foreach ($teams as $t) {
             $tOut = [
                 'id' => $t['original_id'],
+                'db_id' => $t['id'],
                 'name' => $t['name'],
                 'icon' => ''
             ];
