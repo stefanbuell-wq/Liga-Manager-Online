@@ -412,7 +412,7 @@
             const teams = [];
             if (data.teams) {
                 for (const id in data.teams) {
-                    teams.push({ id: parseInt(id), name: data.teams[id].name });
+                    teams.push({ id: data.teams[id].db_id, name: data.teams[id].name });
                 }
                 teams.sort((a, b) => a.name.localeCompare(b.name));
             }
