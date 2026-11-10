@@ -39,26 +39,26 @@ $defaultTheme = [
     'colorPrimaryDark' => '#b80015',
 
     // Background Colors
-    'colorBgDark' => '#0D0D0D',
-    'colorBgCard' => '#1A1F1A',
-    'colorBgCardHover' => '#242924',
-    'colorBgElevated' => '#1E231E',
+    'colorBgDark' => '#F5F5F5',
+    'colorBgCard' => '#FFFFFF',
+    'colorBgCardHover' => '#F0F0F0',
+    'colorBgElevated' => '#FAFAFA',
 
     // Text Colors
-    'colorTextPrimary' => '#FFFFFF',
-    'colorTextSecondary' => '#A0A0A0',
-    'colorTextMuted' => '#666666',
+    'colorTextPrimary' => '#111111',
+    'colorTextSecondary' => '#555555',
+    'colorTextMuted' => '#767676',
 
     // Accent Colors
-    'colorLive' => '#00FF88',
+    'colorLive' => '#00A35C',
     'colorSuccess' => '#22C55E',
     'colorWarning' => '#F59E0B',
     'colorError' => '#EF4444',
 
     // Borders & Effects
     'borderRadius' => '12',
-    'borderOpacity' => '0.08',
-    'shadowIntensity' => '0.4',
+    'borderOpacity' => '0.10',
+    'shadowIntensity' => '0.08',
 
     // Typography
     'fontPrimary' => 'Inter',
@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         '--radius-md' => $theme['borderRadius'] . 'px',
         '--radius-lg' => (intval($theme['borderRadius']) + 4) . 'px',
         '--radius-xl' => (intval($theme['borderRadius']) + 12) . 'px',
-        '--border-color' => 'rgba(255, 255, 255, ' . $theme['borderOpacity'] . ')',
+        '--border-color' => 'rgba(0, 0, 0, ' . $theme['borderOpacity'] . ')',
         '--shadow-card' => '0 4px 24px rgba(0, 0, 0, ' . $theme['shadowIntensity'] . ')',
         '--font-primary' => "'" . $theme['fontPrimary'] . "', -apple-system, BlinkMacSystemFont, sans-serif",
         '--font-display' => "'" . $theme['fontDisplay'] . "', '" . $theme['fontPrimary'] . "', sans-serif",

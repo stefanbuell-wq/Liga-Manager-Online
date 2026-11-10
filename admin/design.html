@@ -12,15 +12,15 @@
         :root {
             --color-primary: #E2001A;
             --color-primary-hover: #ff1a35;
-            --color-bg-dark: #0D0D0D;
-            --color-bg-card: #1A1F1A;
-            --color-bg-elevated: #1E231E;
-            --color-border: rgba(255, 255, 255, 0.08);
-            --color-text-primary: #FFFFFF;
-            --color-text-secondary: #A0A0A0;
-            --color-text-muted: #666666;
+            --color-bg-dark: #F5F5F5;
+            --color-bg-card: #FFFFFF;
+            --color-bg-elevated: #FAFAFA;
+            --color-border: rgba(0, 0, 0, 0.10);
+            --color-text-primary: #111111;
+            --color-text-secondary: #555555;
+            --color-text-muted: #767676;
             --color-success: #22C55E;
-            --color-live: #00FF88;
+            --color-live: #00A35C;
             --radius-md: 12px;
             --radius-lg: 16px;
         }
@@ -274,7 +274,7 @@
 
         /* Preview Content */
         .preview-header {
-            background: rgba(13, 13, 13, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-bottom: 1px solid var(--color-border);
             padding: 16px 24px;
             display: flex;
@@ -346,7 +346,7 @@
         }
 
         .preview-card {
-            background: var(--preview-card, #1A1F1A);
+            background: var(--preview-card, #FFFFFF);
             border: 1px solid var(--color-border);
             border-radius: var(--preview-radius, 12px);
             padding: 20px;
@@ -362,7 +362,7 @@
         }
 
         .preview-badge {
-            background: var(--preview-live, #00FF88);
+            background: var(--preview-live, #00A35C);
             color: #000;
             padding: 2px 8px;
             border-radius: 4px;
@@ -392,11 +392,11 @@
         }
 
         .preview-score.winner {
-            color: var(--preview-live, #00FF88);
+            color: var(--preview-live, #00A35C);
         }
 
         .preview-table {
-            background: var(--preview-card, #1A1F1A);
+            background: var(--preview-card, #FFFFFF);
             border: 1px solid var(--color-border);
             border-radius: var(--preview-radius, 12px);
             overflow: hidden;
@@ -563,8 +563,8 @@
                 <div class="setting-row">
                     <label>Live/Akzent-Farbe</label>
                     <div class="color-input-wrapper">
-                        <input type="color" id="colorLive" value="#00FF88" oninput="syncColorInput(this)">
-                        <input type="text" id="colorLiveText" value="#00FF88" oninput="syncColorPicker(this)">
+                        <input type="color" id="colorLive" value="#00A35C" oninput="syncColorInput(this)">
+                        <input type="text" id="colorLiveText" value="#00A35C" oninput="syncColorPicker(this)">
                     </div>
                 </div>
             </div>
@@ -575,22 +575,22 @@
                 <div class="setting-row">
                     <label>Hintergrund (Dunkel)</label>
                     <div class="color-input-wrapper">
-                        <input type="color" id="colorBgDark" value="#0D0D0D" oninput="syncColorInput(this)">
-                        <input type="text" id="colorBgDarkText" value="#0D0D0D" oninput="syncColorPicker(this)">
+                        <input type="color" id="colorBgDark" value="#F5F5F5" oninput="syncColorInput(this)">
+                        <input type="text" id="colorBgDarkText" value="#F5F5F5" oninput="syncColorPicker(this)">
                     </div>
                 </div>
                 <div class="setting-row">
                     <label>Karten-Hintergrund</label>
                     <div class="color-input-wrapper">
-                        <input type="color" id="colorBgCard" value="#1A1F1A" oninput="syncColorInput(this)">
-                        <input type="text" id="colorBgCardText" value="#1A1F1A" oninput="syncColorPicker(this)">
+                        <input type="color" id="colorBgCard" value="#FFFFFF" oninput="syncColorInput(this)">
+                        <input type="text" id="colorBgCardText" value="#FFFFFF" oninput="syncColorPicker(this)">
                     </div>
                 </div>
                 <div class="setting-row">
                     <label>Erhohter Hintergrund</label>
                     <div class="color-input-wrapper">
-                        <input type="color" id="colorBgElevated" value="#1E231E" oninput="syncColorInput(this)">
-                        <input type="text" id="colorBgElevatedText" value="#1E231E" oninput="syncColorPicker(this)">
+                        <input type="color" id="colorBgElevated" value="#FAFAFA" oninput="syncColorInput(this)">
+                        <input type="text" id="colorBgElevatedText" value="#FAFAFA" oninput="syncColorPicker(this)">
                     </div>
                 </div>
             </div>
@@ -608,8 +608,8 @@
                 <div class="setting-row">
                     <label>Sekundartext</label>
                     <div class="color-input-wrapper">
-                        <input type="color" id="colorTextSecondary" value="#A0A0A0" oninput="syncColorInput(this)">
-                        <input type="text" id="colorTextSecondaryText" value="#A0A0A0" oninput="syncColorPicker(this)">
+                        <input type="color" id="colorTextSecondary" value="#555555" oninput="syncColorInput(this)">
+                        <input type="text" id="colorTextSecondaryText" value="#555555" oninput="syncColorPicker(this)">
                     </div>
                 </div>
                 <div class="setting-row">
@@ -779,18 +779,18 @@
             default: {
                 colorPrimary: '#E2001A',
                 colorPrimaryHover: '#ff1a35',
-                colorLive: '#00FF88',
-                colorBgDark: '#0D0D0D',
-                colorBgCard: '#1A1F1A',
-                colorBgElevated: '#1E231E',
+                colorLive: '#00A35C',
+                colorBgDark: '#F5F5F5',
+                colorBgCard: '#FFFFFF',
+                colorBgElevated: '#FAFAFA',
                 colorTextPrimary: '#FFFFFF',
-                colorTextSecondary: '#A0A0A0',
+                colorTextSecondary: '#555555',
                 colorTextMuted: '#666666'
             },
             blue: {
                 colorPrimary: '#0066FF',
                 colorPrimaryHover: '#3385FF',
-                colorLive: '#00FF88',
+                colorLive: '#00A35C',
                 colorBgDark: '#0A0E14',
                 colorBgCard: '#141A22',
                 colorBgElevated: '#1A222D',
@@ -930,7 +930,7 @@
             frame.style.setProperty('--color-text-primary', document.getElementById('colorTextPrimary').value);
             frame.style.setProperty('--color-text-secondary', document.getElementById('colorTextSecondary').value);
             frame.style.setProperty('--color-text-muted', document.getElementById('colorTextMuted').value);
-            frame.style.setProperty('--color-border', `rgba(255,255,255,0.08)`);
+            frame.style.setProperty('--color-border', `rgba(0, 0, 0, 0.10)`);
 
             // Update text content
             const siteName = document.getElementById('siteName').value;
