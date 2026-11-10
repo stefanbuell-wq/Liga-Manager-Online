@@ -109,41 +109,20 @@
         <section class="hero">
             <div class="container">
                 <div class="hero-grid">
-                    <!-- Main Hero -->
-                    <div class="hero-main">
-                        <img src="img/news/match-1.svg" alt="Hero" class="hero-main-image">
+                    <!-- Main Hero (befuellt aus den neuesten Spielberichten) -->
+                    <a href="javascript:void(0)" class="hero-main" id="hero-main" style="display:block;">
+                        <img src="img/news/match-1.svg" alt="" class="hero-main-image">
                         <div class="hero-main-overlay">
                             <div class="hero-main-content animate-fade-in">
-                                <span class="hero-badge">⚡ Breaking</span>
-                                <h1 class="hero-title">Hamburg-Oberliga: Spannender Titelkampf geht in die heiße Phase</h1>
-                                <p class="hero-meta">vor 2 Stunden • von Redaktion</p>
+                                <span class="hero-badge">Neuester Spielbericht</span>
+                                <h1 class="hero-title" id="hero-title">Aktuelle Meldungen werden geladen …</h1>
+                                <p class="hero-meta" id="hero-meta"></p>
                             </div>
                         </div>
-                    </div>
+                    </a>
 
-                    <!-- Sidebar Cards -->
-                    <div class="hero-sidebar stagger">
-                        <a href="#news-section" class="hero-card animate-fade-in" style="opacity: 0;">
-                            <img src="img/news/match-2.svg" alt="" class="hero-card-image">
-                            <div class="hero-card-content">
-                                <h3 class="hero-card-title">TuS Dassendorf bleibt Spitzenreiter</h3>
-                                <span class="hero-card-meta">vor 5 Stunden</span>
-                            </div>
-                        </a>
-                        <a href="#news-section" class="hero-card animate-fade-in" style="opacity: 0;">
-                            <img src="img/news/match-3.svg" alt="" class="hero-card-image">
-                            <div class="hero-card-content">
-                                <h3 class="hero-card-title">Altona 93 mit wichtigem Heimsieg</h3>
-                                <span class="hero-card-meta">vor 8 Stunden</span>
-                            </div>
-                        </a>
-                        <a href="#news-section" class="hero-card animate-fade-in" style="opacity: 0;">
-                            <img src="img/news/match-4.svg" alt="" class="hero-card-image">
-                            <div class="hero-card-content">
-                                <h3 class="hero-card-title">Nachwuchstalent wechselt zum HSV</h3>
-                                <span class="hero-card-meta">gestern</span>
-                            </div>
-                        </a>
+                    <!-- Sidebar Cards (befuellt per JS) -->
+                    <div class="hero-sidebar stagger" id="hero-cards">
                     </div>
                 </div>
             </div>
@@ -158,7 +137,7 @@
                             <span class="live-dot"></span>
                             Live
                         </span>
-                        Aktuelle Spiele
+                        <span id="live-ticker-title">Aktuelle Spiele</span>
                     </div>
                     <a href="javascript:void(0)" onclick="goToTab('schedule')" class="btn btn-ghost">Alle Spiele →</a>
                 </div>
@@ -682,40 +661,80 @@
             }
         }
 
-        // === LIVE MATCHES ===
-        function loadLiveMatches() {
-            // Demo data for live ticker
-            const liveMatches = [
-                { home: 'TuS Dassendorf', guest: 'SC Victoria', homeGoals: 2, guestGoals: 1, status: 'live', time: "67'" },
-                { home: 'Altona 93', guest: 'Concordia', homeGoals: 0, guestGoals: 0, status: 'live', time: "34'" },
-                { home: 'HSV III', guest: 'Bramfelder SV', homeGoals: 3, guestGoals: 2, status: 'finished', time: 'Ende' },
-                { home: 'Barsbütteler SV', guest: 'Niendorfer TSV', homeGoals: null, guestGoals: null, status: 'upcoming', time: '15:00' },
-                { home: 'FC Türkiye', guest: 'HEBC', homeGoals: 1, guestGoals: 1, status: 'live', time: "78'" },
-            ];
-
+        // === LETZTER SPIELTAG (statt Demo-Liveticker) ===
+        async function loadLiveMatches() {
             const container = document.getElementById('live-ticker');
-            container.innerHTML = liveMatches.map(m => `
-                <div class="match-card ${m.status === 'live' ? 'live' : ''}">
-                    <div class="match-card-header">
-                        <span>${m.time}</span>
-                        <span class="match-status ${m.status}">${m.status === 'live' ? 'LIVE' : m.status === 'finished' ? 'Ende' : 'Bald'}</span>
-                    </div>
-                    <div class="match-teams">
-                        <div class="match-team">
-                            <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                 onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                            <span class="team-name">${m.home}</span>
-                            <span class="team-score ${m.homeGoals > m.guestGoals ? 'winner' : ''}">${m.homeGoals ?? '-'}</span>
+            try {
+                // ohne ?liga= liefert die API die neueste Saison der Hamburg-Oberliga
+                const res = await fetch(`${API_BASE}/get-league-data.php`);
+                const data = await res.json();
+                if (!data.matches) throw new Error('keine Spiele');
+
+                const rounds = Object.keys(data.matches).map(Number).sort((a, b) => a - b);
+                const playedRounds = rounds.filter(r => (data.matches[r] || []).some(m => m.played));
+                const round = playedRounds.length ? playedRounds[playedRounds.length - 1] : rounds[0];
+                const matches = data.matches[round] || [];
+
+                const indicator = document.querySelector('#live-section .live-indicator');
+                if (indicator) indicator.style.display = 'none';
+                const title = document.getElementById('live-ticker-title');
+                if (title) title.textContent = `${data.options.Name || 'Oberliga'} · Spieltag ${round}`;
+
+                container.innerHTML = matches.map(m => {
+                    const played = m.played;
+                    const status = played ? 'finished' : 'upcoming';
+                    return `
+                    <div class="match-card">
+                        <div class="match-card-header">
+                            <span>${esc(m.date || '')}${m.time ? ' • ' + esc(m.time) : ''}</span>
+                            <span class="match-status ${status}">${played ? 'Endstand' : 'Geplant'}</span>
                         </div>
-                        <div class="match-team">
-                            <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                 onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                            <span class="team-name">${m.guest}</span>
-                            <span class="team-score ${m.guestGoals > m.homeGoals ? 'winner' : ''}">${m.guestGoals ?? '-'}</span>
+                        <div class="match-teams">
+                            <div class="match-team">
+                                <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                     onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
+                                <span class="team-name">${esc(m.home)}</span>
+                                <span class="team-score ${played && m.home_goals > m.guest_goals ? 'winner' : ''}">${played ? m.home_goals : '-'}</span>
+                            </div>
+                            <div class="match-team">
+                                <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                                     onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
+                                <span class="team-name">${esc(m.guest)}</span>
+                                <span class="team-score ${played && m.guest_goals > m.home_goals ? 'winner' : ''}">${played ? m.guest_goals : '-'}</span>
+                            </div>
                         </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.warn('Letzter Spieltag konnte nicht geladen werden', e);
+                container.innerHTML = '<p class="text-muted">Keine aktuellen Spiele verfügbar.</p>';
+            }
+        }
+
+        // HTML-Escaping fuer Daten aus der DB
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        // === HERO: neueste Spielberichte ===
+        function renderHero(news) {
+            if (!news || !news.length) return;
+            const [top, ...rest] = news;
+            const main = document.getElementById('hero-main');
+            document.getElementById('hero-title').textContent = top.title;
+            document.getElementById('hero-meta').textContent =
+                `${top.date_formatted || ''}${top.author ? ' • von ' + top.author : ''}`;
+            main.onclick = () => showNews(top.id);
+
+            const imgs = ['img/news/match-2.svg', 'img/news/match-3.svg', 'img/news/match-4.svg'];
+            document.getElementById('hero-cards').innerHTML = rest.slice(0, 3).map((n, i) => `
+                <a href="javascript:void(0)" onclick="showNews(${Number(n.id)})" class="hero-card animate-fade-in">
+                    <img src="${imgs[i]}" alt="" class="hero-card-image">
+                    <div class="hero-card-content">
+                        <h3 class="hero-card-title">${esc(n.title)}</h3>
+                        <span class="hero-card-meta">${esc(n.date_formatted || '')}</span>
                     </div>
-                </div>
-            `).join('');
+                </a>`).join('');
         }
 
         // === NEWS ===
@@ -723,6 +742,8 @@
             try {
                 const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=6`);
                 const data = await res.json();
+
+                renderHero(data.news);
 
                 const container = document.getElementById('news-grid');
                 if (!data.news || data.news.length === 0) {
