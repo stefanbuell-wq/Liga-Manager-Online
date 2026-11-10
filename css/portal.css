@@ -1131,3 +1131,12 @@ h4 { font-size: 1.25rem; }
 .rank-trend.rank-same {
     color: var(--color-text-muted);
 }
+
+/* Rang + Trend in einer Zeile halten (sonst ungleiche Zeilenhoehen) */
+.table-rank, td.table-rank, .full-table td:first-child {
+    white-space: nowrap;
+    min-width: 56px;
+}
+.rank-trend {
+    white-space: nowrap;
+}
