@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saison-Assistent - LMO Admin</title>
+    <link rel="stylesheet" href="../css/league-modern.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --header-height: 64px;
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-live: #00A35C;
+            --color-bg-dark: #F5F5F5;
+            --color-bg-card: #FFFFFF;
+            --color-bg-elevated: #FAFAFA;
+            --color-border: rgba(0, 0, 0, 0.10);
+            --color-text-primary: #111111;
+            --color-text-secondary: #555555;
+            --color-text-muted: #767676;
+            --color-warning: #D97706;
+            --color-danger: #dc3545;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--color-bg-card);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--color-text-primary);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            border-radius: 8px;
+        }
+
+        .nav-items {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 14px 24px;
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+        }
+
+        .nav-item:hover {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(226, 0, 26, 0.15);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            height: var(--header-height);
+            background: var(--color-bg-card);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: var(--color-bg-dark);
+        }
+
+        .wizard-container {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        /* Stepper */
+        .stepper {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .step-pill {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .step-pill.disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .step-pill.active {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(226, 0, 26, 0.12);
+        }
+
+        .step-pill.done {
+            border-color: var(--color-live);
+        }
+
+        .step-num {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-pill.active .step-num {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #fff;
+        }
+
+        .step-pill.done .step-num {
+            background: var(--color-live);
+            border-color: var(--color-live);
+            color: #fff;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .step-sub {
+            font-size: 0.78rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Cards & Forms */
+        .card {
+            background: var(--color-bg-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+
+        .card h3, .card h2 {
+            margin-top: 0;
+            color: var(--color-text-primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="search"],
+        input[type="date"],
+        input[type="time"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--color-text-primary);
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A0A0A0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        button {
+            padding: 11px 22px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.btn-secondary {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+        }
+
+        button.btn-secondary:hover:not(:disabled) {
+            background: var(--color-bg-card);
+            border-color: var(--color-text-muted);
+        }
+
+        button.btn-success {
+            background: var(--color-live);
+            color: #fff;
+        }
+
+        button.btn-success:hover:not(:disabled) {
+            background: #008a4e;
+        }
+
+        button.btn-danger {
+            background: var(--color-danger);
+            color: #fff;
+        }
+
+        button.btn-sm {
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            border-radius: 8px;
+        }
+
+        /* Badges & Alerts */
+        .badge {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(0, 163, 92, 0.14);
+            color: var(--color-live);
+        }
+
+        .badge-warning {
+            background: rgba(217, 119, 6, 0.15);
+            color: var(--color-warning);
+        }
+
+        .badge-danger {
+            background: rgba(226, 0, 26, 0.14);
+            color: var(--color-primary);
+        }
+
+        .info-box {
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .error-banner {
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            background: rgba(226, 0, 26, 0.08);
+            border: 1px solid rgba(226, 0, 26, 0.35);
+            color: var(--color-primary);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        /* Teams Table */
+        .team-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .team-table th,
+        .team-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--color-border);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .team-table th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--color-text-muted);
+            background: var(--color-bg-elevated);
+        }
+
+        .team-row.unchecked {
+            opacity: 0.45;
+            background: var(--color-bg-elevated);
+        }
+
+        .team-logo-preview {
+            height: 28px;
+            width: 28px;
+            object-fit: contain;
+            vertical-align: middle;
+        }
+
+        /* Option Cards (Step 3) */
+        .option-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .option-card {
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            cursor: pointer;
+            background: var(--color-bg-elevated);
+            transition: all 0.2s ease;
+        }
+
+        .option-card.selected {
+            border-color: var(--color-primary);
+            background: rgba(226, 0, 26, 0.04);
+        }
+
+        .option-card h4 {
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option-card p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: var(--color-text-secondary);
+            line-height: 1.45;
+        }
+
+        /* Wizard Footer Actions */
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--color-bg-dark);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        @media (max-width: 860px) {
+            .stepper {
+                grid-template-columns: 1fr 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="hidden">
+        <div class="card login-box">
+            <h2 style="text-align:center; margin-top:0;">LMO Admin Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Benutzername</label>
+                    <input type="text" id="login-user" required>
+                </div>
+                <div class="form-group">
+                    <label>Passwort</label>
+                    <input type="password" id="login-pass" required>
+                </div>
+                <button type="submit" style="width:100%; justify-content:center;">Anmelden</button>
+                <p id="login-error" style="color:var(--color-primary); text-align:center; margin-top:10px;"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">LMO Admin</div>
+        <nav class="nav-items">
+            <a class="nav-item" href="index.html">🏠 Dashboard (Ligen)</a>
+            <a class="nav-item active" href="season.html">📅 Saison-Assistent</a>
+            <a class="nav-item" href="index.html#teams">👥 Teams</a>
+            <a class="nav-item" href="index.html#corrections">📊 Punktekorrekturen</a>
+            <a class="nav-item" href="news.html">📰 News & Berichte</a>
+            <a class="nav-item" href="kader.html">⚽ Kader</a>
+            <a class="nav-item" href="forum.html">💬 Forum</a>
+            <a class="nav-item" href="design.html">🎨 Design Editor</a>
+            <a class="nav-item" href="anleitung.html">📖 Anleitung</a>
+        </nav>
+        <div style="padding: 20px;">
+            <a href="index.html" class="btn-secondary" style="display:block; text-align:center; padding:10px; border-radius:12px; text-decoration:none; color:var(--color-text-primary); border:1px solid var(--color-border);">← Zum Dashboard</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <h2>📅 Saison-Assistent – Neue Saison anlegen</h2>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span id="user-info" style="font-size:0.9rem; color:var(--color-text-secondary);">Admin</span>
+                <a href="index.html" class="btn-secondary" style="padding:7px 14px; border-radius:8px; text-decoration:none; font-size:0.85rem; color:var(--color-text-primary); border:1px solid var(--color-border);">Dashboard</a>
+            </div>
+        </header>
+
+        <section class="content-area">
+            <div class="wizard-container">
+
+                <!-- Stepper -->
+                <div class="stepper">
+                    <div class="step-pill active" id="step-pill-1" onclick="goToStep(1)">
+                        <div class="step-num">1</div>
+                        <div>
+                            <div class="step-label">Quell-Liga & Name</div>
+                            <div class="step-sub">Vorlage & Datei wählen</div>
+                        </div>
+                    </div>
+                    <div class="step-pill disabled" id="step-pill-2" onclick="goToStep(2)">
+                        <div class="step-num">2</div>
+                        <div>
+                            <div class="step-label">Teams übernehmen</div>
+                            <div class="step-sub">Ab-/Aufsteiger anpassen</div>
+                        </div>
+                    </div>
+                    <div class="step-pill disabled" id="step-pill-3" onclick="goToStep(3)">
+                        <div class="step-num">3</div>
+                        <div>
+                            <div class="step-label">Spielplan</div>
+                            <div class="step-sub">Leer oder Doppelrunde</div>
+                        </div>
+                    </div>
+                    <div class="step-pill disabled" id="step-pill-4" onclick="goToStep(4)">
+                        <div class="step-num">4</div>
+                        <div>
+                            <div class="step-label">Vorschau & Anlegen</div>
+                            <div class="step-sub">Prüfen & Speichern</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="global-error" class="error-banner hidden"></div>
+
+                <!-- ==================== SCHRITT 1: QUELL-LIGA & NAME ==================== -->
+                <div id="step-1" class="step-panel">
+                    <!-- Gewählte Quell-Liga + Neuer Name/Dateiname -->
+                    <div id="step1-config-card" class="card hidden">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                            <h3 style="margin:0;">1. Neue Saison konfigurieren</h3>
+                            <span class="badge badge-success" id="source-league-badge">Vorlage gewählt</span>
+                        </div>
+
+                        <div class="info-box" id="source-league-summary"></div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="new-league-name">Name der neuen Saison *</label>
+                                <input type="text" id="new-league-name" placeholder="z. B. Hamburg-Oberliga 27/28" oninput="validateStep1Inputs()">
+                                <small style="color:var(--color-text-muted); font-size:0.8rem;">Wird in der Liga-Auswahl und im Header angezeigt.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-league-file">Dateiname (.l98) *</label>
+                                <input type="text" id="new-league-file" placeholder="z. B. hhoberliga2728.l98" oninput="onNewFileInput()">
+                                <div id="file-validation-msg" style="font-size:0.82rem; margin-top:5px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="wizard-actions">
+                            <span style="font-size:0.85rem; color:var(--color-text-muted);">Unten kann bei Bedarf eine andere Quell-Liga gewählt werden.</span>
+                            <button id="btn-step1-next" onclick="goToStep(2)">Weiter zu Schritt 2: Teams &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- Quell-Liga Liste (wie im Dashboard) -->
+                    <div class="card">
+                        <h3>Quell-Liga auswählen</h3>
+                        <p style="color:var(--color-text-secondary); font-size:0.9rem; margin-top:0;">
+                            Wählen Sie die bestehende Saison aus, deren Einstellungen und Teams als Vorlage dienen sollen (z. B. „Hamburg-Oberliga 26/27“).
+                        </p>
+                        <div id="source-league-list-container">Lade Ligen...</div>
+                    </div>
+                </div>
+
+                <!-- ==================== SCHRITT 2: TEAMS ÜBERNEHMEN ==================== -->
+                <div id="step-2" class="step-panel hidden">
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                            <div>
+                                <h3 style="margin:0;">2. Teams der neuen Saison zusammenstellen</h3>
+                                <div style="font-size:0.88rem; color:var(--color-text-secondary); margin-top:4px;">
+                                    Absteiger per Checkbox abwählen und Aufsteiger / neue Teams hinzufügen. Logos werden automatisch vom gleichnamigen Team übernommen.
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button type="button" class="btn-secondary btn-sm" onclick="toggleAllSourceTeams(true)">Alle wählen</button>
+                                <button type="button" class="btn-secondary btn-sm" id="btn-uncheck-relegated" onclick="uncheckRelegatedTeams()">Abstiegsplätze abwählen</button>
+                            </div>
+                        </div>
+
+                        <!-- Live-Statusbalken Teamanzahl -->
+                        <div id="teams-status-bar" class="info-box" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;"></div>
+
+                        <!-- Tabelle der Teams -->
+                        <div style="overflow-x:auto; margin-bottom:20px;">
+                            <table class="team-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:48px;">Aktiv</th>
+                                        <th style="width:52px;">Nr.</th>
+                                        <th style="width:56px;">Logo</th>
+                                        <th>Teamname</th>
+                                        <th style="width:150px;">Kurzname</th>
+                                        <th style="width:150px;">Herkunft / Info</th>
+                                        <th style="width:100px; text-align:right;">Aktion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wizard-teams-tbody"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Neues Team hinzufügen -->
+                        <div style="background:var(--color-bg-elevated); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:16px;">
+                            <h4 style="margin:0 0 12px 0; font-size:0.95rem;">+ Neues Team (Aufsteiger) hinzufügen</h4>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                                <div style="width:44px; height:42px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-card); border:1px solid var(--color-border); border-radius:8px;">
+                                    <img id="new-team-logo-preview" src="../img/teams/blank.png" onerror="this.src='../img/teams/blank.png'" class="team-logo-preview" alt="">
+                                </div>
+                                <div style="flex:2; min-width:220px;">
+                                    <label for="add-team-name" style="font-size:0.82rem;">Teamname *</label>
+                                    <input type="text" id="add-team-name" list="known-teams-datalist" placeholder="z. B. Altona 93 II oder Aufsteiger..." oninput="onAddTeamNameInput()">
+                                    <datalist id="known-teams-datalist"></datalist>
+                                </div>
+                                <div style="flex:1; min-width:130px;">
+                                    <label for="add-team-short" style="font-size:0.82rem;">Kurzname (max. 12)</label>
+                                    <input type="text" id="add-team-short" maxlength="12" placeholder="z. B. AFC II">
+                                </div>
+                                <div>
+                                    <button type="button" onclick="addNewTeamToSeason()">+ Hinzufügen</button>
+                                </div>
+                            </div>
+                            <div id="add-team-logo-hint" style="font-size:0.8rem; color:var(--color-text-muted); margin-top:8px;">
+                                Tipp: Bei bekannten Vereinen aus anderen Ligen werden Kurzname und Vereinswappen automatisch vorgeschlagen.
+                            </div>
+                        </div>
+
+                        <div class="wizard-actions">
+                            <button type="button" class="btn-secondary" onclick="goToStep(1)">&larr; Zurück zu Schritt 1</button>
+                            <button type="button" id="btn-step2-next" onclick="goToStep(3)">Weiter zu Schritt 3: Spielplan &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== SCHRITT 3: SPIELPLAN ==================== -->
+                <div id="step-3" class="step-panel hidden">
+                    <div class="card">
+                        <h3>3. Spielplan-Modus & Rahmendaten</h3>
+
+                        <div id="step3-math-summary" class="info-box"></div>
+
+                        <div class="option-cards">
+                            <div class="option-card selected" id="opt-card-auto" onclick="selectScheduleMode('auto')">
+                                <h4>
+                                    <input type="radio" name="schedule_mode" id="radio-mode-auto" value="auto" checked>
+                                    Option B: Automatische Doppelrunde
+                                </h4>
+                                <p>
+                                    Erzeugt einen vollständigen Hin- und Rückrunden-Spielplan nach dem Round-Robin-/Berger-Tabellen-Verfahren.
+                                    Die Rückrunde wird gespiegelt mit getauschtem Heim-/Auswärtsrecht.
+                                </p>
+                            </div>
+
+                            <div class="option-card" id="opt-card-empty" onclick="selectScheduleMode('empty')">
+                                <h4>
+                                    <input type="radio" name="schedule_mode" id="radio-mode-empty" value="empty">
+                                    Option A: Leeren Spielplan erzeugen
+                                </h4>
+                                <p>
+                                    Legt die Saison mit allen Teams und korrekter Spieltagsanzahl an, lässt die Paarungen aber noch leer
+                                    (Paarungen können später im Liga-Editor eingetragen werden).
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="auto-schedule-options" style="background:var(--color-bg-elevated); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:18px;">
+                            <h4 style="margin:0 0 12px 0; font-size:0.95rem;">Optionale Terminierung für die Doppelrunde</h4>
+                            <div class="form-row" style="margin-bottom:0;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="schedule-start-date">Startdatum (1. Spieltag, optional)</label>
+                                    <input type="date" id="schedule-start-date" onchange="updateScheduleDatePreview()">
+                                    <small id="schedule-start-date-formatted" style="color:var(--color-text-muted); font-size:0.8rem;">
+                                        Wird im LMO-Format TT.MM.JJJJ gespeichert.
+                                    </small>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="schedule-week-interval">Abstand zwischen Spieltagen (Wochen)</label>
+                                    <input type="number" id="schedule-week-interval" value="1" min="1" max="12" onchange="updateScheduleDatePreview()">
+                                    <small style="color:var(--color-text-muted); font-size:0.8rem;">Standard: 1 Woche (+7 Tage je Spieltag).</small>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="schedule-default-time">Standard-Anstoßzeit (optional)</label>
+                                    <input type="time" id="schedule-default-time" value="15:00">
+                                    <small style="color:var(--color-text-muted); font-size:0.8rem;">Format HH:MM (z. B. 15:00).</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wizard-actions">
+                            <button type="button" class="btn-secondary" onclick="goToStep(2)">&larr; Zurück zu Schritt 2</button>
+                            <button type="button" id="btn-step3-next" onclick="loadPreviewAndGoToStep4()">Vorschau berechnen &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== SCHRITT 4: VORSCHAU & ANLEGEN ==================== -->
+                <div id="step-4" class="step-panel hidden">
+                    <div class="card" id="preview-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                            <h3 style="margin:0;">4. Vorschau prüfen & Saison anlegen</h3>
+                            <span class="badge badge-success" id="preview-mode-badge">Bereit zum Anlegen</span>
+                        </div>
+
+                        <!-- Zusammenfassung -->
+                        <div id="preview-summary-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:20px;"></div>
+
+                        <!-- Teams-Vorschau -->
+                        <div style="margin-bottom:24px;">
+                            <h4 style="margin:0 0 10px 0;">Übernommene Teams (<span id="preview-teams-count">0</span>)</h4>
+                            <div id="preview-teams-chips" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+                        </div>
+
+                        <!-- Spielplan-Vorschau -->
+                        <div id="preview-schedule-section">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                                <h4 style="margin:0;">Spielplan-Vorschau</h4>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <label for="preview-round-select" style="margin:0; font-size:0.85rem;">Spieltag:</label>
+                                    <select id="preview-round-select" style="width:auto; min-width:220px;" onchange="renderPreviewRound()"></select>
+                                </div>
+                            </div>
+                            <div id="preview-round-matches"></div>
+                        </div>
+
+                        <div class="wizard-actions" id="preview-footer-actions">
+                            <button type="button" class="btn-secondary" onclick="goToStep(3)">&larr; Zurück zu Schritt 3</button>
+                            <button type="button" class="btn-success" id="btn-create-season" onclick="createSeasonNow()">
+                                ✅ Neue Saison jetzt verbindlich anlegen
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Erfolgs-Ansicht nach dem Anlegen -->
+                    <div class="card hidden" id="success-card" style="border-color:var(--color-live);">
+                        <h3 style="color:var(--color-live);">🎉 Neue Saison erfolgreich angelegt!</h3>
+                        <p id="success-message" style="font-size:1rem; color:var(--color-text-primary);"></p>
+                        <div id="success-details" class="info-box"></div>
+                        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
+                            <a id="link-open-editor" href="index.html" style="padding:11px 20px; background:var(--color-primary); color:#fff; border-radius:var(--radius-md); text-decoration:none; font-weight:600;">
+                                ✏️ Im Liga-Editor öffnen
+                            </a>
+                            <a id="link-open-frontend" href="../index.html" target="_blank" style="padding:11px 20px; background:var(--color-bg-elevated); color:var(--color-text-primary); border:1px solid var(--color-border); border-radius:var(--radius-md); text-decoration:none; font-weight:600;">
+                                🌐 Öffentliche Ansicht öffnen
+                            </a>
+                            <button type="button" class="btn-secondary" onclick="window.location.reload()">
+                                + Weitere Saison anlegen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = window.location.pathname.replace(/\/admin\/?.*$/, '') + '/api';
+
+        let csrfToken = null;
+        let allLeagues = [];
+        let knownTeams = [];
+        let knownTeamsByLower = {};
+
+        // Wizard State
+        let currentStep = 1;
+        let selectedSourceLeague = null; // { id, file, name, options, absteiger_count }
+        let wizardTeams = [];            // [{ checked, name, short_name, logo_file, origin, rank, is_relegated, is_new }]
+        let scheduleMode = 'auto';       // 'auto' | 'empty'
+        let currentPreview = null;       // Result from action=preview
+        let fileValidAndFree = false;
+        let fileCheckTimer = null;
+
+        function escHtml(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function getTeamLogoSrc(name, logoFile) {
+            if (logoFile) return `../img/teams/${logoFile}`;
+            const clean = String(name || '').replace(/[^a-zA-Z0-9]/g, '');
+            return clean ? `../img/teams/${clean}.gif` : '../img/teams/blank.png';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('global-error');
+            if (!msg) {
+                el.classList.add('hidden');
+                el.textContent = '';
+            } else {
+                el.textContent = msg;
+                el.classList.remove('hidden');
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        async function postWithCsrf(url, data) {
+            const payload = { ...data, csrf_token: csrfToken };
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (result.csrf_token) {
+                csrfToken = result.csrf_token;
+            }
+            return result;
+        }
+
+        // ==================== AUTH & INIT ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = await checkAuth();
+            if (!auth) {
+                document.getElementById('login-overlay').classList.remove('hidden');
+            } else {
+                await initWizard();
+            }
+
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value;
+                const p = document.getElementById('login-pass').value;
+                const res = await fetch(`${API_BASE}/login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const d = await res.json();
+                if (d.csrf_token) csrfToken = d.csrf_token;
+                if (d.success) {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    await initWizard();
+                } else {
+                    document.getElementById('login-error').textContent = d.error || 'Anmeldung fehlgeschlagen';
+                }
+            });
+
+            document.getElementById('add-team-name').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewTeamToSeason();
+                }
+            });
+        });
+
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_BASE}/check-auth.php`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                if (data.user && data.user.name) {
+                    document.getElementById('user-info').textContent = `${data.user.name} (${data.user.role || 'admin'})`;
+                }
+                return !!data.authenticated;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function initWizard() {
+            showError(null);
+            const res = await fetch(`${API_BASE}/season-admin.php?action=init`, { credentials: 'include' });
+            const data = await res.json();
+            if (!data.success) {
+                showError(data.error || 'Initialisierung fehlgeschlagen');
+                return;
+            }
+            if (data.csrf_token) csrfToken = data.csrf_token;
+
+            allLeagues = data.leagues || [];
+            knownTeams = data.known_teams || [];
+            knownTeamsByLower = {};
+            knownTeams.forEach(t => {
+                knownTeamsByLower[t.name.toLowerCase()] = t;
+            });
+
+            // Datalist für bekannte Teams befüllen
+            const dl = document.getElementById('known-teams-datalist');
+            dl.innerHTML = knownTeams.map(t => `<option value="${escHtml(t.name)}">${t.short_name ? escHtml(t.short_name) : ''}</option>`).join('');
+
+            renderSourceLeagueList(allLeagues);
+
+            // Falls ?liga=... in URL übergeben wurde, direkt vorauswählen
+            const params = new URLSearchParams(window.location.search);
+            const preselect = params.get('liga');
+            if (preselect) {
+                await selectSourceLeague(preselect);
+            }
+        }
+
+        // ==================== SCHRITT 1: QUELL-LIGA LISTE (WIE IM DASHBOARD) ====================
+        const leagueListState = { items: [], q: '', klasse: '', sort: 'season-desc' };
+
+        function parseLeague(l) {
+            const m = (l.name || '').match(/^(.*?)[\s,]*((\d{2}|\d{4})\/(\d{2}|\d{4}))\s*$/);
+            if (!m) return { ...l, klasse: (l.name || l.file).trim(), year: 0, season: '' };
+            let y = parseInt(m[3], 10);
+            if (y < 100) y += 2000;
+            const shortSeason = String(y).slice(2) + '/' + String(y + 1).slice(2);
+            return { ...l, klasse: m[1].trim(), year: y, season: shortSeason };
+        }
+
+        function renderSourceLeagueList(leagues) {
+            const container = document.getElementById('source-league-list-container');
+            const items = leagues.map(parseLeague);
+            const klassen = [...new Set(items.map(i => i.klasse))].sort((a, b) => a.localeCompare(b, 'de'));
+            leagueListState.items = items;
+
+            container.innerHTML = `
+                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    <input type="search" placeholder="Quell-Liga suchen (z. B. Oberliga, 26/27) …"
+                           style="flex:2; min-width:200px;" oninput="updateSourceLeagueFilter('q', this.value)">
+                    <select style="flex:1; min-width:180px;" onchange="updateSourceLeagueFilter('klasse', this.value)">
+                        <option value="">Alle Spielklassen (${klassen.length})</option>
+                        ${klassen.map(k => `<option value="${escHtml(k)}">${escHtml(k)}</option>`).join('')}
+                    </select>
+                    <select style="flex:1; min-width:180px;" onchange="updateSourceLeagueFilter('sort', this.value)">
+                        <option value="season-desc">Saison: neueste zuerst</option>
+                        <option value="season-asc">Saison: älteste zuerst</option>
+                        <option value="name-asc">Name A–Z</option>
+                        <option value="name-desc">Name Z–A</option>
+                    </select>
+                </div>
+                <div class="league-list-count" style="color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;"></div>
+                <div class="league-list-items" style="max-height:420px; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-md);"></div>
+            `;
+            renderSourceLeagueItems();
+        }
+
+        function updateSourceLeagueFilter(field, value) {
+            leagueListState[field] = value;
+            renderSourceLeagueItems();
+        }
+
+        function renderSourceLeagueItems() {
+            const container = document.getElementById('source-league-list-container');
+            const q = leagueListState.q.trim().toLowerCase();
+            let list = leagueListState.items.filter(l =>
+                (!leagueListState.klasse || l.klasse === leagueListState.klasse) &&
+                (!q || (l.name + ' ' + l.file + ' ' + l.season).toLowerCase().includes(q))
+            );
+
+            const byName = (a, b) => a.name.localeCompare(b.name, 'de');
+            const sorters = {
+                'season-desc': (a, b) => (b.year - a.year) || a.klasse.localeCompare(b.klasse, 'de'),
+                'season-asc': (a, b) => (a.year - b.year) || a.klasse.localeCompare(b.klasse, 'de'),
+                'name-asc': byName,
+                'name-desc': (a, b) => byName(b, a)
+            };
+            list.sort(sorters[leagueListState.sort] || sorters['season-desc']);
+
+            const grouped = leagueListState.sort.startsWith('season');
+            let lastYear = null, html = '';
+            list.forEach(l => {
+                if (grouped && l.year !== lastYear) {
+                    lastYear = l.year;
+                    html += `<div style="padding:10px 15px 6px; font-size:0.8rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--color-text-muted); background:var(--color-bg-elevated);">
+                        ${l.year ? 'Saison ' + l.year + '/' + String(l.year + 1).slice(2) : 'Ohne Saison'}</div>`;
+                }
+                const isSelected = selectedSourceLeague && selectedSourceLeague.file === l.file;
+                html += `
+                <div onclick="selectSourceLeague('${escHtml(l.file)}')"
+                     style="padding:12px 15px; border-bottom:1px solid var(--color-border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:${isSelected ? 'rgba(226, 0, 26, 0.08)' : 'var(--color-bg-card)'};">
+                    <div>
+                        <span style="font-weight:700; color:${isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)'};">${escHtml(l.name)}</span>
+                        ${isSelected ? '<span class="badge badge-danger" style="margin-left:8px;">Ausgewählt</span>' : ''}
+                    </div>
+                    <span style="color:var(--color-text-muted); font-size:0.9rem;">${escHtml(l.file)} &rarr;</span>
+                </div>`;
+            });
+
+            container.querySelector('.league-list-count').textContent = `${list.length} von ${leagueListState.items.length} Ligen`;
+            container.querySelector('.league-list-items').innerHTML = html || '<p style="padding:15px; color:var(--color-text-muted);">Keine Liga gefunden.</p>';
+        }
+
+        async function selectSourceLeague(ligaFile) {
+            showError(null);
+            const res = await fetch(`${API_BASE}/season-admin.php?action=source_league&liga=${encodeURIComponent(ligaFile)}`, {
+                credentials: 'include'
+            });
+            const data = await res.json();
+            if (!data.success) {
+                showError(data.error || 'Quell-Liga konnte nicht geladen werden.');
+                return;
+            }
+
+            selectedSourceLeague = data.source_league;
+            wizardTeams = (data.teams || []).map(t => ({
+                checked: true,
+                name: t.name,
+                short_name: t.short_name || '',
+                logo_file: t.logo_file || null,
+                rank: t.rank,
+                points: t.points,
+                is_relegated: !!t.is_relegated,
+                is_new: false
+            }));
+
+            document.getElementById('step1-config-card').classList.remove('hidden');
+            document.getElementById('source-league-summary').innerHTML = `
+                <strong>Quell-Liga:</strong> ${escHtml(selectedSourceLeague.name)} (<code>${escHtml(selectedSourceLeague.file)}</code>)
+                &nbsp;|&nbsp; <strong>Teams in Vorlage:</strong> ${wizardTeams.length}
+                ${selectedSourceLeague.absteiger_count > 0 ? `&nbsp;|&nbsp; <strong>Reguläre Abstiegsplätze (AB):</strong> ${selectedSourceLeague.absteiger_count}` : ''}
+            `;
+
+            document.getElementById('new-league-name').value = data.suggested_name || '';
+            document.getElementById('new-league-file').value = data.suggested_file || '';
+
+            renderSourceLeagueItems();
+            await checkNewFilenameAvailability();
+            renderWizardTeams();
+            updateStepPills();
+
+            document.getElementById('step1-config-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function onNewFileInput() {
+            clearTimeout(fileCheckTimer);
+            fileCheckTimer = setTimeout(checkNewFilenameAvailability, 180);
+        }
+
+        async function checkNewFilenameAvailability() {
+            const fileInput = document.getElementById('new-league-file');
+            const msgEl = document.getElementById('file-validation-msg');
+            const raw = fileInput.value.trim();
+
+            if (!/^[a-z0-9_-]+\.l98$/.test(raw)) {
+                fileValidAndFree = false;
+                msgEl.innerHTML = `<span style="color:var(--color-primary); font-weight:600;">✗ Ungültiges Format: Nur Kleinbuchstaben, Zahlen, _ oder - und Endung .l98 erlaubt (^[a-z0-9_-]+\\.l98$).</span>`;
+                validateStep1Inputs();
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/season-admin.php?action=check_file&file=${encodeURIComponent(raw)}`, {
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.exists) {
+                    fileValidAndFree = false;
+                    msgEl.innerHTML = `<span style="color:var(--color-primary); font-weight:600;">✗ Dateiname "${escHtml(raw)}" existiert bereits in der Datenbank!</span>`;
+                } else if (data.available) {
+                    fileValidAndFree = true;
+                    msgEl.innerHTML = `<span style="color:var(--color-live); font-weight:600;">✓ Dateiname "${escHtml(raw)}" ist gültig und noch frei.</span>`;
+                }
+            } catch (e) {
+                fileValidAndFree = false;
+            }
+            validateStep1Inputs();
+        }
+
+        function validateStep1Inputs() {
+            const nameOk = document.getElementById('new-league-name').value.trim().length > 0;
+            const btn = document.getElementById('btn-step1-next');
+            btn.disabled = !(selectedSourceLeague && nameOk && fileValidAndFree);
+            return !btn.disabled;
+        }
+
+        // ==================== SCHRITT 2: TEAMS ====================
+        function getSelectedTeams() {
+            return wizardTeams.filter(t => t.checked && t.name.trim() !== '');
+        }
+
+        function renderWizardTeams() {
+            const tbody = document.getElementById('wizard-teams-tbody');
+            const hasRelegated = wizardTeams.some(t => t.is_relegated);
+            document.getElementById('btn-uncheck-relegated').classList.toggle('hidden', !hasRelegated);
+
+            let activeNr = 0;
+            tbody.innerHTML = wizardTeams.map((t, idx) => {
+                const nr = t.checked ? (++activeNr) : '–';
+                const logoSrc = getTeamLogoSrc(t.name, t.logo_file);
+                let badgeHtml = '';
+                if (t.is_new) {
+                    badgeHtml = `<span class="badge badge-success">Neu hinzugefügt</span>`;
+                } else if (t.is_relegated) {
+                    badgeHtml = `<span class="badge badge-warning" title="Tabellenplatz ${t.rank} in der Quell-Liga">Platz ${t.rank} (Absteiger?)</span>`;
+                } else if (t.rank) {
+                    badgeHtml = `<span style="color:var(--color-text-muted); font-size:0.82rem;">Platz ${t.rank} (${t.points ?? 0} Pkt.)</span>`;
+                } else {
+                    badgeHtml = `<span style="color:var(--color-text-muted); font-size:0.82rem;">Quell-Liga</span>`;
+                }
+
+                return `
+                    <tr class="team-row ${t.checked ? '' : 'unchecked'}">
+                        <td>
+                            <input type="checkbox" ${t.checked ? 'checked' : ''} onchange="toggleWizardTeam(${idx}, this.checked)" style="width:18px; height:18px; cursor:pointer;">
+                        </td>
+                        <td style="font-weight:700; color:var(--color-text-muted);">${nr}</td>
+                        <td>
+                            <img src="${escHtml(logoSrc)}" onerror="this.src='../img/teams/blank.png'" class="team-logo-preview" alt="">
+                        </td>
+                        <td>
+                            <input type="text" value="${escHtml(t.name)}" oninput="updateWizardTeamField(${idx}, 'name', this.value)" style="padding:7px 10px; font-weight:600;">
+                        </td>
+                        <td>
+                            <input type="text" value="${escHtml(t.short_name || '')}" maxlength="12" placeholder="Kurzname" oninput="updateWizardTeamField(${idx}, 'short_name', this.value)" style="padding:7px 10px;">
+                        </td>
+                        <td>${badgeHtml}</td>
+                        <td style="text-align:right; white-space:nowrap;">
+                            <button type="button" class="btn-secondary btn-sm" onclick="moveWizardTeam(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
+                            <button type="button" class="btn-secondary btn-sm" onclick="moveWizardTeam(${idx}, 1)" ${idx === wizardTeams.length - 1 ? 'disabled' : ''} title="Nach unten">↓</button>
+                            ${t.is_new ? `<button type="button" class="btn-danger btn-sm" onclick="removeWizardTeam(${idx})" title="Entfernen">✕</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateTeamsStatusBar();
+        }
+
+        function updateTeamsStatusBar() {
+            const active = getSelectedTeams();
+            const n = active.length;
+            const bar = document.getElementById('teams-status-bar');
+            const nextBtn = document.getElementById('btn-step2-next');
+
+            const isOdd = (n % 2 !== 0);
+            const effectiveN = isOdd ? (n + 1) : n;
+            const rounds = n >= 2 ? 2 * (effectiveN - 1) : 0;
+            const matchesPerRound = Math.floor(n / 2);
+
+            let statusBadge = '';
+            let validCount = (n >= 4 && n <= 24);
+            if (!validCount) {
+                statusBadge = `<span class="badge badge-danger">Ungültige Anzahl: ${n} Teams (erlaubt: 4 bis 24 Teams)</span>`;
+            } else if (isOdd) {
+                statusBadge = `<span class="badge badge-warning">${n} Teams ausgewählt (ungerade → je 1 Team pro Spieltag spielfrei)</span>`;
+            } else {
+                statusBadge = `<span class="badge badge-success">${n} Teams ausgewählt (gerade Anzahl)</span>`;
+            }
+
+            bar.innerHTML = `
+                <div>${statusBadge}</div>
+                <div style="font-size:0.88rem; color:var(--color-text-secondary);">
+                    Resultierender Spielplan: <strong>${rounds} Spieltage</strong> &times; <strong>${matchesPerRound} Spiele pro Spieltag</strong>
+                    ${isOdd ? ' (+ 1&times; spielfrei)' : ''}
+                </div>
+            `;
+
+            nextBtn.disabled = !validCount;
+        }
+
+        function toggleWizardTeam(idx, checked) {
+            wizardTeams[idx].checked = checked;
+            renderWizardTeams();
+        }
+
+        function toggleAllSourceTeams(checked) {
+            wizardTeams.forEach(t => { t.checked = checked; });
+            renderWizardTeams();
+        }
+
+        function uncheckRelegatedTeams() {
+            wizardTeams.forEach(t => {
+                if (t.is_relegated) t.checked = false;
+            });
+            renderWizardTeams();
+        }
+
+        function updateWizardTeamField(idx, field, val) {
+            wizardTeams[idx][field] = val;
+            if (field === 'name') {
+                const match = knownTeamsByLower[val.trim().toLowerCase()];
+                if (match) {
+                    wizardTeams[idx].logo_file = match.logo_file || null;
+                    if (!wizardTeams[idx].short_name && match.short_name) {
+                        wizardTeams[idx].short_name = match.short_name;
+                    }
+                } else {
+                    wizardTeams[idx].logo_file = null;
+                }
+            }
+            updateTeamsStatusBar();
+        }
+
+        function moveWizardTeam(idx, dir) {
+            const target = idx + dir;
+            if (target < 0 || target >= wizardTeams.length) return;
+            const tmp = wizardTeams[idx];
+            wizardTeams[idx] = wizardTeams[target];
+            wizardTeams[target] = tmp;
+            renderWizardTeams();
+        }
+
+        function removeWizardTeam(idx) {
+            wizardTeams.splice(idx, 1);
+            renderWizardTeams();
+        }
+
+        function onAddTeamNameInput() {
+            const nameVal = document.getElementById('add-team-name').value.trim();
+            const shortInput = document.getElementById('add-team-short');
+            const logoImg = document.getElementById('new-team-logo-preview');
+            const hint = document.getElementById('add-team-logo-hint');
+
+            const known = knownTeamsByLower[nameVal.toLowerCase()];
+            if (known) {
+                if (!shortInput.value && known.short_name) {
+                    shortInput.value = known.short_name;
+                }
+                logoImg.src = getTeamLogoSrc(known.name, known.logo_file);
+                hint.innerHTML = `<span style="color:var(--color-live);">✓ Bekanntes Team erkannt: Logo ${known.logo_file ? `(${escHtml(known.logo_file)})` : ''} wird übernommen.</span>`;
+            } else {
+                logoImg.src = getTeamLogoSrc(nameVal, null);
+                hint.textContent = 'Tipp: Bei bekannten Vereinen aus anderen Ligen werden Kurzname und Vereinswappen automatisch vorgeschlagen.';
+            }
+        }
+
+        function addNewTeamToSeason() {
+            showError(null);
+            const nameInput = document.getElementById('add-team-name');
+            const shortInput = document.getElementById('add-team-short');
+            const name = nameInput.value.trim();
+            let shortName = shortInput.value.trim();
+
+            if (!name) {
+                showError('Bitte einen Teamnamen für das neue Team eingeben.');
+                return;
+            }
+
+            const exists = wizardTeams.some(t => t.checked && t.name.trim().toLowerCase() === name.toLowerCase());
+            if (exists) {
+                showError(`Das Team "${name}" ist bereits in der Auswahl enthalten.`);
+                return;
+            }
+
+            const known = knownTeamsByLower[name.toLowerCase()];
+            if (!shortName && known && known.short_name) {
+                shortName = known.short_name;
+            }
+
+            wizardTeams.push({
+                checked: true,
+                name: name,
+                short_name: shortName,
+                logo_file: known ? known.logo_file : null,
+                rank: null,
+                points: null,
+                is_relegated: false,
+                is_new: true
+            });
+
+            nameInput.value = '';
+            shortInput.value = '';
+            document.getElementById('new-team-logo-preview').src = '../img/teams/blank.png';
+            document.getElementById('add-team-logo-hint').textContent = 'Tipp: Bei bekannten Vereinen aus anderen Ligen werden Kurzname und Vereinswappen automatisch vorgeschlagen.';
+
+            renderWizardTeams();
+        }
+
+        // ==================== SCHRITT 3: SPIELPLAN ====================
+        function selectScheduleMode(mode) {
+            scheduleMode = mode;
+            document.getElementById('radio-mode-auto').checked = (mode === 'auto');
+            document.getElementById('radio-mode-empty').checked = (mode === 'empty');
+            document.getElementById('opt-card-auto').classList.toggle('selected', mode === 'auto');
+            document.getElementById('opt-card-empty').classList.toggle('selected', mode === 'empty');
+            document.getElementById('auto-schedule-options').classList.toggle('hidden', mode !== 'auto');
+        }
+
+        function updateStep3Summary() {
+            const active = getSelectedTeams();
+            const n = active.length;
+            const isOdd = (n % 2 !== 0);
+            const effectiveN = isOdd ? (n + 1) : n;
+            const rounds = 2 * (effectiveN - 1);
+            const matchesPerRound = Math.floor(n / 2);
+            const totalMatches = rounds * matchesPerRound;
+
+            document.getElementById('step3-math-summary').innerHTML = `
+                <strong>Berechnung für n = ${n} Teams:</strong>
+                &nbsp; Spieltage (Rounds) = <strong>${rounds}</strong> (${rounds / 2} Hinrunde + ${rounds / 2} Rückrunde)
+                &nbsp;|&nbsp; Spiele pro Spieltag (Matches) = <strong>${matchesPerRound}</strong>
+                &nbsp;|&nbsp; Gesamtanzahl Spiele = <strong>${totalMatches}</strong>
+                ${isOdd ? `<br><span style="color:var(--color-warning); font-weight:600;">Hinweis: Da ${n} ungerade ist, hat an jedem der ${rounds} Spieltage genau 1 Team spielfrei.</span>` : ''}
+            `;
+            updateScheduleDatePreview();
+        }
+
+        function updateScheduleDatePreview() {
+            const dateVal = document.getElementById('schedule-start-date').value;
+            const weekVal = parseInt(document.getElementById('schedule-week-interval').value, 10) || 1;
+            const infoEl = document.getElementById('schedule-start-date-formatted');
+
+            if (!dateVal) {
+                infoEl.textContent = 'Kein Startdatum gewählt (Spieldatum bleibt leer).';
+                return;
+            }
+            const m = dateVal.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (m) {
+                const formatted = `${m[3]}.${m[2]}.${m[1]}`;
+                infoEl.innerHTML = `1. Spieltag: <strong>${formatted}</strong> (Format TT.MM.JJJJ, Abstand: +${weekVal * 7} Tage je Spieltag)`;
+            }
+        }
+
+        // ==================== SCHRITT 4: VORSCHAU & ANLEGEN ====================
+        function buildSeasonPayload(actionName) {
+            return {
+                action: actionName,
+                source_liga: selectedSourceLeague ? selectedSourceLeague.file : '',
+                new_name: document.getElementById('new-league-name').value.trim(),
+                new_file: document.getElementById('new-league-file').value.trim(),
+                teams: getSelectedTeams().map(t => ({
+                    name: t.name.trim(),
+                    short_name: (t.short_name || '').trim(),
+                    logo_file: t.logo_file || null
+                })),
+                schedule_mode: scheduleMode,
+                start_date: scheduleMode === 'auto' ? document.getElementById('schedule-start-date').value : '',
+                week_interval: scheduleMode === 'auto' ? (parseInt(document.getElementById('schedule-week-interval').value, 10) || 1) : 1,
+                default_time: scheduleMode === 'auto' ? document.getElementById('schedule-default-time').value : ''
+            };
+        }
+
+        async function loadPreviewAndGoToStep4() {
+            showError(null);
+            const btn = document.getElementById('btn-step3-next');
+            const oldText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Berechne Vorschau...';
+
+            try {
+                const res = await postWithCsrf(`${API_BASE}/season-admin.php`, buildSeasonPayload('preview'));
+                btn.disabled = false;
+                btn.textContent = oldText;
+
+                if (!res.success) {
+                    showError(res.error || 'Vorschau konnte nicht erstellt werden.');
+                    return;
+                }
+
+                currentPreview = res.preview;
+                renderStep4Preview();
+                setStep(4);
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = oldText;
+                showError('Netzwerkfehler bei der Vorschau-Berechnung.');
+            }
+        }
+
+        function renderStep4Preview() {
+            if (!currentPreview) return;
+
+            document.getElementById('preview-card').classList.remove('hidden');
+            document.getElementById('success-card').classList.add('hidden');
+
+            const p = currentPreview;
+            document.getElementById('preview-mode-badge').textContent =
+                p.schedule_mode === 'auto' ? 'Automatische Doppelrunde (Option B)' : 'Leerer Spielplan (Option A)';
+
+            document.getElementById('preview-summary-grid').innerHTML = `
+                <div class="info-box" style="margin:0;">
+                    <div style="font-size:0.78rem; color:var(--color-text-muted); text-transform:uppercase;">Neue Saison</div>
+                    <div style="font-weight:700; font-size:1.02rem; margin-top:4px;">${escHtml(p.new_name)}</div>
+                    <div style="font-size:0.85rem; color:var(--color-text-secondary);">Datei: <code>${escHtml(p.new_file)}</code></div>
+                </div>
+                <div class="info-box" style="margin:0;">
+                    <div style="font-size:0.78rem; color:var(--color-text-muted); text-transform:uppercase;">Quell-Liga (Options)</div>
+                    <div style="font-weight:700; font-size:1.02rem; margin-top:4px;">${escHtml(p.source_league.name)}</div>
+                    <div style="font-size:0.85rem; color:var(--color-text-secondary);">Actual = 1, Optionen kopiert</div>
+                </div>
+                <div class="info-box" style="margin:0;">
+                    <div style="font-size:0.78rem; color:var(--color-text-muted); text-transform:uppercase;">Teams & Modus</div>
+                    <div style="font-weight:700; font-size:1.02rem; margin-top:4px;">${p.team_count} Teams ${p.has_bye ? '(ungerade → spielfrei)' : '(gerade)'}</div>
+                    <div style="font-size:0.85rem; color:var(--color-text-secondary);">${p.rounds_count} Spieltage &times; ${p.matches_per_round} Spiele</div>
+                </div>
+                <div class="info-box" style="margin:0;">
+                    <div style="font-size:0.78rem; color:var(--color-text-muted); text-transform:uppercase;">Spiele in Datenbank</div>
+                    <div style="font-weight:700; font-size:1.02rem; margin-top:4px;">${p.total_matches} Paarungen</div>
+                    <div style="font-size:0.85rem; color:var(--color-text-secondary);">
+                        ${p.start_date ? `Start: ${escHtml(p.start_date)} (${p.week_interval} Wo.)` : 'Ohne Startdatum'}
+                        ${p.default_time ? ` | ${escHtml(p.default_time)} Uhr` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('preview-teams-count').textContent = p.team_count;
+            document.getElementById('preview-teams-chips').innerHTML = p.teams.map(t => `
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 12px; background:var(--color-bg-elevated); border:1px solid var(--color-border); border-radius:20px; font-size:0.88rem;">
+                    <span style="color:var(--color-text-muted); font-weight:700;">#${t.original_id}</span>
+                    <img src="${escHtml(getTeamLogoSrc(t.name, t.logo_file))}" onerror="this.src='../img/teams/blank.png'" style="width:20px; height:20px; object-fit:contain;" alt="">
+                    <span style="font-weight:600;">${escHtml(t.name)}</span>
+                    ${t.short_name ? `<span style="color:var(--color-text-muted);">(${escHtml(t.short_name)})</span>` : ''}
+                </div>
+            `).join('');
+
+            const schedSec = document.getElementById('preview-schedule-section');
+            if (p.schedule_mode === 'empty') {
+                schedSec.innerHTML = `
+                    <div class="info-box">
+                        <strong>Option A (Leerer Spielplan):</strong> Es werden <strong>${p.rounds_count} Spieltage</strong> mit je <strong>${p.matches_per_round} Spielen</strong> in den Liga-Optionen vorbereitet.
+                        Die Paarungen können anschließend im Liga-Editor eingetragen werden.
+                    </div>
+                `;
+            } else {
+                schedSec.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                        <h4 style="margin:0;">Spielplan-Vorschau (Doppelrunde: Hin- & Rückrunde)</h4>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <label for="preview-round-select" style="margin:0; font-size:0.85rem;">Spieltag wählen:</label>
+                            <select id="preview-round-select" style="width:auto; min-width:250px;" onchange="renderPreviewRound()"></select>
+                        </div>
+                    </div>
+                    <div id="preview-round-matches"></div>
+                `;
+
+                const sel = document.getElementById('preview-round-select');
+                sel.innerHTML = '';
+                for (let r = 1; r <= p.rounds_count; r++) {
+                    const rObj = p.schedule[r];
+                    const opt = document.createElement('option');
+                    opt.value = r;
+                    const halfLabel = rObj.half === 1 ? 'Hinrunde' : 'Rückrunde';
+                    opt.textContent = `Spieltag ${r} (${halfLabel})${rObj.date ? ' – ' + rObj.date : ''}`;
+                    sel.appendChild(opt);
+                }
+                renderPreviewRound();
+            }
+        }
+
+        function renderPreviewRound() {
+            if (!currentPreview || currentPreview.schedule_mode !== 'auto') return;
+            const sel = document.getElementById('preview-round-select');
+            const roundNr = parseInt(sel.value, 10) || 1;
+            const rObj = currentPreview.schedule[roundNr];
+            const container = document.getElementById('preview-round-matches');
+
+            if (!rObj) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <table class="team-table" style="border:1px solid var(--color-border); border-radius:var(--radius-md); overflow:hidden;">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">Spiel</th>
+                            <th style="text-align:right;">Heim</th>
+                            <th style="width:50px; text-align:center;">vs.</th>
+                            <th>Auswärts</th>
+                            <th style="width:140px;">Datum</th>
+                            <th style="width:100px;">Uhrzeit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rObj.matches.map((m, idx) => `
+                            <tr>
+                                <td style="color:var(--color-text-muted); font-weight:600;">#${idx + 1}</td>
+                                <td style="text-align:right; font-weight:600;">${escHtml(m.home_name)}</td>
+                                <td style="text-align:center; color:var(--color-text-muted);">:</td>
+                                <td style="font-weight:600;">${escHtml(m.guest_name)}</td>
+                                <td>${m.match_date ? `<code>${escHtml(m.match_date)}</code>` : '<span style="color:var(--color-text-muted);">–</span>'}</td>
+                                <td>${m.match_time ? `<code>${escHtml(m.match_time)}</code>` : '<span style="color:var(--color-text-muted);">–</span>'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            if (rObj.bye_team) {
+                html += `
+                    <div class="info-box" style="margin-top:10px; margin-bottom:0;">
+                        <strong>Spielfrei an Spieltag ${roundNr}:</strong> ${escHtml(rObj.bye_team)}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function createSeasonNow() {
+            showError(null);
+            if (!currentPreview) return;
+
+            const btn = document.getElementById('btn-create-season');
+            const oldText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Lege Saison in Datenbank an...';
+
+            try {
+                const res = await postWithCsrf(`${API_BASE}/season-admin.php`, buildSeasonPayload('create'));
+                btn.disabled = false;
+                btn.textContent = oldText;
+
+                if (!res.success) {
+                    showError(res.error || 'Fehler beim Anlegen der Saison.');
+                    return;
+                }
+
+                const lg = res.league;
+                document.getElementById('preview-card').classList.add('hidden');
+                const sCard = document.getElementById('success-card');
+                sCard.classList.remove('hidden');
+
+                document.getElementById('success-message').textContent = res.message;
+                document.getElementById('success-details').innerHTML = `
+                    <strong>Liga-ID:</strong> ${lg.id} &nbsp;|&nbsp;
+                    <strong>Datei:</strong> <code>${escHtml(lg.file)}</code> &nbsp;|&nbsp;
+                    <strong>Teams:</strong> ${lg.teams_count} &nbsp;|&nbsp;
+                    <strong>Spieltage:</strong> ${lg.rounds_count} &nbsp;|&nbsp;
+                    <strong>Spiele je Spieltag:</strong> ${lg.matches_per_round} &nbsp;|&nbsp;
+                    <strong>Angelegte Spiele:</strong> ${lg.matches_inserted} &nbsp;|&nbsp;
+                    <strong>Cache geleert:</strong> Ja (${lg.cache_cleared} Dateien)
+                `;
+
+                document.getElementById('link-open-editor').href = `index.html?open=${encodeURIComponent(lg.file)}`;
+                document.getElementById('link-open-frontend').href = `../index.html?liga=${encodeURIComponent(lg.file)}`;
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = oldText;
+                showError('Netzwerkfehler beim Speichern der Saison.');
+            }
+        }
+
+        // ==================== NAVIGATION ZWISCHEN SCHRITTEN ====================
+        function goToStep(targetStep) {
+            showError(null);
+
+            if (targetStep > 1 && !validateStep1Inputs()) {
+                showError('Bitte zuerst eine Quell-Liga auswählen sowie einen gültigen, freien Dateinamen (.l98) und Namen eingeben.');
+                return;
+            }
+
+            if (targetStep > 2) {
+                const n = getSelectedTeams().length;
+                if (n < 4 || n > 24) {
+                    showError(`Bitte zwischen 4 und 24 Teams auswählen (aktuell: ${n}).`);
+                    return;
+                }
+                // Prüfe auf leere oder doppelte Teamnamen
+                const seen = new Set();
+                for (const t of getSelectedTeams()) {
+                    const key = t.name.trim().toLowerCase();
+                    if (seen.has(key)) {
+                        showError(`Doppelter Teamname: "${t.name}". Jedes Team darf nur einmal vorkommen.`);
+                        return;
+                    }
+                    seen.add(key);
+                }
+            }
+
+            if (targetStep === 4) {
+                loadPreviewAndGoToStep4();
+                return;
+            }
+
+            setStep(targetStep);
+        }
+
+        function setStep(step) {
+            currentStep = step;
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step-${i}`).classList.toggle('hidden', i !== step);
+            }
+            if (step === 2) {
+                renderWizardTeams();
+            } else if (step === 3) {
+                updateStep3Summary();
+            }
+            updateStepPills();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateStepPills() {
+            const step1Ready = selectedSourceLeague && fileValidAndFree && document.getElementById('new-league-name').value.trim().length > 0;
+            const n = getSelectedTeams().length;
+            const step2Ready = step1Ready && n >= 4 && n <= 24;
+
+            for (let i = 1; i <= 4; i++) {
+                const pill = document.getElementById(`step-pill-${i}`);
+                pill.classList.remove('active', 'done', 'disabled');
+                if (i === currentStep) {
+                    pill.classList.add('active');
+                } else if (i < currentStep) {
+                    pill.classList.add('done');
+                } else {
+                    const canReach = (i === 2 && step1Ready) || (i === 3 && step2Ready) || (i === 4 && step2Ready);
+                    if (!canReach) pill.classList.add('disabled');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
