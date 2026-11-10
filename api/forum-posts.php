@@ -68,7 +68,7 @@ try {
 
             // Anmeldung prüfen (falls nicht public)
             $category = $repo->getCategoryById($topic['category_id']);
-            if (($category['reply_permission'] ?? 'registered') !== 'public' && !Security::isLoggedIn()) {
+            if (($category['reply_permission'] ?? 'registered') !== 'public' && !Security::isMember()) {
                 http_response_code(401);
                 echo json_encode(['success' => false, 'error' => 'Anmeldung erforderlich']);
                 exit;

@@ -26,15 +26,24 @@ class Security {
      * Check if user is logged in
      */
     public static function isLoggedIn() {
+        // Bedeutet "Redaktion angemeldet" (editor/admin) – fuer Admin-APIs
         self::initSession();
         return isset($_SESSION['lmo26_admin']) && $_SESSION['lmo26_admin'] === true;
+    }
+
+    /**
+     * Irgendein angemeldetes Konto (auch Forennutzer)
+     */
+    public static function isMember() {
+        self::initSession();
+        return !empty($_SESSION['lmo26_auth']) && !empty($_SESSION['lmo26_user_id']);
     }
 
     /**
      * Get current user's role
      */
     public static function getUserRole() {
-        if (!self::isLoggedIn()) {
+        if (!self::isMember() && !self::isLoggedIn()) {
             return 'guest';
         }
         return $_SESSION['lmo26_user_role'] ?? 'user';
@@ -158,15 +167,6 @@ class Security {
      * Returns: true if allowed, false if blocked
      */
     public static function checkRateLimit($identifier) {
-        // Temporary bypass via env or toggle file to assist recovery
-        if (getenv('LMO26_RL_OFF') === '1') {
-            return ['allowed' => true];
-        }
-        $toggleFile = __DIR__ . '/../data/ratelimit.off';
-        if (file_exists($toggleFile)) {
-            return ['allowed' => true];
-        }
-
         $pdo = self::getRateLimitDb();
 
         // Clean old entries

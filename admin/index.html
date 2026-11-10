@@ -674,7 +674,8 @@
                         <div class="form-group">
                             <label>Rolle</label>
                             <select id="user-role">
-                                <option value="editor">Editor</option>
+                                <option value="user">Forennutzer</option>
+                                <option value="editor">Redaktion (Editor)</option>
                                 <option value="admin">Administrator</option>
                             </select>
                         </div>
@@ -1441,29 +1442,56 @@
         }
 
         // ==================== BENUTZERVERWALTUNG ====================
+        let usersShowLegacy = false;
+        function uEsc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        const ROLE_LABEL = { admin: ['Admin', '#ffc107', '#000'], editor: ['Redaktion', '#17a2b8', '#fff'], user: ['Forum', '#e5e7eb', '#111'] };
+        const STATUS_LABEL = {
+            active: ['✓ Aktiv', '#28a745'], pending_email: ['✉ E-Mail unbestätigt', '#b45309'],
+            pending_approval: ['⏳ Wartet auf Freigabe', '#b45309'], inactive: ['⏸ Inaktiv (12 Mon.)', '#6b7280'],
+            rejected: ['✗ Abgelehnt', '#dc3545']
+        };
+
         async function loadUsersList() {
             document.getElementById('user-editor-panel').classList.add('hidden');
             const container = document.getElementById('users-list');
             container.innerHTML = 'Lade...';
 
-            const data = await (await fetch(`${API_BASE}/users.php?list=1`)).json();
+            const data = await (await fetch(`${API_BASE}/users.php?list=1${usersShowLegacy ? '&legacy=1' : ''}`)).json();
+            if (data.error) { container.innerHTML = `Fehler: ${uEsc(data.error)}`; return; }
 
-            if (data.error) {
-                container.innerHTML = `Fehler: ${data.error}`;
-                return;
+            const pending = (data.users || []).filter(u => u.status === 'pending_approval' || u.status === 'pending_email');
+            const others = (data.users || []).filter(u => !pending.includes(u));
+
+            let html = '';
+            if (!data.mail_configured) {
+                html += `<div style="padding:10px 12px; margin-bottom:15px; border-radius:6px; background:rgba(245,158,11,0.15); color:#92400e;">
+                    ⚠ E-Mail-Versand ist nicht eingerichtet (<code>config/mail.php</code> fehlt). Registrierung und „Passwort vergessen“ funktionieren erst danach.</div>`;
+            }
+            if (pending.length) {
+                html += `<h4 style="margin:0 0 10px;">Offene Registrierungen (${pending.length})</h4>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:25px;">
+                    <tbody>${pending.map(u => `
+                        <tr style="border-bottom:1px solid var(--border-color, #eee);">
+                            <td style="padding:10px;"><strong>${uEsc(u.username)}</strong><br><span style="color:var(--color-text-muted); font-size:0.85rem;">${uEsc(u.email)}</span></td>
+                            <td style="padding:10px; font-size:0.9rem;">${u.legacy_claim ? `Möchte früheren Forennamen übernehmen: <strong>${uEsc(u.legacy_claim)}</strong>` : '—'}</td>
+                            <td style="padding:10px; color:${STATUS_LABEL[u.status][1]}; font-size:0.9rem;">${STATUS_LABEL[u.status][0]}<br><span style="color:var(--color-text-muted)">${uEsc(u.created_at)}</span></td>
+                            <td style="padding:10px; text-align:right; white-space:nowrap;">
+                                ${u.status === 'pending_approval' ? `
+                                    <button onclick="userAction('approve', ${u.id})" style="font-size:0.8rem; padding:5px 10px;">${u.legacy_claim ? 'Freigeben + Namen übernehmen' : 'Freigeben'}</button>
+                                    ${u.legacy_claim ? `<button onclick="userAction('approve', ${u.id}, {accept_claim:false})" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;">Freigeben ohne Übernahme</button>` : ''}` : ''}
+                                <button onclick="userAction('reject', ${u.id})" class="btn-danger" style="font-size:0.8rem; padding:5px 10px;">Ablehnen</button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>`;
             }
 
-            if (!data.users || data.users.length === 0) {
-                container.innerHTML = 'Keine Benutzer gefunden.';
-                return;
-            }
-
-            container.innerHTML = `
+            html += `
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
-                        <tr style="background:#f8f9fa;">
+                        <tr style="background:var(--color-bg-elevated, #f8f9fa);">
                             <th style="padding:12px; text-align:left;">Benutzername</th>
-                            <th style="padding:12px; text-align:left;">Anzeigename</th>
+                            <th style="padding:12px; text-align:left;">E-Mail</th>
                             <th style="padding:12px; text-align:center;">Rolle</th>
                             <th style="padding:12px; text-align:center;">Status</th>
                             <th style="padding:12px; text-align:left;">Letzter Login</th>
@@ -1471,28 +1499,63 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${data.users.map(u => `
-                            <tr style="border-bottom:1px solid #eee;">
-                                <td style="padding:12px; font-weight:600;">${u.username}</td>
-                                <td style="padding:12px;">${u.display_name || '-'}</td>
-                                <td style="padding:12px; text-align:center;">
-                                    <span style="padding:3px 8px; border-radius:4px; font-size:0.8rem; background:${u.role === 'admin' ? '#ffc107' : '#17a2b8'}; color:${u.role === 'admin' ? '#000' : '#fff'};">
-                                        ${u.role === 'admin' ? 'Admin' : 'Editor'}
-                                    </span>
-                                </td>
-                                <td style="padding:12px; text-align:center;">
-                                    <span style="color:${u.active ? '#28a745' : '#dc3545'};">${u.active ? '✓ Aktiv' : '✗ Inaktiv'}</span>
-                                </td>
-                                <td style="padding:12px; color:#666; font-size:0.9rem;">${u.last_login ? new Date(u.last_login).toLocaleString('de') : 'Nie'}</td>
-                                <td style="padding:12px; text-align:right;">
+                        ${others.map(u => {
+                            const r = ROLE_LABEL[u.role] || ROLE_LABEL.user;
+                            const st = u.active == 1 ? STATUS_LABEL.active : (STATUS_LABEL[u.status] || ['✗ Deaktiviert', '#dc3545']);
+                            return `
+                            <tr style="border-bottom:1px solid var(--border-color, #eee);">
+                                <td style="padding:12px; font-weight:600;">${uEsc(u.username)}${u.display_name && u.display_name !== u.username ? `<br><span style="font-weight:400; color:var(--color-text-muted); font-size:0.85rem;">${uEsc(u.display_name)}</span>` : ''}</td>
+                                <td style="padding:12px; font-size:0.9rem;">${uEsc(u.email) || '<span style="color:var(--color-text-muted)">–</span>'}</td>
+                                <td style="padding:12px; text-align:center;"><span style="padding:3px 8px; border-radius:4px; font-size:0.8rem; background:${r[1]}; color:${r[2]};">${r[0]}</span></td>
+                                <td style="padding:12px; text-align:center; color:${st[1]}; font-size:0.9rem;">${st[0]}</td>
+                                <td style="padding:12px; color:var(--color-text-muted); font-size:0.9rem;">${u.last_login ? new Date(u.last_login.replace(' ', 'T') + 'Z').toLocaleString('de') : 'Nie'}</td>
+                                <td style="padding:12px; text-align:right; white-space:nowrap;">
+                                    ${u.email ? `<button onclick="userAction('send_reset', ${u.id})" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;" title="Mail zum Zurücksetzen des Passworts senden">Reset-Mail</button>` : ''}
                                     <button onclick="openUserEditor(${u.id})" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;">Bearbeiten</button>
                                 </td>
-                            </tr>
-                        `).join('')}
+                            </tr>`;
+                        }).join('')}
                     </tbody>
                 </table>
-            `;
+                <p style="margin-top:12px; font-size:0.85rem; color:var(--color-text-muted);">
+                    ${data.legacy_hidden ? `${data.legacy_hidden} alte Forenkonten (nie angemeldet, ohne E-Mail) ausgeblendet. ` : ''}
+                    <a href="javascript:void(0)" onclick="usersShowLegacy=!usersShowLegacy; loadUsersList();">${usersShowLegacy ? 'Alte Forenkonten ausblenden' : 'Alte Forenkonten anzeigen'}</a>
+                    · Forenkonten ohne Anmeldung seit 12 Monaten werden automatisch deaktiviert.
+                    · <a href="../konto.html">Eigenes Passwort ändern</a>
+                </p>`;
+            container.innerHTML = html;
         }
+
+        async function userAction(action, id, extra = {}) {
+            if (action === 'reject' && !confirmInline('Registrierung wirklich ablehnen und löschen?')) return;
+            const res = await postWithCsrf(`${API_BASE}/users.php`, { action, id, ...extra });
+            showToast(res.success ? res.message : ('Fehler: ' + (res.error || 'unbekannt')), !res.success);
+            loadUsersList();
+        }
+
+        // Ohne Browser-Dialoge (blockieren Automatisierung): einfache Inline-Bestaetigung per zweitem Klick
+        const _confirmed = {};
+        function confirmInline(text) {
+            const key = text;
+            if (_confirmed[key] && Date.now() - _confirmed[key] < 5000) { delete _confirmed[key]; return true; }
+            _confirmed[key] = Date.now();
+            showToast(text + ' – zum Bestätigen innerhalb von 5 s erneut klicken.', true);
+            return false;
+        }
+        function showToast(text, isError = false) {
+            let t = document.getElementById('admin-toast');
+            if (!t) {
+                t = document.createElement('div'); t.id = 'admin-toast';
+                t.style.cssText = 'position:fixed; right:20px; bottom:20px; max-width:420px; padding:12px 16px; border-radius:8px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.15); font-size:0.9rem;';
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.style.background = isError ? '#fee2e2' : '#dcfce7';
+            t.style.color = isError ? '#991b1b' : '#166534';
+            t.style.display = 'block';
+            clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 6000);
+        }
+
 
         async function openUserEditor(userId) {
             document.getElementById('user-editor-panel').classList.remove('hidden');

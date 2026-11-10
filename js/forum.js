@@ -56,7 +56,7 @@ async function checkAuth() {
         });
         const data = await res.json();
 
-        if (data.authenticated) {
+        if (data.member || data.authenticated) {
             currentUser = {
                 id: data.user_id,
                 username: data.username,
@@ -87,11 +87,13 @@ function updateUserStatus() {
             <span style="color: var(--color-text-muted); margin-right: var(--spacing-sm);">
                 Hallo, <strong>${escapeHtml(currentUser.displayName || currentUser.username)}</strong>
             </span>
-            <a href="admin/index.html" class="btn btn-secondary" style="font-size: 0.85rem;">Admin</a>
+            <a href="konto.html" class="btn btn-secondary" style="font-size: 0.85rem;">Mein Konto</a>
+            ${['editor', 'admin'].includes(currentUser.role) ? '<a href="admin/index.html" class="btn btn-secondary" style="font-size: 0.85rem;">Admin</a>' : ''}
         `;
         document.getElementById('new-topic-btn').style.display = 'inline-flex';
     } else {
-        el.innerHTML = `<a href="admin/index.html" class="btn btn-primary">Login</a>`;
+        el.innerHTML = `<a href="konto.html?next=forum.html" class="btn btn-primary">Anmelden</a>
+            <a href="konto.html?tab=register" class="btn btn-secondary" style="font-size: 0.85rem;">Registrieren</a>`;
         document.getElementById('new-topic-btn').style.display = 'none';
     }
 }
@@ -405,7 +407,8 @@ function renderPosts(posts, topic) {
             html += `
                 <div class="login-prompt">
                     <p>Du musst eingeloggt sein, um zu antworten.</p>
-                    <a href="admin/index.html" class="btn btn-primary">Jetzt anmelden</a>
+                    <a href="konto.html?next=forum.html" class="btn btn-primary">Jetzt anmelden</a>
+                    <a href="konto.html?tab=register" class="btn btn-secondary">Registrieren</a>
                 </div>
             `;
         }

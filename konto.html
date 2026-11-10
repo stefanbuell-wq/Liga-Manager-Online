@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mein Konto - HAFO.de</title>
+
+    <!-- Fonts (lokal eingebunden) -->
+    <link rel="stylesheet" href="css/fonts.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/portal.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <!-- Theme Loader -->
+    <script>
+        (function() {
+            const cached = localStorage.getItem('hafo_theme');
+            if (cached) {
+                try {
+                    const theme = JSON.parse(cached);
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                } catch(e) {}
+            }
+            fetch('api/theme.php')
+                .then(r => r.json())
+                .then(theme => {
+                    localStorage.setItem('hafo_theme', JSON.stringify(theme));
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                })
+                .catch(() => {});
+        })();
+    </script>
+    <style>
+        .account-wrap { max-width: 520px; margin: var(--spacing-2xl) auto; padding: 0 var(--spacing-md); }
+        .account-card { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-xl); box-shadow: var(--shadow-card); }
+        .account-tabs { display: flex; gap: var(--spacing-xs); margin-bottom: var(--spacing-lg); border-bottom: 1px solid var(--border-color); }
+        .account-tabs button { background: none; border: none; padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; font: inherit; color: var(--color-text-secondary); border-bottom: 2px solid transparent; }
+        .account-tabs button.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
+        .account-form label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary); margin: var(--spacing-md) 0 var(--spacing-xs); }
+        .account-form input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color-hover); border-radius: var(--radius-sm); background: var(--color-bg-elevated); color: var(--color-text-primary); font: inherit; box-sizing: border-box; }
+        .account-form .hint { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; }
+        .account-form button[type=submit] { margin-top: var(--spacing-lg); width: 100%; }
+        .account-msg { padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-sm); margin-bottom: var(--spacing-md); font-size: 0.9rem; display: none; }
+        .account-msg.ok { display: block; background: rgba(34,197,94,0.12); color: #166534; }
+        .account-msg.err { display: block; background: rgba(239,68,68,0.12); color: #991b1b; }
+        .hp { position: absolute; left: -9999px; }
+        .account-links { margin-top: var(--spacing-md); font-size: 0.85rem; text-align: center; }
+        .account-links a { color: var(--color-text-secondary); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                </a>
+
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                </nav>
+
+                <div class="header-actions">
+                    
+                    <button class="mobile-menu-btn" style="display:none">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="account-wrap">
+            <div class="account-card">
+                <div id="msg" class="account-msg"></div>
+
+                <!-- Angemeldet -->
+                <div id="view-me" style="display:none">
+                    <h2 style="margin-top:0">Mein Konto</h2>
+                    <p>Angemeldet als <strong id="me-name"></strong> <span id="me-role" style="color:var(--color-text-muted)"></span></p>
+                    <p id="me-admin" style="display:none"><a href="admin/index.html" class="btn btn-secondary">Zum Admin-Bereich</a></p>
+                    <form class="account-form" id="form-email">
+                        <h3>E-Mail-Adresse</h3>
+                        <label for="em-email">E-Mail</label><input type="email" id="em-email" required autocomplete="email">
+                        <label for="em-pass">Aktuelles Passwort</label><input type="password" id="em-pass" required autocomplete="current-password">
+                        <button type="submit" class="btn btn-secondary">E-Mail speichern</button>
+                    </form>
+                    <form class="account-form" id="form-pw">
+                        <h3>Passwort ändern</h3>
+                        <label for="pw-cur">Aktuelles Passwort</label><input type="password" id="pw-cur" required autocomplete="current-password">
+                        <label for="pw-new">Neues Passwort</label><input type="password" id="pw-new" required minlength="8" autocomplete="new-password">
+                        <div class="hint">Mind. 8 Zeichen, Buchstaben und Zahlen.</div>
+                        <button type="submit" class="btn btn-secondary">Passwort ändern</button>
+                    </form>
+                    <button class="btn btn-ghost" style="margin-top:var(--spacing-lg); width:100%" onclick="logout()">Abmelden</button>
+                </div>
+
+                <!-- Nicht angemeldet -->
+                <div id="view-guest" style="display:none">
+                    <div class="account-tabs">
+                        <button data-tab="login" class="active">Anmelden</button>
+                        <button data-tab="register">Registrieren</button>
+                        <button data-tab="forgot">Passwort vergessen</button>
+                    </div>
+
+                    <form class="account-form" id="form-login" data-pane="login">
+                        <label for="li-user">Benutzername oder E-Mail</label><input id="li-user" required autocomplete="username">
+                        <label for="li-pass">Passwort</label><input type="password" id="li-pass" required autocomplete="current-password">
+                        <button type="submit" class="btn btn-primary">Anmelden</button>
+                    </form>
+
+                    <form class="account-form" id="form-register" data-pane="register" style="display:none">
+                        <label for="rg-user">Benutzername</label><input id="rg-user" required minlength="3" maxlength="30" autocomplete="username">
+                        <label for="rg-email">E-Mail</label><input type="email" id="rg-email" required autocomplete="email">
+                        <label for="rg-pass">Passwort</label><input type="password" id="rg-pass" required minlength="8" autocomplete="new-password">
+                        <div class="hint">Mind. 8 Zeichen, Buchstaben und Zahlen.</div>
+                        <label for="rg-legacy">Früherer Forenname (optional)</label><input id="rg-legacy" maxlength="60" autocomplete="off">
+                        <div class="hint">Warst du schon im alten HAFO-Forum aktiv? Dann trag deinen alten Namen ein – nach Prüfung übernimmst du ihn samt deinen Beiträgen.</div>
+                        <input class="hp" id="rg-website" tabindex="-1" autocomplete="off" aria-hidden="true">
+                        <div class="hint" style="margin-top:var(--spacing-md)">Nach der Registrierung bestätigst du deine E-Mail-Adresse; danach schaltet ein Administrator dein Konto frei. Hinweise zum Datenschutz: <a href="datenschutz.html">Datenschutzerklärung</a>.</div>
+                        <button type="submit" class="btn btn-primary">Registrieren</button>
+                    </form>
+
+                    <form class="account-form" id="form-forgot" data-pane="forgot" style="display:none">
+                        <label for="fg-login">Benutzername oder E-Mail</label><input id="fg-login" required>
+                        <button type="submit" class="btn btn-primary">Link zum Zurücksetzen senden</button>
+                    </form>
+                </div>
+
+                <!-- Passwort per Link neu setzen -->
+                <form class="account-form" id="form-reset" style="display:none">
+                    <h2 style="margin-top:0">Neues Passwort festlegen</h2>
+                    <label for="rs-pass">Neues Passwort</label><input type="password" id="rs-pass" required minlength="8" autocomplete="new-password">
+                    <label for="rs-pass2">Wiederholen</label><input type="password" id="rs-pass2" required minlength="8" autocomplete="new-password">
+                    <button type="submit" class="btn btn-primary">Passwort speichern</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon">⚽</div>
+                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    </a>
+                    <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Forum</h4>
+                    <div class="footer-links">
+                        <a href="forum.html">Übersicht</a>
+                        <a href="javascript:void(0)">Regeln</a>
+                        <a href="javascript:void(0)">FAQ</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Service</h4>
+                    <div class="footer-links">
+                        <a href="index.html#news-section">Spielberichte</a>
+                        <a href="index.html#league-section">Statistiken</a>
+                        <a href="javascript:void(0)">Kontakt</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Rechtliches</h4>
+                    <div class="footer-links">
+                        <a href="impressum.html">Impressum</a>
+                        <a href="datenschutz.html">Datenschutz</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    const API = 'api';
+    let csrf = '';
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+
+    function msg(text, ok = true) { const m = $('msg'); m.textContent = text; m.className = 'account-msg ' + (ok ? 'ok' : 'err'); window.scrollTo(0, 0); }
+    async function post(url, body) {
+        const r = await fetch(url, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+            body: JSON.stringify({ ...body, csrf_token: csrf }) });
+        const d = await r.json().catch(() => ({ error: 'Serverfehler' }));
+        if (d.csrf_token) csrf = d.csrf_token;
+        return d;
+    }
+    function showTab(t) {
+        document.querySelectorAll('.account-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+        document.querySelectorAll('[data-pane]').forEach(f => f.style.display = f.dataset.pane === t ? '' : 'none');
+    }
+    document.querySelectorAll('.account-tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+    async function init() {
+        const me = await (await fetch(`${API}/account.php?action=me`, { credentials: 'include' })).json();
+        csrf = me.csrf_token || '';
+        const verify = params.get('verify'), reset = params.get('reset');
+        if (verify) {
+            $('view-guest').style.display = '';
+            const d = await post(`${API}/account.php`, { action: 'verify', token: verify });
+            msg(d.message || d.error, !!d.success);
+            history.replaceState(null, '', 'konto.html');
+            return;
+        }
+        if (reset) { $('form-reset').style.display = ''; return; }
+        if (me.authenticated) {
+            $('view-me').style.display = '';
+            $('me-name').textContent = me.user.display_name || me.user.username;
+            $('me-role').textContent = me.user.staff ? `(${me.user.role === 'admin' ? 'Administrator' : 'Redaktion'})` : '';
+            $('me-admin').style.display = me.user.staff ? '' : 'none';
+            $('em-email').value = me.user.email || '';
+        } else {
+            $('view-guest').style.display = '';
+            showTab(params.get('tab') || 'login');
+        }
+    }
+
+    $('form-login').onsubmit = async e => {
+        e.preventDefault();
+        const d = await post(`${API}/login.php`, { username: $('li-user').value, password: $('li-pass').value });
+        if (d.success) {
+            const next = params.get('next');
+            location.href = (next && /^[a-z0-9_-]+\.html(#[\w-]*)?$/i.test(next)) ? next : (d.user.staff ? 'admin/index.html' : 'forum.html');
+        } else msg(d.error || 'Anmeldung fehlgeschlagen', false);
+    };
+    $('form-register').onsubmit = async e => {
+        e.preventDefault();
+        const d = await post(`${API}/account.php`, { action: 'register', username: $('rg-user').value, email: $('rg-email').value,
+            password: $('rg-pass').value, legacy_claim: $('rg-legacy').value, website: $('rg-website').value });
+        msg(d.message || d.error, !!d.success);
+        if (d.success) e.target.reset();
+    };
+    $('form-forgot').onsubmit = async e => {
+        e.preventDefault();
+        const d = await post(`${API}/account.php`, { action: 'request_reset', login: $('fg-login').value });
+        msg(d.message || d.error, !!d.success);
+    };
+    $('form-reset').onsubmit = async e => {
+        e.preventDefault();
+        if ($('rs-pass').value !== $('rs-pass2').value) return msg('Die Passwörter stimmen nicht überein.', false);
+        const d = await post(`${API}/account.php`, { action: 'reset', token: params.get('reset'), password: $('rs-pass').value });
+        msg(d.message || d.error, !!d.success);
+        if (d.success) { e.target.style.display = 'none'; history.replaceState(null, '', 'konto.html'); $('view-guest').style.display = ''; showTab('login'); }
+    };
+    $('form-pw').onsubmit = async e => {
+        e.preventDefault();
+        const d = await post(`${API}/account.php`, { action: 'change_password', current_password: $('pw-cur').value, new_password: $('pw-new').value });
+        msg(d.message || d.error, !!d.success); if (d.success) e.target.reset();
+    };
+    $('form-email').onsubmit = async e => {
+        e.preventDefault();
+        const d = await post(`${API}/account.php`, { action: 'update_email', email: $('em-email').value, current_password: $('em-pass').value });
+        msg(d.message || d.error, !!d.success); $('em-pass').value = '';
+    };
+    async function logout() { await post(`${API}/logout.php`, {}); location.href = 'konto.html'; }
+    init();
+    </script>
+</body>
+</html>

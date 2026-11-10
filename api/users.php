@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/../lib/Security.php';
 require_once __DIR__ . '/../lib/LmoDatabase.php';
+require_once __DIR__ . '/../lib/AccountService.php';
 
 Security::initSession();
 header('Content-Type: application/json; charset=utf-8');
@@ -37,12 +38,7 @@ function ensureUsersTable() {
         last_login DATETIME
     )");
 
-    // Default-Admin erstellen falls keine Benutzer existieren
-    $count = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-    if ($count == 0) {
-        $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)");
-        $stmt->execute(['admin', password_hash('hafo', PASSWORD_DEFAULT), 'Administrator', 'admin']);
-    }
+    // Kein automatischer Default-Admin mehr (frueher admin/hafo) – Ersteinrichtung per CLI-Skript
 }
 
 // Auth Check (außer für Passwort-Änderung des eigenen Accounts)
@@ -58,8 +54,7 @@ function requireAuth() {
 function requireAdmin($pdo) {
     $userId = $_SESSION['lmo26_user_id'] ?? null;
     if (!$userId) {
-        // Legacy-Session ohne User-ID -> als Admin behandeln
-        return true;
+        return false; // keine Legacy-Sessions ohne Benutzer-ID mehr
     }
     $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
     $stmt->execute([$userId]);
@@ -70,21 +65,31 @@ function requireAdmin($pdo) {
 try {
     ensureUsersTable();
     $pdo = LmoDatabase::getInstance();
+    $accounts = new AccountService(); // legt Zusatzspalten/Tabellen an
 
     // GET: Benutzerliste
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['list'])) {
         requireAuth();
 
+        if (requireAdmin($pdo)) {
+            $accounts->deactivateInactiveDaily();
+        }
+        $withLegacy = !empty($_GET['legacy']);
         $stmt = $pdo->query("
-            SELECT id, username, display_name, role, active, created_at, last_login
+            SELECT id, username, display_name, role, active, created_at, last_login, email, status, legacy_claim
             FROM users
-            ORDER BY username
+            " . ($withLegacy ? "" : "WHERE NOT (role = 'user' AND last_login IS NULL AND (email IS NULL OR email = '') AND COALESCE(status,'active') = 'active')") . "
+            ORDER BY CASE WHEN status IN ('pending_approval','pending_email') THEN 0 ELSE 1 END, role DESC, username
         ");
         $users = $stmt->fetchAll();
+        $legacyCount = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user' AND last_login IS NULL AND (email IS NULL OR email = '') AND COALESCE(status,'active') = 'active'")->fetchColumn();
 
         echo json_encode([
             'success' => true,
-            'users' => $users
+            'users' => $users,
+            'legacy_hidden' => $withLegacy ? 0 : $legacyCount,
+            'pending' => count(array_filter($users, fn($u) => in_array($u['status'], ['pending_approval', 'pending_email'], true))),
+            'mail_configured' => (new Mailer())->isConfigured()
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -179,11 +184,16 @@ try {
                     throw new Exception('Benutzer-ID ist erforderlich');
                 }
 
-                // Update ohne Passwort
+                if (!in_array($role, ['user', 'editor', 'admin'], true)) {
+                    throw new Exception('Ungültige Rolle');
+                }
+                // Reaktivieren setzt auch den Status zurueck (z. B. nach Inaktivitaet)
                 $stmt = $pdo->prepare("
-                    UPDATE users SET display_name = ?, role = ?, active = ? WHERE id = ?
+                    UPDATE users SET display_name = ?, role = ?, active = ?,
+                        status = CASE WHEN ? = 1 AND COALESCE(status,'active') = 'inactive' THEN 'active' ELSE status END
+                    WHERE id = ?
                 ");
-                $stmt->execute([$displayName, $role, $active, $userId]);
+                $stmt->execute([$displayName, $role, $active, $active, $userId]);
 
                 // Passwort nur ändern wenn angegeben
                 if (!empty($newPassword)) {
@@ -273,6 +283,27 @@ try {
                     'success' => true,
                     'message' => 'Passwort geändert'
                 ], JSON_UNESCAPED_UNICODE);
+                break;
+
+            case 'approve':
+            case 'reject':
+            case 'send_reset':
+                requireAuth();
+                if (!requireAdmin($pdo)) {
+                    throw new Exception('Nur Administratoren');
+                }
+                $targetId = (int)($input['id'] ?? 0);
+                if ($action === 'approve') {
+                    $login = $accounts->approve($targetId, ($input['accept_claim'] ?? true) !== false);
+                    $msg = "Freigeschaltet – Anmeldename: $login (E-Mail verschickt)";
+                } elseif ($action === 'reject') {
+                    $accounts->reject($targetId);
+                    $msg = 'Registrierung abgelehnt und gelöscht';
+                } else {
+                    $accounts->sendResetFor($targetId);
+                    $msg = 'E-Mail zum Zurücksetzen verschickt';
+                }
+                echo json_encode(['success' => true, 'message' => $msg], JSON_UNESCAPED_UNICODE);
                 break;
 
             default:
