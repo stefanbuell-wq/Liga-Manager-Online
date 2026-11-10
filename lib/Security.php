@@ -331,7 +331,7 @@ class Security {
         header('Referrer-Policy: strict-origin-when-cross-origin');
 
         // Content Security Policy (adjust as needed)
-        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;");
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:;");
     }
 
     /**
