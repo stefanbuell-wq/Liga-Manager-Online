@@ -1593,7 +1593,7 @@
             html += `
                 <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                     <input type="search" id="users-q" placeholder="Benutzer suchen (Name, E-Mail) …" value="${uEsc(usersFilter.q)}"
-                           style="flex:2; min-width:220px;" oninput="usersFilter.q=this.value; renderUsersList(); document.getElementById('users-q').focus();">
+                           style="flex:2; min-width:220px;" oninput="usersFilter.q=this.value; const pos=this.selectionStart; renderUsersList(); const el=document.getElementById('users-q'); el.focus(); el.setSelectionRange(pos, pos);">
                     <select style="flex:1; min-width:200px;" onchange="usersFilter.type=this.value; renderUsersList();">
                         <option value="" ${usersFilter.type === '' ? 'selected' : ''}>Alle Konten (${allOthers.length})</option>
                         <option value="staff" ${usersFilter.type === 'staff' ? 'selected' : ''}>Redaktion & Admins (${cnt('staff')})</option>
