@@ -190,7 +190,7 @@ try {
                 // Reaktivieren setzt auch den Status zurueck (z. B. nach Inaktivitaet)
                 $stmt = $pdo->prepare("
                     UPDATE users SET display_name = ?, role = ?, active = ?,
-                        status = CASE WHEN ? = 1 AND COALESCE(status,'active') = 'inactive' THEN 'active' ELSE status END
+                        status = CASE WHEN ? = 1 AND COALESCE(status,'active') IN ('inactive','disabled') THEN 'active' ELSE status END
                     WHERE id = ?
                 ");
                 $stmt->execute([$displayName, $role, $active, $active, $userId]);
