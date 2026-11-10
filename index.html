@@ -523,8 +523,13 @@
                 const res = await fetch(`${API_BASE}/list-leagues.php`);
                 const data = await res.json();
                 if (data.leagues && data.leagues.length > 0) {
+                    // Standard: neueste Saison der Hamburg-Oberliga (hhoberliga2627 > hhoberliga2526 ...)
+                    const oberliga = data.leagues
+                        .filter(l => /^hhoberliga\d{4}\.l98$/i.test(l.file))
+                        .sort((a, b) => b.file.localeCompare(a.file));
+                    const defaultFile = (oberliga[0] || data.leagues[0]).file;
                     select.innerHTML = data.leagues.map(l =>
-                        `<option value="${l.file}" ${l.file === 'hhoberliga2425.l98' ? 'selected' : ''}>${l.name}</option>`
+                        `<option value="${l.file}" ${l.file === defaultFile ? 'selected' : ''}>${l.name}</option>`
                     ).join('');
 
                     // Load default league

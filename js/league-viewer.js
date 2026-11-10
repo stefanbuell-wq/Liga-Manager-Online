@@ -4,14 +4,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === STATE ===
     const urlParams = new URLSearchParams(window.location.search);
-    const liga = urlParams.get('liga') || 'hhoberliga2425.l98';
+    let liga = urlParams.get('liga');
     let currentRound = parseInt(urlParams.get('round')) || null;
     let leagueData = null;
 
     // === INIT ===
-    initTabs();
-    initLeagueSelector();
-    fetchData(liga);
+    (async () => {
+        if (!liga) {
+            // Standard: neueste Saison der Hamburg-Oberliga
+            try {
+                const res = await fetch('api/list-leagues.php');
+                const data = await res.json();
+                const oberliga = (data.leagues || [])
+                    .filter(l => /^hhoberliga\d{4}\.l98$/i.test(l.file))
+                    .sort((a, b) => b.file.localeCompare(a.file));
+                liga = (oberliga[0] || (data.leagues || [])[0] || {}).file || 'hhoberliga2627.l98';
+            } catch (e) {
+                liga = 'hhoberliga2627.l98';
+            }
+        }
+        initTabs();
+        initLeagueSelector();
+        fetchData(liga);
+    })();
 
     // === LEAGUE SELECTOR ===
     async function initLeagueSelector() {
