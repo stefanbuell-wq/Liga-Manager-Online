@@ -967,11 +967,22 @@
             for (let i = 1; i <= rounds; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
-                opt.textContent = `Spieltag ${i}`;
+                const firstDate = ((data.matches[i] || []).find(m => m.date) || {}).date;
+                opt.textContent = firstDate ? `Spieltag ${i} – ${firstDate}` : `Spieltag ${i}`;
                 if (i === actual) opt.selected = true;
                 sel.appendChild(opt);
             }
             renderMatches();
+        }
+
+        // Datum: DB/LMO speichert TT.MM.JJJJ, <input type="date"> erwartet JJJJ-MM-TT
+        function toIsoDate(d) {
+            const m = String(d || '').match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+            return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : (/^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d : '');
+        }
+        function fromIsoDate(d) {
+            const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? `${m[3]}.${m[2]}.${m[1]}` : '';
         }
 
         function renderMatches() {
@@ -997,7 +1008,7 @@
                     <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:0.9rem;">
                         <div>
                             <label style="font-size:0.8rem; color:#666;">Datum</label>
-                            <input type="date" class="match-date" value="${m.date || ''}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                            <input type="date" class="match-date" value="${toIsoDate(m.date)}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div>
                             <label style="font-size:0.8rem; color:#666;">Uhrzeit</label>
@@ -1020,7 +1031,7 @@
                 const idx = row.dataset.idx;
                 const h = row.querySelector('.home-score').value;
                 const g = row.querySelector('.guest-score').value;
-                const date = row.querySelector('.match-date').value;
+                const date = fromIsoDate(row.querySelector('.match-date').value);
                 const time = row.querySelector('.match-time').value;
                 const note = row.querySelector('.match-note').value;
                 const original = currentLeagueData.matches[currentRound][idx];

@@ -1,3 +1,8 @@
+# Alte Portal-Adresse auf die Startseite umleiten
+<IfModule mod_alias.c>
+    RedirectMatch 301 ^/portal\.html$ /
+</IfModule>
+
 # Security Headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"

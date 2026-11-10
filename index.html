@@ -176,7 +176,7 @@
             <div class="container">
                 <!-- Tabs -->
                 <div class="tabs">
-                    <button class="tab-btn active" data-tab="overview">Übersicht</button>
+                    <button class="tab-btn active" data-tab="overview">Aktuell</button>
                     <button class="tab-btn" data-tab="schedule">Spielplan</button>
                     <button class="tab-btn" data-tab="table">Tabelle</button>
                     <button class="tab-btn" data-tab="stats">Statistiken</button>
@@ -191,7 +191,7 @@
                     </select>
                 </div>
 
-                <!-- Tab: Übersicht -->
+                <!-- Tab: Aktuell -->
                 <div id="tab-overview" class="tab-content active">
                     <div class="content-grid">
                         <div>
@@ -874,43 +874,86 @@
         }
 
         // === SCHEDULE (All Matchdays) ===
+        // === SPIELPLAN: Sortierung, Team-Filter, Uhrzeit, Spielbericht-Link ===
+        const scheduleState = { sort: 'round-asc', team: '' };
+
+        function scheduleEsc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function scheduleDateKey(m) {
+            const d = String(m.date || '').match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+            if (!d) return '9999-99-99 99:99';
+            return `${d[3]}-${d[2].padStart(2, '0')}-${d[1].padStart(2, '0')} ${m.time || '00:00'}`;
+        }
+
         function renderSchedule() {
             if (!leagueData || !leagueData.matches) return;
 
             const container = document.getElementById('schedule-display');
             const totalRounds = parseInt(leagueData.options.Rounds) || 1;
-            let html = '';
 
+            // alle Spiele mit Spieltag sammeln
+            let all = [];
             for (let round = 1; round <= totalRounds; round++) {
-                const matches = leagueData.matches[round] || [];
-                if (matches.length === 0) continue;
+                (leagueData.matches[round] || []).forEach(m => all.push({ ...m, round }));
+            }
+            const teams = [...new Set(all.flatMap(m => [m.home, m.guest]))].sort((a, b) => a.localeCompare(b, 'de'));
+            if (scheduleState.team && !teams.includes(scheduleState.team)) scheduleState.team = '';
+            if (scheduleState.team) all = all.filter(m => m.home === scheduleState.team || m.guest === scheduleState.team);
 
-                html += `
-                    <div class="table-card" style="margin-bottom: var(--spacing-lg);">
-                        <div class="table-header">
-                            <h3>Spieltag ${round}</h3>
-                        </div>
-                        <div style="padding: var(--spacing-md);">
-                `;
+            const toolbar = `
+                <div style="display:flex; flex-wrap:wrap; gap:var(--spacing-sm); margin-bottom:var(--spacing-lg);">
+                    <select class="btn btn-secondary" onchange="scheduleState.sort=this.value; renderSchedule();">
+                        <option value="round-asc"  ${scheduleState.sort === 'round-asc' ? 'selected' : ''}>Spieltag aufsteigend</option>
+                        <option value="round-desc" ${scheduleState.sort === 'round-desc' ? 'selected' : ''}>Spieltag absteigend (neueste zuerst)</option>
+                        <option value="date-asc"   ${scheduleState.sort === 'date-asc' ? 'selected' : ''}>Datum / Uhrzeit chronologisch</option>
+                        <option value="date-desc"  ${scheduleState.sort === 'date-desc' ? 'selected' : ''}>Datum / Uhrzeit neueste zuerst</option>
+                    </select>
+                    <select class="btn btn-secondary" onchange="scheduleState.team=this.value; renderSchedule();">
+                        <option value="">Alle Teams</option>
+                        ${teams.map(t => `<option value="${scheduleEsc(t)}" ${t === scheduleState.team ? 'selected' : ''}>${scheduleEsc(t)}</option>`).join('')}
+                    </select>
+                </div>`;
 
-                matches.forEach(m => {
-                    const played = m.played;
+            const row = m => {
+                const played = m.played;
+                const when = [m.date, m.time ? m.time + ' Uhr' : ''].filter(Boolean).join(' · ');
+                const report = m.has_news && m.news_id
+                    ? `<button onclick="showNews(${Number(m.news_id)})" title="Spielbericht lesen" aria-label="Spielbericht lesen"
+                         style="border:none; background:none; cursor:pointer; font-size:1.1rem; padding:0 var(--spacing-xs);">📰</button>`
+                    : '<span style="display:inline-block; width:28px;"></span>';
+                return `
+                    <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="flex: 1; text-align: right;">${scheduleEsc(m.home)}</span>
+                        <span style="min-width: 60px; text-align: center; font-weight: 700; background: var(--color-bg-elevated); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-sm);">
+                            ${played ? m.home_goals + ' : ' + m.guest_goals : '- : -'}
+                        </span>
+                        <span style="flex: 1;">${scheduleEsc(m.guest)}</span>
+                        <span style="min-width: 150px; text-align: right; color: var(--color-text-muted); font-size: 0.85rem;">${scheduleEsc(when)}</span>
+                        ${report}
+                    </div>`;
+            };
+
+            let html = toolbar;
+            if (scheduleState.sort.startsWith('round')) {
+                const rounds = [...new Set(all.map(m => m.round))].sort((a, b) => scheduleState.sort === 'round-asc' ? a - b : b - a);
+                rounds.forEach(r => {
+                    const ms = all.filter(m => m.round === r).sort((a, b) => scheduleDateKey(a).localeCompare(scheduleDateKey(b)));
                     html += `
-                        <div style="display: flex; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
-                            <span style="flex: 1; text-align: right; padding-right: var(--spacing-md);">${m.home}</span>
-                            <span style="min-width: 60px; text-align: center; font-weight: 700; background: var(--color-bg-elevated); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-sm);">
-                                ${played ? m.home_goals + ' : ' + m.guest_goals : '- : -'}
-                            </span>
-                            <span style="flex: 1; padding-left: var(--spacing-md);">${m.guest}</span>
-                            <span style="min-width: 80px; text-align: right; color: var(--color-text-muted); font-size: 0.85rem;">${m.date || ''}</span>
-                        </div>
-                    `;
+                        <div class="table-card" style="margin-bottom: var(--spacing-lg);">
+                            <div class="table-header"><h3>Spieltag ${r}${ms[0] && ms[0].date ? ' <span style="font-weight:400; color:var(--color-text-muted); font-size:0.85rem;">· ' + scheduleEsc(ms[0].date) + '</span>' : ''}</h3></div>
+                            <div style="padding: var(--spacing-md);">${ms.map(row).join('')}</div>
+                        </div>`;
                 });
-
-                html += '</div></div>';
+            } else {
+                all.sort((a, b) => scheduleDateKey(a).localeCompare(scheduleDateKey(b)));
+                if (scheduleState.sort === 'date-desc') all.reverse();
+                html += `<div class="table-card"><div style="padding: var(--spacing-md);">${all.map(m =>
+                    row(m).replace('<span style="flex: 1; text-align: right;">', `<span style="min-width:90px; color:var(--color-text-muted); font-size:0.8rem;">Spieltag ${m.round}</span><span style="flex: 1; text-align: right;">`)
+                ).join('')}</div></div>`;
             }
 
-            container.innerHTML = html || '<p class="text-muted">Kein Spielplan vorhanden.</p>';
+            container.innerHTML = all.length ? html : toolbar + '<p class="text-muted">Kein Spielplan vorhanden.</p>';
         }
 
         // === STATS ===
