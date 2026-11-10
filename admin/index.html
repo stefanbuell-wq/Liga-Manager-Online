@@ -448,6 +448,7 @@
         <div class="sidebar-header">LMO Admin</div>
         <nav class="nav-items">
             <a class="nav-item active" onclick="switchTab('dashboard')">🏠 Dashboard (Ligen)</a>
+            <a class="nav-item" href="season.html">📅 Saison-Assistent</a>
             <a class="nav-item" onclick="switchTab('teams')">👥 Teams</a>
             <a class="nav-item" onclick="switchTab('corrections')">📊 Punktekorrekturen</a>
             <a class="nav-item" href="news.html">📰 News & Berichte</a>
@@ -482,7 +483,10 @@
                     <pre id="setup-output" style="background: var(--color-bg-elevated); border:1px solid var(--color-border); padding:12px; border-radius: var(--radius-md); max-height: 260px; overflow:auto; white-space: pre-wrap;">Bereit.</pre>
                 </div>
                 <div class="card">
-                    <h3>Verfügbare Ligen</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+                        <h3 style="margin:0;">Verfügbare Ligen</h3>
+                        <a href="season.html" style="padding:10px 18px; background:var(--color-primary); color:#fff; border-radius:var(--radius-md); text-decoration:none; font-weight:600; font-size:0.9rem;">📅 + Neue Saison anlegen</a>
+                    </div>
                     <div id="league-list-container">Lade...</div>
                 </div>
             </div>
@@ -728,7 +732,16 @@
             if (!auth) {
                 document.getElementById('login-overlay').classList.remove('hidden');
             } else {
-                loadDashboard();
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('open')) {
+                    openLeagueEditor(params.get('open'));
+                } else if (window.location.hash === '#teams') {
+                    switchTab('teams');
+                } else if (window.location.hash === '#corrections') {
+                    switchTab('corrections');
+                } else {
+                    loadDashboard();
+                }
             }
 
             // Login Handler
@@ -788,7 +801,7 @@
         function switchTab(tabId) {
             // Update Sidebar
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navMap = { 'dashboard': 0, 'editor': 0, 'teams': 1, 'corrections': 2, 'news': 3, 'users': 4 };
+            const navMap = { 'dashboard': 0, 'editor': 0, 'teams': 2, 'corrections': 3, 'news': 4, 'users': 6 };
             if (navMap[tabId] !== undefined) document.querySelectorAll('.nav-item')[navMap[tabId]].classList.add('active');
 
             // Hide/Show Views
@@ -990,7 +1003,55 @@
             const matches = currentLeagueData.matches[currentRound] || [];
             const container = document.getElementById('matches-container');
 
-            if (matches.length === 0) { container.innerHTML = 'Huch, keine Spiele gefunden.'; return; }
+            if (matches.length === 0) {
+                // Leerer Spieltag (z. B. aus Option A des Saison-Assistenten): Paarungen eintragen ermöglichen
+                const teamsList = Object.values(currentLeagueData.teams || {});
+                const matchesPerRound = parseInt(currentLeagueData.options?.Matches) || Math.floor(teamsList.length / 2) || 0;
+                if (matchesPerRound <= 0 || teamsList.length < 2) {
+                    container.innerHTML = 'Huch, keine Spiele gefunden.';
+                    return;
+                }
+                const teamOptions = `<option value="">-- Team wählen --</option>` +
+                    teamsList.map(t => `<option value="${t.id}">${leagueEsc(t.name)}</option>`).join('');
+
+                let emptyHtml = `<div style="margin-bottom:12px; padding:10px 14px; background:var(--color-bg-elevated); border:1px solid var(--color-border); border-radius:8px; font-size:0.9rem; color:var(--color-text-secondary);">
+                    Für Spieltag ${currentRound} sind noch keine Paarungen hinterlegt. Wählen Sie unten die Heim- und Auswärtsteams aus und klicken Sie auf <strong>Speichern</strong>.
+                </div>`;
+                for (let idx = 0; idx < matchesPerRound; idx++) {
+                    emptyHtml += `
+                        <div class="match-row" data-idx="${idx}" data-new-pairing="1" style="flex-direction:column; align-items:stretch; padding:15px;">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+                                <div class="teams-display" style="flex:1; min-width:260px;">
+                                    <select class="home-team-select" style="flex:1;">${teamOptions}</select>
+                                    <span style="padding:0 6px;">vs</span>
+                                    <select class="guest-team-select" style="flex:1;">${teamOptions}</select>
+                                </div>
+                                <div style="display:flex; gap:5px; align-items:center;">
+                                    <input type="text" class="score-input home-score" value="" placeholder="-">
+                                    :
+                                    <input type="text" class="score-input guest-score" value="" placeholder="-">
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:0.9rem;">
+                                <div>
+                                    <label style="font-size:0.8rem; color:#666;">Datum</label>
+                                    <input type="date" class="match-date" value="" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; color:#666;">Uhrzeit</label>
+                                    <input type="time" class="match-time" value="" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:0.8rem; color:#666;">Notiz</label>
+                                    <input type="text" class="match-note" value="" placeholder="z.B. verlegt, abgesagt..." style="width:100%; padding:5px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = emptyHtml;
+                return;
+            }
 
             container.innerHTML = matches.map((m, idx) => `
                 <div class="match-row" data-idx="${idx}" style="flex-direction:column; align-items:stretch; padding:15px 0;">
@@ -1035,6 +1096,24 @@
                 const date = fromIsoDate(row.querySelector('.match-date').value);
                 const time = row.querySelector('.match-time').value;
                 const note = row.querySelector('.match-note').value;
+
+                if (row.dataset.newPairing === '1') {
+                    const homeId = parseInt(row.querySelector('.home-team-select').value, 10);
+                    const guestId = parseInt(row.querySelector('.guest-team-select').value, 10);
+                    if (homeId && guestId && homeId !== guestId) {
+                        dataToSave.push({
+                            home_id: homeId,
+                            guest_id: guestId,
+                            home_goals: h,
+                            guest_goals: g,
+                            date: date,
+                            time: time,
+                            note: note
+                        });
+                    }
+                    return;
+                }
+
                 const original = currentLeagueData.matches[currentRound][idx];
 
                 dataToSave.push({

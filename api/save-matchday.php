@@ -73,6 +73,16 @@ try {
           AND guest_team_id = :gid
     ");
 
+    $stmtInsert = $pdo->prepare("
+        INSERT INTO matches (
+            league_id, round_nr, home_team_id, guest_team_id,
+            home_goals, guest_goals, match_date, match_time, match_note
+        ) VALUES (
+            :lid, :r, :hid, :gid,
+            :hg, :gg, :md, :mt, :mn
+        )
+    ");
+
     $pdo->beginTransaction();
 
     foreach ($matches as $m) {
@@ -80,7 +90,7 @@ try {
         $hid = $teamLookup[$m['home_id']] ?? null;
         $gid = $teamLookup[$m['guest_id']] ?? null;
 
-        if ($hid && $gid) {
+        if ($hid && $gid && $hid !== $gid) {
             // Nullify empty values
             $hg = ($m['home_goals'] === "" || $m['home_goals'] === null) ? null : $m['home_goals'];
             $gg = ($m['guest_goals'] === "" || $m['guest_goals'] === null) ? null : $m['guest_goals'];
@@ -88,7 +98,7 @@ try {
             $mt = !empty($m['time']) ? $m['time'] : null;
             $mn = !empty($m['note']) ? trim($m['note']) : null;
 
-            $stmtUpdate->execute([
+            $params = [
                 ':hg' => $hg,
                 ':gg' => $gg,
                 ':md' => $md,
@@ -98,11 +108,32 @@ try {
                 ':r' => $round,
                 ':hid' => $hid,
                 ':gid' => $gid
-            ]);
+            ];
+
+            $stmtUpdate->execute($params);
+            if ($stmtUpdate->rowCount() === 0) {
+                // Prüfen ob Paarung bereits mit NULL-Werten existiert (SQLite rowCount ist 0 wenn Werte identisch)
+                $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM matches WHERE league_id = ? AND round_nr = ? AND home_team_id = ? AND guest_team_id = ?");
+                $stmtCheck->execute([$lid, $round, $hid, $gid]);
+                if ((int)$stmtCheck->fetchColumn() === 0) {
+                    $stmtInsert->execute($params);
+                }
+            }
         }
     }
 
     $pdo->commit();
+
+    // Cache leeren (data/cache)
+    $cacheDir = __DIR__ . '/../data/cache';
+    if (is_dir($cacheDir)) {
+        foreach (glob($cacheDir . '/*.json') ?: [] as $cacheFile) {
+            if (is_file($cacheFile)) {
+                @unlink($cacheFile);
+            }
+        }
+    }
+
     echo json_encode(['success' => true]);
 
 } catch (Exception $e) {
