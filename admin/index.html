@@ -1521,7 +1521,9 @@
         }
 
         // ==================== BENUTZERVERWALTUNG ====================
-        let usersShowLegacy = false;
+        let usersShowLegacy = true;   // Standard: alle Konten anzeigen
+        let usersFilter = { q: '', type: '' };
+        let usersCache = null;
         function uEsc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         const ROLE_LABEL = { admin: ['Admin', '#ffc107', '#000'], editor: ['Redaktion', '#17a2b8', '#fff'], user: ['Forum', '#e5e7eb', '#111'] };
         const STATUS_LABEL = {
@@ -1535,11 +1537,32 @@
             const container = document.getElementById('users-list');
             container.innerHTML = 'Lade...';
 
-            const data = await (await fetch(`${API_BASE}/users.php?list=1${usersShowLegacy ? '&legacy=1' : ''}`)).json();
+            const data = await (await fetch(`${API_BASE}/users.php?list=1&legacy=1`)).json();
             if (data.error) { container.innerHTML = `Fehler: ${uEsc(data.error)}`; return; }
+            usersCache = data;
+            renderUsersList();
+        }
+
+        const isLegacyUser = u => u.role === 'user' && !u.last_login && !u.email && (u.status || 'active') === 'active';
+
+        function renderUsersList() {
+            const data = usersCache;
+            const container = document.getElementById('users-list');
+            if (!data) return;
 
             const pending = (data.users || []).filter(u => u.status === 'pending_approval' || u.status === 'pending_email');
-            const others = (data.users || []).filter(u => !pending.includes(u));
+            const q = usersFilter.q.trim().toLowerCase();
+            const typeMatch = u => ({
+                '': true,
+                staff: ['admin', 'editor'].includes(u.role),
+                forum: u.role === 'user' && !isLegacyUser(u),
+                legacy: isLegacyUser(u),
+                inactive: u.active != 1,
+            })[usersFilter.type];
+            const allOthers = (data.users || []).filter(u => !pending.includes(u));
+            const others = allOthers.filter(u => typeMatch(u) &&
+                (!q || [u.username, u.display_name, u.email].some(v => (v || '').toLowerCase().includes(q))));
+            const shown = others.slice(0, 200);
 
             let html = '';
             if (!data.mail_configured) {
@@ -1565,7 +1588,22 @@
                 </table>`;
             }
 
+            const cnt = f => allOthers.filter(u => ({staff: ['admin','editor'].includes(u.role), forum: u.role === 'user' && !isLegacyUser(u), legacy: isLegacyUser(u), inactive: u.active != 1})[f]).length;
             html += `
+                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                    <input type="search" id="users-q" placeholder="Benutzer suchen (Name, E-Mail) …" value="${uEsc(usersFilter.q)}"
+                           style="flex:2; min-width:220px;" oninput="usersFilter.q=this.value; renderUsersList(); document.getElementById('users-q').focus();">
+                    <select style="flex:1; min-width:200px;" onchange="usersFilter.type=this.value; renderUsersList();">
+                        <option value="" ${usersFilter.type === '' ? 'selected' : ''}>Alle Konten (${allOthers.length})</option>
+                        <option value="staff" ${usersFilter.type === 'staff' ? 'selected' : ''}>Redaktion & Admins (${cnt('staff')})</option>
+                        <option value="forum" ${usersFilter.type === 'forum' ? 'selected' : ''}>Neue Forenkonten (${cnt('forum')})</option>
+                        <option value="legacy" ${usersFilter.type === 'legacy' ? 'selected' : ''}>Alte Forenkonten (${cnt('legacy')})</option>
+                        <option value="inactive" ${usersFilter.type === 'inactive' ? 'selected' : ''}>Deaktiviert (${cnt('inactive')})</option>
+                    </select>
+                </div>
+                <div style="font-size:0.85rem; color:var(--color-text-muted); margin-bottom:8px;">
+                    ${others.length} Treffer${others.length > shown.length ? ` – die ersten ${shown.length} werden angezeigt, Suche verfeinern` : ''}
+                </div>
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:var(--color-bg-elevated, #f8f9fa);">
@@ -1578,9 +1616,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${others.map(u => {
+                        ${shown.map(u => {
                             const r = ROLE_LABEL[u.role] || ROLE_LABEL.user;
-                            const st = u.active == 1 ? STATUS_LABEL.active : (STATUS_LABEL[u.status] || ['✗ Deaktiviert', '#dc3545']);
+                            const st = isLegacyUser(u) ? ['Altkonto (reserviert)', '#6b7280'] : (u.active == 1 ? STATUS_LABEL.active : (STATUS_LABEL[u.status] || ['✗ Deaktiviert', '#dc3545']));
                             return `
                             <tr style="border-bottom:1px solid var(--border-color, #eee);">
                                 <td style="padding:12px; font-weight:600;">${uEsc(u.username)}${u.display_name && u.display_name !== u.username ? `<br><span style="font-weight:400; color:var(--color-text-muted); font-size:0.85rem;">${uEsc(u.display_name)}</span>` : ''}</td>
@@ -1597,9 +1635,8 @@
                     </tbody>
                 </table>
                 <p style="margin-top:12px; font-size:0.85rem; color:var(--color-text-muted);">
-                    ${data.legacy_hidden ? `${data.legacy_hidden} alte Forenkonten (nie angemeldet, ohne E-Mail) ausgeblendet. ` : ''}
-                    <a href="javascript:void(0)" onclick="usersShowLegacy=!usersShowLegacy; loadUsersList();">${usersShowLegacy ? 'Alte Forenkonten ausblenden' : 'Alte Forenkonten anzeigen'}</a>
-                    · Forenkonten ohne Anmeldung seit 12 Monaten werden automatisch deaktiviert.
+                    „Alte Forenkonten“ = aus dem früheren Forum übernommen, noch nie angemeldet; sie bleiben reserviert und werden nicht automatisch deaktiviert.
+                    · Neue Forenkonten ohne Anmeldung seit 12 Monaten werden automatisch deaktiviert.
                     · <a href="../konto.html">Eigenes Passwort ändern</a>
                 </p>`;
             container.innerHTML = html;

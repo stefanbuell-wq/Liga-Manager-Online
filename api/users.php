@@ -79,7 +79,7 @@ try {
             SELECT id, username, display_name, role, active, created_at, last_login, email, status, legacy_claim
             FROM users
             " . ($withLegacy ? "" : "WHERE NOT (role = 'user' AND last_login IS NULL AND (email IS NULL OR email = '') AND COALESCE(status,'active') = 'active')") . "
-            ORDER BY CASE WHEN status IN ('pending_approval','pending_email') THEN 0 ELSE 1 END, role DESC, username
+            ORDER BY CASE WHEN status IN ('pending_approval','pending_email') THEN 0 ELSE 1 END, CASE role WHEN 'admin' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, (last_login IS NULL), username COLLATE NOCASE
         ");
         $users = $stmt->fetchAll();
         $legacyCount = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user' AND last_login IS NULL AND (email IS NULL OR email = '') AND COALESCE(status,'active') = 'active'")->fetchColumn();
