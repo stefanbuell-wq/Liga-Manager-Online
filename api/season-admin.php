@@ -22,7 +22,7 @@ error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
 // Auth Check: Nur eingeloggte Admins
-$role = $_SESSION['lmo26_user_role'] ?? 'admin';
+$role = $_SESSION['lmo26_user_role'] ?? '';
 if (!isset($_SESSION['lmo26_admin']) || $_SESSION['lmo26_admin'] !== true || $role !== 'admin') {
     http_response_code(403);
     echo json_encode([
