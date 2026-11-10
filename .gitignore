@@ -61,3 +61,6 @@ nul
 # SQLite WAL/Temp
 data/*.sqlite-shm
 data/*.sqlite-wal
+
+# Deploy-Konfiguration (lokal)
+deploy/deploy.config.psd1
