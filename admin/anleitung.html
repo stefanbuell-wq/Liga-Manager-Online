@@ -371,8 +371,9 @@
                 <a href="#korrekturen"><span>7.</span> Punktekorrekturen</a>
                 <a href="#benutzer"><span>8.</span> Benutzerverwaltung</a>
                 <a href="#kader"><span>9.</span> Kaderverwaltung</a>
-                <a href="#design"><span>10.</span> Design-Editor</a>
-                <a href="#tipps"><span>11.</span> Tipps & Tricks</a>
+                <a href="#saison"><span>10.</span> Neue Saison</a>
+                <a href="#design"><span>11.</span> Design-Editor</a>
+                <a href="#tipps"><span>12.</span> Tipps & Tricks</a>
             </div>
         </nav>
 
@@ -455,6 +456,16 @@
                         <td>Spieler pro Team verwalten</td>
                     </tr>
                     <tr>
+                        <td>Saison-Assistent</td>
+                        <td><code>/admin/season.html</code></td>
+                        <td>Neue Saison mit Teams und Spielplan anlegen (nur Admin)</td>
+                    </tr>
+                    <tr>
+                        <td>Mein Konto</td>
+                        <td><code>/konto.html</code></td>
+                        <td>Eigenes Passwort und E-Mail aendern</td>
+                    </tr>
+                    <tr>
                         <td>Design</td>
                         <td><code>/admin/design.html</code></td>
                         <td>Farben und Aussehen anpassen</td>
@@ -476,10 +487,24 @@
 
             <h3>So melden Sie sich an</h3>
             <ol class="steps">
-                <li><strong>Admin-Seite oeffnen:</strong> Navigieren Sie zu <code>/admin/</code></li>
-                <li><strong>Zugangsdaten eingeben:</strong> Benutzername und Passwort eintragen</li>
+                <li><strong>Admin-Seite oeffnen:</strong> Navigieren Sie zu <code>/admin/</code> &ndash; oder melden Sie sich auf der Startseite ueber "Anmelden" (<code>/konto.html</code>) an</li>
+                <li><strong>Zugangsdaten eingeben:</strong> Benutzername <em>oder</em> E-Mail-Adresse und Passwort</li>
                 <li><strong>Anmelden klicken:</strong> Sie werden zum Dashboard weitergeleitet</li>
             </ol>
+
+            <p>Den Admin-Bereich sehen nur Konten mit der Rolle <strong>Editor</strong> oder <strong>Admin</strong>. Forennutzer koennen sich ebenfalls anmelden, landen aber nur im Forum und auf "Mein Konto".</p>
+
+            <h3>Eigenes Passwort aendern / vergessen</h3>
+            <ul>
+                <li><strong>Aendern:</strong> Unter <code>/konto.html</code> &rarr; "Mein Konto" koennen Sie Passwort und E-Mail-Adresse selbst aendern.</li>
+                <li><strong>Vergessen:</strong> Auf <code>/konto.html</code> &rarr; "Passwort vergessen" Ihre E-Mail-Adresse eingeben. Sie erhalten einen Link, der 1 Stunde gueltig ist.</li>
+                <li><strong>Kein Zugang mehr als Admin?</strong> Ein anderer Admin kann Ihnen ein neues Passwort setzen (siehe Benutzerverwaltung) oder der technische Betreuer setzt es auf dem Server neu.</li>
+            </ul>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Hinweis:</strong> Fuenf falsche Passwort-Eingaben sperren die Anmeldung fuer 15 Minuten.</p>
+            </div>
 
             <h3>Benutzerrollen</h3>
             <table>
@@ -539,6 +564,9 @@
                 <p><strong>Tipp:</strong> Mit <kbd>Tab</kbd> springen Sie schnell zum naechsten Eingabefeld. Das beschleunigt die Eingabe erheblich!</p>
             </div>
 
+            <h3>Datum des Spieltags</h3>
+            <p>In der Spieltagsauswahl steht neben jedem Spieltag sein Datum ("Spieltag 5 &ndash; 12.09.2026"). Das Datum aendern Sie ueber das Datumsfeld des Spieltags; es wird beim Speichern uebernommen.</p>
+
             <h3>Spielnotizen hinzufuegen</h3>
             <p>Fuer jedes Spiel koennen zusaetzliche Informationen hinterlegt werden:</p>
             <ul>
@@ -546,6 +574,7 @@
                 <li><strong>Datum/Uhrzeit:</strong> Anstoßzeit aendern</li>
                 <li><strong>Spielbericht:</strong> Link zu einem externen Bericht</li>
             </ul>
+            <p>Uhrzeit und verknuepfte Spielberichte (Symbol 📰) erscheinen oeffentlich im Spielplan. Besucher koennen den Spielplan nach Spieltag oder Datum sortieren und nach Team filtern.</p>
 
             <p>Klicken Sie auf das Info-Symbol neben einem Spiel, um das Notiz-Fenster zu oeffnen.</p>
 
@@ -557,6 +586,7 @@
                 <li>0 Punkte fuer eine Niederlage</li>
                 <li>Sortierung: Punkte → Tordifferenz → Tore</li>
             </ul>
+            <p>Oeffentlich laesst sich die Tabelle fuer jeden Spieltag anzeigen ("Stand nach Spieltag X"), inklusive Pfeilen fuer Platzierungsaenderungen.</p>
 
             <h3>Tastenkuerzel</h3>
             <table>
@@ -889,21 +919,51 @@
         <section class="section" id="benutzer">
             <h2><span class="icon">🔐</span> 8. Benutzerverwaltung</h2>
 
-            <p>Verwalten Sie hier alle registrierten Benutzer und deren Berechtigungen.</p>
+            <p>Verwalten Sie hier alle Konten: Redaktion, Admins und Forennutzer. Die Benutzerverwaltung ist nur fuer Admins sichtbar (Dashboard &rarr; Tab "Benutzer").</p>
+
+            <h3>Benutzer finden</h3>
+            <ul>
+                <li><strong>Suche:</strong> Name oder E-Mail eintippen &ndash; die Liste filtert sofort.</li>
+                <li><strong>Filter:</strong> Alle Konten, Redaktion &amp; Admins, Neue Forenkonten, Alte Forenkonten, Deaktiviert.</li>
+                <li>Angezeigt werden hoechstens 200 Treffer; bei mehr bitte die Suche verfeinern.</li>
+            </ul>
+
+            <h3>Neue Registrierungen freigeben</h3>
+            <p>Forennutzer registrieren sich selbst unter <code>/konto.html</code> und bestaetigen ihre E-Mail-Adresse. Danach erscheinen sie oben unter <strong>"Offene Registrierungen"</strong>:</p>
+            <ul>
+                <li><strong>Freigeben:</strong> Das Konto wird aktiv, der Nutzer kann im Forum schreiben.</li>
+                <li><strong>Freigeben + Namen uebernehmen:</strong> Erscheint, wenn jemand angibt, frueher unter einem anderen Namen im alten Forum geschrieben zu haben. Das neue Konto uebernimmt dann das Altkonto mit allen alten Beitraegen. Nur bestaetigen, wenn Sie sicher sind, dass es dieselbe Person ist!</li>
+                <li><strong>Freigeben ohne Uebernahme:</strong> Konto freigeben, das Altkonto bleibt unberuehrt.</li>
+                <li><strong>Ablehnen:</strong> Die Registrierung wird verworfen.</li>
+            </ul>
 
             <h3>Benutzer bearbeiten</h3>
             <ol class="steps">
-                <li><strong>Dashboard oeffnen</strong></li>
-                <li><strong>Tab "Benutzer" waehlen</strong></li>
-                <li><strong>Benutzer in der Liste finden</strong></li>
-                <li><strong>Rolle aendern:</strong> Im Dropdown die neue Rolle waehlen</li>
+                <li><strong>Benutzer suchen</strong> und auf <strong>"Bearbeiten"</strong> klicken</li>
+                <li><strong>Rolle waehlen:</strong> Forennutzer, Redaktion (Editor) oder Administrator</li>
+                <li><strong>Aktiv:</strong> Haken entfernen, um ein Konto zu sperren; Haken setzen, um es wieder zu aktivieren</li>
+                <li><strong>Speichern</strong></li>
             </ol>
 
             <h3>Neuen Benutzer anlegen</h3>
-            <p>Benutzer registrieren sich selbst ueber die Login-Seite. Danach kann ein Admin die Rolle hochstufen.</p>
+            <p>Forennutzer registrieren sich selbst. Redakteure koennen Sie direkt ueber <strong>"+ Neuer Benutzer"</strong> anlegen (Benutzername, Passwort, Rolle).</p>
 
             <h3>Passwort zuruecksetzen</h3>
-            <p>Aktuell muss ein neues Passwort direkt in der Datenbank gesetzt werden. Funktion zur Passwort-Reset kommt in einer zukuenftigen Version.</p>
+            <ul>
+                <li><strong>Reset-Mail:</strong> Bei Konten mit E-Mail-Adresse schickt der Knopf "Reset-Mail" einen Link zum Setzen eines neuen Passworts.</li>
+                <li><strong>Direkt setzen:</strong> Unter "Bearbeiten" ein neues Passwort eintragen und speichern. Teilen Sie es der Person auf einem sicheren Weg mit (z.&nbsp;B. telefonisch).</li>
+            </ul>
+
+            <h3>Alte Forenkonten und Inaktivitaet</h3>
+            <ul>
+                <li>Die rund 1.270 Konten aus dem alten Forum sind <strong>deaktiviert</strong>. Ihre Beitraege bleiben sichtbar; die Konten koennen sich nicht anmelden, bis jemand sie bei der Registrierung uebernimmt.</li>
+                <li>Neue Forenkonten, die sich <strong>12 Monate</strong> nicht angemeldet haben, werden automatisch deaktiviert. Redaktion und Admins sind davon ausgenommen.</li>
+            </ul>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>E-Mail-Versand:</strong> Registrierung, "Passwort vergessen" und Reset-Mail funktionieren nur, wenn der Mailversand eingerichtet ist. Ist er es nicht, zeigt die Benutzerverwaltung einen Hinweis.</p>
+            </div>
 
             <div class="info-box warning">
                 <span class="icon">⚠️</span>
@@ -925,6 +985,26 @@
                 <li><strong>Spieler hinzufuegen:</strong> Trikotnummer, Name und Position (TW/AB/MF/ST) eingeben</li>
                 <li><strong>Speichern:</strong> Der Spieler erscheint in der Kaderliste</li>
             </ol>
+            <p>Jede Rueckennummer darf pro Team nur einmal vergeben sein.</p>
+
+            <h3>Spielerprofil</h3>
+            <p>Beim Bearbeiten eines Spielers koennen Sie zusaetzlich pflegen: Geburtsdatum, Nationalitaet, im Verein seit, starker Fuss, Groesse, einen Link (z.&nbsp;B. FuPa-Profil) und eine interne Notiz.</p>
+            <ul>
+                <li><strong>Datumsangaben:</strong> <code>TT.MM.JJJJ</code>, <code>MM/JJJJ</code> oder nur <code>JJJJ</code></li>
+                <li><strong>Oeffentlich sichtbar:</strong> Auf der Startseite (Tabelle &rarr; Klick auf ein Team) sehen Besucher Kader und Spielerprofile &ndash; vom Geburtsdatum nur das <strong>Alter</strong>. Die Notiz bleibt intern.</li>
+                <li>Von Hand gepflegte Angaben werden bei einem spaeteren automatischen Datenabruf nicht ueberschrieben.</li>
+            </ul>
+
+            <h3>Vereinshistorie</h3>
+            <p>Im Spielerprofil unter "Vereinshistorie" mit <strong>"+ Station"</strong> fruehere Vereine mit Von/Bis eintragen. Die Anzahl der Stationen sehen Sie in der Kaderliste.</p>
+
+            <h3>Kader aus der Vorsaison uebernehmen</h3>
+            <ul>
+                <li><strong>"Aus Vorsaison uebernehmen"</strong> (beim Team): kopiert die Spieler desselben Teams aus der vorherigen Saison.</li>
+                <li><strong>"Alle Kader aus Vorsaison uebernehmen"</strong> (bei der Liga): macht das fuer alle Teams der Liga auf einmal.</li>
+                <li>Bereits vorhandene Spieler werden nicht doppelt angelegt. Ist eine Rueckennummer schon belegt, wird sie beim kopierten Spieler leer gelassen.</li>
+                <li>Danach Abgaenge loeschen und Neuzugaenge ergaenzen.</li>
+            </ul>
 
             <h3>Positionen</h3>
             <table>
@@ -948,16 +1028,37 @@
             </div>
         </section>
 
-        <!-- 10. Design-Editor -->
+        <!-- 10. Neue Saison -->
+        <section class="section" id="saison">
+            <h2><span class="icon">📅</span> 10. Neue Saison anlegen</h2>
+
+            <p>Der Saison-Assistent legt eine neue Saison inklusive Teams und Spielplan an. Er ist nur fuer Admins verfuegbar: Dashboard &rarr; <strong>"📅 + Neue Saison anlegen"</strong> bzw. <code>/admin/season.html</code>.</p>
+
+            <ol class="steps">
+                <li><strong>Saison konfigurieren:</strong> Name und Dateiname der neuen Saison eingeben und die Vorsaison als Quell-Liga waehlen.</li>
+                <li><strong>Teams zusammenstellen:</strong> Teams der Vorsaison uebernehmen ("Alle waehlen", "Abstiegsplaetze abwaehlen"), Aufsteiger mit "+ Hinzufuegen" ergaenzen.</li>
+                <li><strong>Spielplan-Rahmen:</strong> Startdatum des 1. Spieltags, Abstand zwischen Spieltagen und Standard-Anstosszeit festlegen.</li>
+                <li><strong>Vorschau pruefen &amp; anlegen:</strong> Spielplan je Spieltag kontrollieren, dann die Saison anlegen.</li>
+            </ol>
+
+            <p>Danach im Liga-Editor einzelne Termine anpassen (Verlegungen, Winterpause) und in der Kaderverwaltung die Kader aus der Vorsaison uebernehmen.</p>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Tipp:</strong> Die Startseite zeigt automatisch die neueste Oberliga-Saison an &ndash; sobald die neue Saison angelegt ist, ist sie oeffentlich sichtbar.</p>
+            </div>
+        </section>
+
+        <!-- 11. Design-Editor -->
         <section class="section" id="design">
-            <h2><span class="icon">🎨</span> 10. Design-Editor</h2>
+            <h2><span class="icon">🎨</span> 11. Design-Editor</h2>
 
             <p>Im Design-Editor koennen Sie das Erscheinungsbild der oeffentlichen Seite anpassen.</p>
 
             <h3>Anpassbare Einstellungen</h3>
             <ul>
                 <li><strong>Primaerfarbe:</strong> Hauptfarbe fuer Buttons, Links und Akzente</li>
-                <li><strong>Hintergrundfarben:</strong> Dunkler Hintergrund und Karten-Hintergrund</li>
+                <li><strong>Hintergrundfarben:</strong> Seiten-Hintergrund und Karten-Hintergrund (Standard: helles Design)</li>
                 <li><strong>Textfarben:</strong> Primaer-, Sekundaer- und gedaempfte Textfarbe</li>
             </ul>
 
@@ -966,7 +1067,7 @@
 
         <!-- 11. Tipps -->
         <section class="section" id="tipps">
-            <h2><span class="icon">💡</span> 11. Tipps & Tricks</h2>
+            <h2><span class="icon">💡</span> 12. Tipps & Tricks</h2>
 
             <h3>Allgemeine Tipps</h3>
             <ul>
@@ -1003,6 +1104,10 @@
                         <td>Benutzerrolle pruefen, ggf. Admin kontaktieren</td>
                     </tr>
                     <tr>
+                        <td>Anmeldung gesperrt</td>
+                        <td>Nach 5 Fehlversuchen 15 Minuten warten, dann "Passwort vergessen" nutzen</td>
+                    </tr>
+                    <tr>
                         <td>Tabelle zeigt falsche Punkte</td>
                         <td>Punktekorrekturen pruefen</td>
                     </tr>
@@ -1014,16 +1119,16 @@
             </table>
 
             <h3>Backup</h3>
-            <p>Die Datenbank liegt unter <code>/data/database.sqlite</code>. Regelmaessige Backups dieser Datei werden empfohlen.</p>
+            <p>Die Datenbank liegt auf dem Server unter <code>data/database.sqlite</code> und ist von aussen nicht abrufbar. Vor jedem Update der Webseite wird automatisch eine Sicherung angelegt; zusaetzliche Backups erstellt der technische Betreuer im Hosting-Panel.</p>
 
             <div class="info-box tip">
                 <span class="icon">💡</span>
-                <p><strong>Profi-Tipp:</strong> Legen Sie vor groesseren Aenderungen immer ein Backup der SQLite-Datenbank an!</p>
+                <p><strong>Profi-Tipp:</strong> Vor groesseren Aenderungen (z.&nbsp;B. Saisonwechsel, Kaderuebernahme fuer alle Ligen) kurz Bescheid geben, damit vorher ein Backup angelegt wird.</p>
             </div>
         </section>
 
         <footer class="footer">
-            <p>HAFO Liga-Manager Online &bull; Version 2.6 &bull; &copy; 2025</p>
+            <p>HAFO Liga-Manager Online &bull; Version 2.7 &bull; Stand November 2026</p>
             <p>Bei Fragen oder Problemen: <a href="mailto:admin@hafo.de">admin@hafo.de</a></p>
         </footer>
     </div>
