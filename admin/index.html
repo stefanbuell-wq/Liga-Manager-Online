@@ -830,13 +830,93 @@
                 return;
             }
 
-            container.innerHTML = data.leagues.map(l => `
-                <div onclick="openLeagueEditor('${l.file}')" 
-                     style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold; font-size:1.1rem;">${l.name}</span>
-                    <span style="color:#666; font-size:0.9rem;">${l.file} &rarr;</span>
+            renderLeagueList(container, data.leagues, 'openLeagueEditor', 'dashboard');
+        }
+
+        // -- LIGALISTEN: Suche, Filter, Sortierung (Dashboard, Teams, Korrekturen) --
+        const leagueListState = {};
+
+        function leagueEsc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        // "Hamburg-Oberliga 26/27" -> {klasse:"Hamburg-Oberliga", year:2026, season:"26/27"}
+        function parseLeague(l) {
+            const m = (l.name || '').match(/^(.*?)[\s,]*((\d{2}|\d{4})\/(\d{2}|\d{4}))\s*$/);
+            if (!m) return { ...l, klasse: (l.name || l.file).trim(), year: 0, season: '' };
+            let y = parseInt(m[3], 10);
+            if (y < 100) y += 2000;
+            const shortSeason = String(y).slice(2) + '/' + String(y + 1).slice(2);
+            return { ...l, klasse: m[1].trim(), year: y, season: shortSeason };
+        }
+
+        function renderLeagueList(container, leagues, onClickFn, key) {
+            const items = leagues.map(parseLeague);
+            const klassen = [...new Set(items.map(i => i.klasse))].sort((a, b) => a.localeCompare(b, 'de'));
+            const saved = (() => { try { return JSON.parse(localStorage.getItem('lmo_league_sort') || '{}'); } catch (e) { return {}; } })();
+            const st = leagueListState[key] = { items, onClickFn, q: '', klasse: '', sort: saved.sort || 'season-desc' };
+
+            container.innerHTML = `
+                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    <input type="search" placeholder="Liga suchen (z. B. Oberliga, 25/26) …"
+                           style="flex:2; min-width:200px;" oninput="leagueListUpdate('${key}', 'q', this.value)">
+                    <select style="flex:1; min-width:180px;" onchange="leagueListUpdate('${key}', 'klasse', this.value)">
+                        <option value="">Alle Spielklassen (${klassen.length})</option>
+                        ${klassen.map(k => `<option value="${leagueEsc(k)}">${leagueEsc(k)}</option>`).join('')}
+                    </select>
+                    <select style="flex:1; min-width:180px;" onchange="leagueListUpdate('${key}', 'sort', this.value)">
+                        <option value="season-desc" ${st.sort === 'season-desc' ? 'selected' : ''}>Saison: neueste zuerst</option>
+                        <option value="season-asc" ${st.sort === 'season-asc' ? 'selected' : ''}>Saison: älteste zuerst</option>
+                        <option value="name-asc" ${st.sort === 'name-asc' ? 'selected' : ''}>Name A–Z</option>
+                        <option value="name-desc" ${st.sort === 'name-desc' ? 'selected' : ''}>Name Z–A</option>
+                    </select>
                 </div>
-            `).join('');
+                <div class="league-list-count" style="color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;"></div>
+                <div class="league-list-items"></div>`;
+            leagueListRender(key, container);
+        }
+
+        function leagueListUpdate(key, field, value) {
+            const st = leagueListState[key];
+            st[field] = value;
+            if (field === 'sort') { try { localStorage.setItem('lmo_league_sort', JSON.stringify({ sort: value })); } catch (e) {} }
+            const containerId = { dashboard: 'league-list-container', teams: 'teams-league-list', corr: 'corr-league-list' }[key];
+            leagueListRender(key, document.getElementById(containerId));
+        }
+
+        function leagueListRender(key, container) {
+            const st = leagueListState[key];
+            const q = st.q.trim().toLowerCase();
+            let list = st.items.filter(l =>
+                (!st.klasse || l.klasse === st.klasse) &&
+                (!q || (l.name + ' ' + l.file + ' ' + l.season).toLowerCase().includes(q)));
+
+            const byName = (a, b) => a.name.localeCompare(b.name, 'de');
+            const sorters = {
+                'season-desc': (a, b) => (b.year - a.year) || a.klasse.localeCompare(b.klasse, 'de'),
+                'season-asc':  (a, b) => (a.year - b.year) || a.klasse.localeCompare(b.klasse, 'de'),
+                'name-asc': byName,
+                'name-desc': (a, b) => byName(b, a),
+            };
+            list.sort(sorters[st.sort] || sorters['season-desc']);
+
+            const grouped = st.sort.startsWith('season');
+            let lastYear = null, html = '';
+            list.forEach(l => {
+                if (grouped && l.year !== lastYear) {
+                    lastYear = l.year;
+                    html += `<div style="padding:10px 15px 6px; font-size:0.8rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--color-text-muted); background:var(--color-bg-elevated);">
+                        ${l.year ? 'Saison ' + l.year + '/' + String(l.year + 1).slice(2) : 'Ohne Saison'}</div>`;
+                }
+                html += `
+                <div onclick="${st.onClickFn}('${leagueEsc(l.file)}')"
+                     style="padding:12px 15px; border-bottom:1px solid var(--border-color, #eee); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">${leagueEsc(l.name)}</span>
+                    <span style="color:var(--color-text-muted); font-size:0.9rem;">${leagueEsc(l.file)} &rarr;</span>
+                </div>`;
+            });
+            container.querySelector('.league-list-count').textContent = `${list.length} von ${st.items.length} Ligen`;
+            container.querySelector('.league-list-items').innerHTML = html || '<p style="padding:15px; color:var(--color-text-muted);">Keine Liga gefunden.</p>';
         }
 
         async function runServerCheck() {
@@ -1082,13 +1162,7 @@
                 return;
             }
 
-            container.innerHTML = data.leagues.map(l => `
-                <div onclick="loadTeamsForLeague('${l.file}')"
-                     style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold;">${l.name}</span>
-                    <span style="color:#666; font-size:0.9rem;">${l.file} &rarr;</span>
-                </div>
-            `).join('');
+            renderLeagueList(container, data.leagues, 'loadTeamsForLeague', 'teams');
         }
 
         async function loadTeamsForLeague(ligaFile) {
@@ -1253,13 +1327,7 @@
                 return;
             }
 
-            container.innerHTML = data.leagues.map(l => `
-                <div onclick="loadCorrectionsForLeague('${l.file}')"
-                     style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between;">
-                    <span style="font-weight:bold;">${l.name}</span>
-                    <span style="color:#666;">${l.file} &rarr;</span>
-                </div>
-            `).join('');
+            renderLeagueList(container, data.leagues, 'loadCorrectionsForLeague', 'corr');
         }
 
         async function loadCorrectionsForLeague(ligaFile) {

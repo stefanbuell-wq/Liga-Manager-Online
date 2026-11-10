@@ -134,7 +134,7 @@
 
         button.btn-primary {
             background: var(--color-primary);
-            color: white;
+            color: var(--color-text-primary);
         }
 
         button.btn-primary:hover {
@@ -415,7 +415,7 @@
                     
                     <div style="margin-bottom: 25px;">
                         <h4>Team</h4>
-                        <select id="modal-event-team" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: white; border-radius: 6px;">
+                        <select id="modal-event-team" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: var(--color-text-primary); border-radius: 6px;">
                             <option value="">Team wählen...</option>
                             ${teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
                         </select>
@@ -423,14 +423,14 @@
                     
                     <div style="margin-bottom: 25px;">
                         <h4>Spieler (optional)</h4>
-                        <input type="text" id="modal-player-name" placeholder="Spielername" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: white; border-radius: 6px; margin-bottom: 10px;">
+                        <input type="text" id="modal-player-name" placeholder="Spielername" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: var(--color-text-primary); border-radius: 6px; margin-bottom: 10px;">
                         <label style="font-size: 0.9rem; color: var(--color-text-secondary);">Minute (optional)</label>
-                        <input type="number" id="modal-minute" placeholder="z.B. 45" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: white; border-radius: 6px;" min="0" max="120">
+                        <input type="number" id="modal-minute" placeholder="z.B. 45" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: var(--color-text-primary); border-radius: 6px;" min="0" max="120">
                     </div>
                     
                     <div style="display: flex; gap: 10px;">
                         <button onclick="saveMatchEvent(${match.id})" style="flex: 1; padding: 12px; background: var(--color-primary); border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Hinzufügen</button>
-                        <button onclick="closeModal('event-modal')" style="flex: 1; padding: 12px; background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: white; border-radius: 6px; cursor: pointer;">Abbrechen</button>
+                        <button onclick="closeModal('event-modal')" style="flex: 1; padding: 12px; background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: var(--color-text-primary); border-radius: 6px; cursor: pointer;">Abbrechen</button>
                     </div>
                 </div>
             `;
