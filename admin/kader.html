@@ -305,7 +305,9 @@
         <div class="card hidden" id="teamGridCard">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2 style="margin:0;" id="leagueName">Teams</h2>
+                <button class="btn btn-secondary btn-sm" onclick="copyLeagueSquads()" title="Für alle Teams dieser Liga die Spieler des gleichnamigen Teams aus der Vorsaison übernehmen">Alle Kader aus Vorsaison übernehmen</button>
             </div>
+            <div id="copyMsg" style="font-size:0.85rem; margin-bottom:10px;"></div>
             <div class="team-grid" id="teamGrid"></div>
         </div>
 
@@ -315,6 +317,7 @@
                 <h2 style="margin:0;" id="teamTitle">Kader</h2>
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-sm" onclick="showAddForm()">+ Spieler</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyTeamSquad()" title="Spieler des gleichnamigen Teams aus der Vorsaison übernehmen (vorhandene Namen werden übersprungen)">Aus Vorsaison übernehmen</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteAllPlayers()">Alle loeschen</button>
                 </div>
             </div>
@@ -346,10 +349,57 @@
                         </select>
                     </div>
                 </div>
-                <div style="display:flex; gap:8px; margin-top:12px;">
+                <h4 style="margin:18px 0 8px;">Profil</h4>
+                <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Geburtsdatum</label>
+                        <input type="text" id="pBirth" placeholder="TT.MM.JJJJ oder JJJJ">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Nationalität</label>
+                        <input type="text" id="pNation" placeholder="z. B. Deutschland">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Im Verein seit</label>
+                        <input type="text" id="pJoined" placeholder="MM/JJJJ oder JJJJ">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-top:10px; grid-template-columns:1fr 1fr 1fr;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Starker Fuß</label>
+                        <select id="pFoot"><option value="">--</option><option>rechts</option><option>links</option><option>beidfüßig</option></select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Größe (cm)</label>
+                        <input type="number" id="pHeight" min="120" max="230">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Profil-Link (Quelle)</label>
+                        <input type="url" id="pUrl" placeholder="https://…">
+                    </div>
+                </div>
+                <div class="form-group" style="margin:10px 0 0;">
+                    <label>Interne Notiz (nicht öffentlich)</label>
+                    <input type="text" id="pNotes" maxlength="1000">
+                </div>
+                <div id="pSourceInfo" style="font-size:0.8rem; color:var(--color-text-muted); margin-top:6px;"></div>
+
+                <div id="historyBox" class="hidden">
+                    <h4 style="margin:18px 0 8px;">Vereinshistorie</h4>
+                    <div id="historyList"></div>
+                    <div class="form-row" style="margin-top:8px; align-items:end; grid-template-columns:2fr 1fr 1fr auto;">
+                        <div class="form-group" style="margin-bottom:0; flex:2;"><label>Verein</label><input type="text" id="hClub" placeholder="z. B. TuS Dassendorf"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Von</label><input type="text" id="hFrom" placeholder="MM/JJJJ"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Bis</label><input type="text" id="hTo" placeholder="MM/JJJJ"></div>
+                        <div class="form-group" style="margin-bottom:0;"><button class="btn btn-secondary btn-sm" onclick="addHistory()">+ Station</button></div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:16px;">
                     <button class="btn btn-sm" onclick="savePlayer()">Speichern</button>
                     <button class="btn btn-secondary btn-sm" onclick="hideAddForm()">Abbrechen</button>
                 </div>
+                <div id="playerFormMsg" style="font-size:0.85rem; margin-top:8px;"></div>
             </div>
 
             <!-- Player Table -->
@@ -515,6 +565,8 @@
                             <th style="width:60px;">Nr.</th>
                             <th>Name</th>
                             <th>Position</th>
+                            <th style="width:70px;">Alter</th>
+                            <th style="width:90px;">Stationen</th>
                             <th style="width:140px;"></th>
                         </tr>
                     </thead>
@@ -524,6 +576,8 @@
                                 <td style="font-weight:700; color:var(--color-text-secondary);">${p.number || '-'}</td>
                                 <td style="font-weight:600;">${escapeHtml(p.name)}</td>
                                 <td><span class="position-badge pos-${(p.position || '').toLowerCase()}">${escapeHtml(p.position || '-')}</span></td>
+                                <td>${p.age ?? '–'}</td>
+                                <td>${p.history_count > 0 ? p.history_count : '–'}</td>
                                 <td style="text-align:right;">
                                     <button class="btn btn-secondary btn-sm" onclick="editPlayer(${p.id}, '${escapeAttr(p.name)}', ${p.number || 'null'}, '${escapeAttr(p.position || '')}')">Bearbeiten</button>
                                     <button class="btn btn-danger btn-sm" onclick="deletePlayer(${p.id}, '${escapeAttr(p.name)}')">X</button>
@@ -555,7 +609,77 @@
             document.getElementById('playerNumber').value = '';
             document.getElementById('playerName').value = '';
             document.getElementById('playerPosition').value = '';
+            fillProfile({});
+            document.getElementById('historyBox').classList.add('hidden');
             document.getElementById('playerName').focus();
+        }
+
+        const PROFILE_MAP = { pBirth: 'birth_date', pNation: 'nationality', pJoined: 'joined_at', pFoot: 'foot', pHeight: 'height_cm', pUrl: 'external_url', pNotes: 'notes' };
+
+        function isoToDe(v) {
+            if (!v) return '';
+            let m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/); if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+            m = String(v).match(/^(\d{4})-(\d{2})$/); if (m) return `${m[2]}/${m[1]}`;
+            return v;
+        }
+
+        function fillProfile(p) {
+            for (const [id, f] of Object.entries(PROFILE_MAP)) {
+                const v = p[f] ?? '';
+                document.getElementById(id).value = ['birth_date', 'joined_at'].includes(f) ? isoToDe(v) : v;
+            }
+            const manual = (p.manual_fields || '').split(',').filter(Boolean);
+            document.getElementById('pSourceInfo').textContent =
+                (p.source ? `Quelle: ${p.source}${p.source_updated_at ? ', Stand ' + isoToDe(p.source_updated_at) : ''}. ` : '') +
+                (manual.length ? `Von Hand gepflegt (wird beim Import nicht überschrieben): ${manual.join(', ')}` : '');
+            document.getElementById('playerFormMsg').textContent = '';
+        }
+
+        function readProfile() {
+            const out = {};
+            for (const [id, f] of Object.entries(PROFILE_MAP)) out[f] = document.getElementById(id).value.trim();
+            return out;
+        }
+
+        function renderHistory(list) {
+            const box = document.getElementById('historyList');
+            if (!list.length) { box.innerHTML = '<p style="color:var(--color-text-muted); font-size:0.85rem;">Noch keine Stationen erfasst.</p>'; return; }
+            box.innerHTML = '<table><tbody>' + list.map(h => `
+                <tr>
+                    <td style="font-weight:600;">${escapeHtml(h.club)}</td>
+                    <td>${escapeHtml(isoToDe(h.from_date) || '?')} – ${escapeHtml(isoToDe(h.to_date) || 'heute')}</td>
+                    <td style="font-size:0.8rem; color:var(--color-text-muted);">${h.manual == 1 ? 'manuell' : escapeHtml(h.source || '')}</td>
+                    <td style="text-align:right;"><button class="btn btn-danger btn-sm" onclick="deleteHistory(${h.id})">X</button></td>
+                </tr>`).join('') + '</tbody></table>';
+        }
+
+        async function playerPost(body) {
+            const resp = await fetch('../api/get-players.php', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...body, csrf_token: csrfToken }) });
+            const r = await resp.json();
+            if (r.error) throw new Error(r.error);
+            return r;
+        }
+
+        async function reloadHistory() {
+            const id = document.getElementById('editPlayerId').value;
+            const d = await (await fetch('../api/get-players.php?admin=1&id=' + id)).json();
+            renderHistory(d.player.history || []);
+        }
+
+        async function addHistory() {
+            const id = parseInt(document.getElementById('editPlayerId').value);
+            try {
+                await playerPost({ action: 'history_add', player_id: id, club: document.getElementById('hClub').value,
+                    from_date: document.getElementById('hFrom').value, to_date: document.getElementById('hTo').value });
+                ['hClub', 'hFrom', 'hTo'].forEach(x => document.getElementById(x).value = '');
+                await reloadHistory();
+            } catch (e) { document.getElementById('playerFormMsg').textContent = 'Fehler: ' + e.message; }
+        }
+
+        async function deleteHistory(hid) {
+            try { await playerPost({ action: 'history_delete', history_id: hid }); await reloadHistory(); }
+            catch (e) { document.getElementById('playerFormMsg').textContent = 'Fehler: ' + e.message; }
         }
 
         function hideAddForm() {
@@ -569,6 +693,11 @@
             document.getElementById('playerNumber').value = number || '';
             document.getElementById('playerName').value = name;
             document.getElementById('playerPosition').value = position;
+            document.getElementById('historyBox').classList.remove('hidden');
+            fillProfile({});
+            fetch('../api/get-players.php?admin=1&id=' + id).then(r => r.json()).then(d => {
+                if (d.player) { fillProfile(d.player); renderHistory(d.player.history || []); }
+            });
             document.getElementById('playerName').focus();
         }
 
@@ -589,7 +718,8 @@
                 team_id: currentTeamId,
                 name: name,
                 number: number ? parseInt(number) : null,
-                position: position || null
+                position: position || null,
+                profile: readProfile()
             };
 
             if (playerId) {
@@ -609,7 +739,7 @@
                 hideAddForm();
                 await loadPlayers();
             } catch (e) {
-                alert('Fehler: ' + e.message);
+                document.getElementById('playerFormMsg').textContent = 'Fehler: ' + e.message;
             }
         }
 
@@ -632,6 +762,40 @@
             } catch (e) {
                 alert('Fehler: ' + e.message);
             }
+        }
+
+        async function copyTeamSquad() {
+            try {
+                const r = await playerPost({ action: 'copy_previous', team_id: currentTeamId });
+                document.getElementById('playerFormMsg').textContent = '';
+                const msg = r.source ? `${r.copied} Spieler aus „${r.source}“ übernommen${r.skipped ? `, ${r.skipped} schon vorhanden` : ''}.` : 'Kein gleichnamiges Team mit Kader in einer Vorsaison gefunden.';
+                showKaderMsg(msg, !r.source);
+                await loadPlayers();
+            } catch (e) { showKaderMsg('Fehler: ' + e.message, true); }
+        }
+
+        async function copyLeagueSquads() {
+            const box = document.getElementById('copyMsg');
+            box.textContent = 'Übernehme Kader …';
+            try {
+                const r = await playerPost({ action: 'copy_previous_league', liga: currentLeagueFile });
+                const none = r.teams.filter(t => !t.source).map(t => t.team);
+                box.innerHTML = `${r.copied} Spieler übernommen.` + (none.length ? ` Ohne Vorsaison-Kader: ${none.map(escapeHtml).join(', ')}.` : '');
+                playerCountsCache = {};
+                if (typeof onLeagueSelect === 'function') await onLeagueSelect();
+                document.getElementById('copyMsg').innerHTML = box.innerHTML;
+            } catch (e) { box.textContent = 'Fehler: ' + e.message; }
+        }
+
+        function showKaderMsg(text, isError) {
+            let el = document.getElementById('kaderMsg');
+            if (!el) {
+                el = document.createElement('div'); el.id = 'kaderMsg';
+                el.style.cssText = 'font-size:0.85rem; margin:8px 0;';
+                document.getElementById('playerStats').before(el);
+            }
+            el.textContent = text;
+            el.style.color = isError ? '#991b1b' : '#166534';
         }
 
         async function deleteAllPlayers() {

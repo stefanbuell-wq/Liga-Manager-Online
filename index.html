@@ -897,6 +897,75 @@
             }
         }
 
+        // === KADER & SPIELERPROFIL ===
+        function sqEsc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function sqDate(v) {
+            if (!v) return '';
+            let m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/); if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+            m = String(v).match(/^(\d{4})-(\d{2})$/); if (m) return `${m[2]}/${m[1]}`;
+            return v;
+        }
+        function openInfoModal(html) {
+            const modal = document.getElementById('news-modal');
+            document.getElementById('news-modal-body').innerHTML = html;
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        async function showTeamSquad(teamName) {
+            const team = Object.values((leagueData && leagueData.teams) || {}).find(t => t.name === teamName);
+            if (!team || !team.db_id) return;
+            const data = await (await fetch(`${API_BASE}/get-players.php?team_id=${team.db_id}`)).json();
+            const players = data.players || [];
+            const order = { Torwart: 0, Abwehr: 1, Mittelfeld: 2, Sturm: 3 };
+            players.sort((a, b) => ((order[a.position] ?? 4) - (order[b.position] ?? 4)) || ((a.number || 99) - (b.number || 99)));
+            openInfoModal(`
+                <h2 style="margin-bottom: var(--spacing-xs);">${sqEsc(teamName)}</h2>
+                <div style="color: var(--color-text-muted); margin-bottom: var(--spacing-lg);">Kader · ${sqEsc(leagueData.options.Name || '')}</div>
+                ${players.length ? `
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="text-align:left; color:var(--color-text-muted); font-size:0.8rem;">
+                        <th style="padding:6px;">Nr.</th><th style="padding:6px;">Name</th><th style="padding:6px;">Position</th><th style="padding:6px;">Alter</th><th style="padding:6px;">Nation</th>
+                    </tr></thead>
+                    <tbody>${players.map(p => `
+                        <tr style="border-top:1px solid var(--border-color); cursor:pointer;" onclick="showPlayer(${Number(p.id)})">
+                            <td style="padding:8px 6px; font-weight:700; color:var(--color-text-secondary);">${p.number ?? '–'}</td>
+                            <td style="padding:8px 6px; font-weight:600;">${sqEsc(p.name)}${p.history_count > 0 ? ' <span title="Stationen erfasst" style="font-size:0.75rem; color:var(--color-text-muted);">· ' + p.history_count + ' Stat.</span>' : ''}</td>
+                            <td style="padding:8px 6px;">${sqEsc(p.position || '–')}</td>
+                            <td style="padding:8px 6px;">${p.age ?? '–'}</td>
+                            <td style="padding:8px 6px;">${sqEsc(p.nationality || '–')}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>` : '<p class="text-muted">Für dieses Team ist noch kein Kader hinterlegt.</p>'}
+            `);
+        }
+
+        async function showPlayer(id) {
+            const data = await (await fetch(`${API_BASE}/get-players.php?id=${Number(id)}`)).json();
+            const p = data.player;
+            if (!p) return;
+            const facts = [
+                ['Verein', p.team_name], ['Position', p.position], ['Rückennummer', p.number],
+                ['Alter', p.age != null ? `${p.age} Jahre${p.birth_year ? ' (Jg. ' + p.birth_year + ')' : ''}` : null],
+                ['Nationalität', p.nationality], ['Im Verein seit', sqDate(p.joined_at)],
+                ['Starker Fuß', p.foot], ['Größe', p.height_cm ? p.height_cm + ' cm' : null],
+            ].filter(f => f[1] !== null && f[1] !== undefined && f[1] !== '');
+            openInfoModal(`
+                <div style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: var(--spacing-xs);">${sqEsc(p.league_name || '')}</div>
+                <h2 style="margin-bottom: var(--spacing-lg);">${sqEsc(p.name)}</h2>
+                <div style="display:grid; grid-template-columns: max-content 1fr; gap: 6px 20px; margin-bottom: var(--spacing-lg);">
+                    ${facts.map(f => `<div style="color:var(--color-text-muted);">${f[0]}</div><div style="font-weight:600;">${sqEsc(f[1])}</div>`).join('')}
+                </div>
+                <h3 style="margin-bottom: var(--spacing-sm);">Stationen</h3>
+                ${(p.history || []).length ? `<ul style="list-style:none; padding:0; margin:0;">${p.history.map(h => `
+                    <li style="padding:8px 0; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; gap:12px;">
+                        <span style="font-weight:600;">${sqEsc(h.club)}</span>
+                        <span style="color:var(--color-text-muted);">${sqEsc(sqDate(h.from_date) || '?')} – ${sqEsc(sqDate(h.to_date) || 'heute')}</span>
+                    </li>`).join('')}</ul>` : '<p class="text-muted">Keine früheren Stationen erfasst.</p>'}
+                ${p.source ? `<p style="margin-top: var(--spacing-lg); font-size:0.8rem; color:var(--color-text-muted);">Quelle: ${sqEsc(p.source)}${p.source_updated_at ? ', Stand ' + sqEsc(sqDate(p.source_updated_at)) : ''}${p.external_url ? ` · <a href="${sqEsc(p.external_url)}" target="_blank" rel="noopener noreferrer">Profil</a>` : ''}</p>` : ''}
+            `);
+        }
+
         function closeNewsModal() {
             const modal = document.getElementById('news-modal');
             modal.classList.remove('active');
@@ -955,7 +1024,8 @@
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
-                            ${team.name}
+                            <a href="javascript:void(0)" onclick="showTeamSquad(${JSON.stringify(team.name).replace(/"/g, '&quot;')})"
+                               title="Kader anzeigen" style="color:inherit; text-decoration:none; border-bottom:1px dotted var(--color-text-muted);">${team.name}</a>
                         </td>
                         <td class="table-stats">${team.played}</td>
                         <td class="table-stats">${team.won}</td>
