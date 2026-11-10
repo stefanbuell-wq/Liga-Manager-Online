@@ -30,9 +30,22 @@ if (!preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $ligaFile)) {
     exit;
 }
 
-// Einfacher File-Cache
+// Validate optional round parameter (integer >= 1; upper bound 1..Rounds checked in repository)
+$round = null;
+if (isset($_GET['round']) && $_GET['round'] !== '') {
+    $rawRound = $_GET['round'];
+    if (!is_string($rawRound) || !preg_match('/^[1-9]\d{0,2}$/', $rawRound)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid round parameter']);
+        exit;
+    }
+    $round = (int)$rawRound;
+}
+
+// Einfacher File-Cache (Cache-Key enthält Liga und optionalen Spieltag)
 $cacheDir = __DIR__ . '/../data/cache';
-$cacheFile = $cacheDir . '/' . md5($ligaFile) . '.json';
+$cacheKey = $round !== null ? "{$ligaFile}_round_{$round}" : $ligaFile;
+$cacheFile = $cacheDir . '/' . md5($cacheKey) . '.json';
 $cacheTime = 300; // 5 Minuten
 
 // Cache prüfen
@@ -43,7 +56,7 @@ if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
 
 try {
     $repo = new LmoRepository();
-    $data = $repo->getLeagueDataFull($ligaFile);
+    $data = $repo->getLeagueDataFull($ligaFile, $round);
     $json = json_encode($data);
 
     // Cache schreiben
@@ -53,6 +66,10 @@ try {
     file_put_contents($cacheFile, $json);
 
     echo $json;
+} catch (InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['error' => $e->getMessage()]);
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }

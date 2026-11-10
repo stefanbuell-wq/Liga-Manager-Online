@@ -1074,3 +1074,60 @@ h4 { font-size: 1.25rem; }
 ::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-muted);
 }
+
+
+/* === TABLE ROUND SELECTOR & RANK TRENDS === */
+.table-round-bar {
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.table-subtitle {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.table-round-control {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.table-round-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.table-round-select {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.875rem;
+}
+
+.table-round-select-sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.8rem;
+}
+
+.rank-trend {
+    display: inline-block;
+    margin-left: var(--spacing-xs);
+    font-size: 0.72rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.rank-trend.rank-up {
+    color: var(--color-live);
+}
+
+.rank-trend.rank-down {
+    color: var(--color-primary);
+}
+
+.rank-trend.rank-same {
+    color: var(--color-text-muted);
+}
