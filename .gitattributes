@@ -1,0 +1,9 @@
+# Zeilenenden im Repo einheitlich LF; Windows-Skripte CRLF
+* text=auto eol=lf
+*.bat text eol=crlf
+*.sqlite binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary

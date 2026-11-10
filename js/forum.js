@@ -827,18 +827,57 @@ function escapeHtml(text) {
 }
 
 /**
- * Format post content (basic formatting)
+ * Format post content (supports sanitized HTML from migrated SMF posts & plain text for new posts)
  */
 function formatPostContent(content) {
     if (!content) return '';
 
-    // Escape HTML first
-    let formatted = escapeHtml(content);
+    const hasHtml = /<(?:br|p|div|span|strong|b|em|i|u|s|sub|sup|blockquote|ul|ol|li|pre|code|a|img|hr|table|tr|td|th)\b/i.test(content);
+    if (!hasHtml) {
+        const escaped = escapeHtml(content);
+        return escaped.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+    }
 
-    // Convert newlines to paragraphs
-    formatted = formatted.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+    // Sanitize HTML via DOMParser (allow safe formatting tags & attributes only)
+    const allowedTags = new Set([
+        'BR', 'P', 'DIV', 'SPAN', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'SUB', 'SUP',
+        'BLOCKQUOTE', 'UL', 'OL', 'LI', 'PRE', 'CODE', 'A', 'IMG', 'HR', 'TABLE', 'TBODY', 'THEAD', 'TR', 'TD', 'TH'
+    ]);
+    const allowedAttrs = {
+        'A': new Set(['href', 'target', 'rel']),
+        'IMG': new Set(['src', 'alt', 'width', 'height', 'style', 'loading']),
+        'SPAN': new Set(['style', 'class']),
+        'DIV': new Set(['style', 'class']),
+        'BLOCKQUOTE': new Set(['class']),
+        'PRE': new Set(['class'])
+    };
 
-    return formatted;
+    const doc = new DOMParser().parseFromString(content, 'text/html');
+    const cleanNode = (node) => {
+        const children = Array.from(node.childNodes);
+        for (const child of children) {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+                const tag = child.tagName.toUpperCase();
+                if (!allowedTags.has(tag)) {
+                    child.replaceWith(document.createTextNode(child.textContent || ''));
+                    continue;
+                }
+                const allowedForTag = allowedAttrs[tag] || new Set();
+                for (const attr of Array.from(child.attributes)) {
+                    const name = attr.name.toLowerCase();
+                    const val = attr.value.trim();
+                    if (!allowedForTag.has(name)) {
+                        child.removeAttribute(attr.name);
+                    } else if ((name === 'href' || name === 'src') && /^javascript:/i.test(val)) {
+                        child.removeAttribute(attr.name);
+                    }
+                }
+                cleanNode(child);
+            }
+        }
+    };
+    cleanNode(doc.body);
+    return doc.body.innerHTML;
 }
 
 /**

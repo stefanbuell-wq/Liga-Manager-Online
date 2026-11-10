@@ -19,18 +19,18 @@ class LmoParser
         if (!preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $ligaFile)) {
             throw new Exception("Invalid league file format: $ligaFile");
         }
-        
+
         $filePath = $this->ligaDir . '/' . $ligaFile;
 
         if (!file_exists($filePath)) {
             throw new Exception("Liga file not found: $filePath");
         }
 
-        // LMO files are often ISO-8859-1 encoded. We need to handle this.
-        // parse_ini_file might fail with key names in different encodings, 
-        // so we read it manually to ensure UTF-8 conversion.
+        // LMO files are Windows-1252 / ISO-8859-1 encoded.
         $content = file_get_contents($filePath);
-        $content = mb_convert_encoding($content, 'UTF-8', 'ISO-8859-1');
+        if (!mb_check_encoding($content, 'UTF-8') || !preg_match('/[\xC2-\xF4][\x80-\xBF]/', $content)) {
+            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        }
 
         $this->data = parse_ini_string($content, true, INI_SCANNER_RAW);
 
@@ -38,6 +38,8 @@ class LmoParser
             throw new Exception("Could not parse LMO file.");
         }
 
+        $this->teams = [];
+        $this->matches = [];
         $this->parseTeams();
         $this->parseMatches();
 
@@ -56,10 +58,28 @@ class LmoParser
                 if (is_numeric($key)) {
                     $id = (int) $key;
                     $name = trim($value, '"');
+                    $shortName = isset($this->data['Teamk'][$id]) ? trim($this->data['Teamk'][$id], '"') : '';
+                    $midName = isset($this->data['Teamm'][$id]) ? trim($this->data['Teamm'][$id], '"') : '';
+                    $teamSec = $this->data["Team$id"] ?? [];
+                    $sp = isset($teamSec['SP']) ? (int) $teamSec['SP'] : 0;
+                    $sm = isset($teamSec['SM']) ? (int) $teamSec['SM'] : 0;
+                    $tor1 = isset($teamSec['TOR1']) ? (int) $teamSec['TOR1'] : 0;
+                    $tor2 = isset($teamSec['TOR2']) ? (int) $teamSec['TOR2'] : 0;
+                    $note = isset($teamSec['NOT']) ? trim($teamSec['NOT'], '"') : '';
+                    $url = isset($teamSec['URL']) ? trim($teamSec['URL'], '"') : '';
+
                     $this->teams[$id] = [
                         'id' => $id,
                         'name' => $name,
-                        'icon' => ''
+                        'short_name' => $shortName,
+                        'mid_name' => $midName,
+                        'icon' => '',
+                        'penalty_points' => $sp,
+                        'minus_points' => $sm,
+                        'bonus_goals_for' => $tor1,
+                        'bonus_goals_against' => $tor2,
+                        'note' => $note !== '' ? $note : null,
+                        'url' => $url !== '' ? $url : null,
                     ];
                 }
             }
@@ -93,7 +113,7 @@ class LmoParser
                     $homeGoals = (int) $homeGoalsStr;
                     $guestGoals = (int) $guestGoalsStr;
 
-                    $played = ($homeGoals != -1 && $guestGoals != -1);
+                    $played = ($homeGoals >= 0 && $guestGoals >= 0);
 
                     // Date & Time from AT (Anstoß-Timestamp)
                     $atKey = "AT$j";
@@ -101,13 +121,26 @@ class LmoParser
 
                     $matchDate = null;
                     $matchTime = null;
+                    $isoDate = null;
 
                     if ($timestamp > 0) {
                         $matchDate = date('d.m.Y', $timestamp);
                         $matchTime = date('H:i', $timestamp);
+                        $isoDate = date('Y-m-d', $timestamp);
                     }
 
                     if ($homeIdx > 0 && $guestIdx > 0) {
+                        $note = isset($this->data[$section]["NT$j"]) && trim($this->data[$section]["NT$j"]) !== ''
+                            ? trim($this->data[$section]["NT$j"], '"')
+                            : null;
+                        $reportUrl = isset($this->data[$section]["BE$j"]) && trim($this->data[$section]["BE$j"]) !== ''
+                            ? trim($this->data[$section]["BE$j"], '"')
+                            : null;
+                        $newsId = null;
+                        if ($reportUrl && preg_match('/fullnews\.php\?id=(\d+)/i', $reportUrl, $nm)) {
+                            $newsId = (int) $nm[1];
+                        }
+
                         $roundMatches[] = [
                             'home_id' => $homeIdx,
                             'guest_id' => $guestIdx,
@@ -116,10 +149,13 @@ class LmoParser
                             'home_goals' => $played ? $homeGoals : null,
                             'guest_goals' => $played ? $guestGoals : null,
                             'played' => $played,
+                            'timestamp' => $timestamp > 0 ? $timestamp : null,
                             'date' => $matchDate,
+                            'iso_date' => $isoDate,
                             'time' => $matchTime,
-                            'note' => isset($this->data[$section]["NT$j"]) ? $this->data[$section]["NT$j"] : null,
-                            'report_url' => isset($this->data[$section]["BE$j"]) ? $this->data[$section]["BE$j"] : null,
+                            'note' => $note,
+                            'report_url' => $reportUrl,
+                            'news_id' => $newsId,
                         ];
                     }
                 }
@@ -130,18 +166,29 @@ class LmoParser
 
     private function calculateTable()
     {
+        $ptsWin = isset($this->data['Options']['PointsForWin']) ? (int) $this->data['Options']['PointsForWin'] : 3;
+        $ptsDraw = isset($this->data['Options']['PointsForDraw']) ? (int) $this->data['Options']['PointsForDraw'] : 1;
+        $ptsLost = isset($this->data['Options']['PointsForLost']) ? (int) $this->data['Options']['PointsForLost'] : 0;
+
         $table = [];
         foreach ($this->teams as $id => $team) {
+            $sp = (int) ($team['penalty_points'] ?? 0);
+            $tor1 = (int) ($team['bonus_goals_for'] ?? 0);
+            $tor2 = (int) ($team['bonus_goals_against'] ?? 0);
             $table[$id] = [
+                'team_id' => $id,
                 'name' => $team['name'],
+                'short_name' => $team['short_name'] ?? '',
                 'played' => 0,
                 'won' => 0,
                 'draw' => 0,
                 'lost' => 0,
-                'goals_for' => 0,
-                'goals_against' => 0,
+                'goals_for' => $tor1,
+                'goals_against' => $tor2,
                 'diff' => 0,
-                'points' => 0
+                'points' => -$sp,
+                'penalty_points' => $sp,
+                'note' => $team['note'] ?? null,
             ];
         }
 
@@ -162,12 +209,13 @@ class LmoParser
 
                     if ($hg > $gg) {
                         $table[$h]['won']++;
-                        $table[$h]['points'] += 3;
+                        $table[$h]['points'] += $ptsWin;
                     } elseif ($hg == $gg) {
                         $table[$h]['draw']++;
-                        $table[$h]['points'] += 1;
+                        $table[$h]['points'] += $ptsDraw;
                     } else {
                         $table[$h]['lost']++;
+                        $table[$h]['points'] += $ptsLost;
                     }
                 }
 
@@ -178,12 +226,13 @@ class LmoParser
 
                     if ($gg > $hg) {
                         $table[$g]['won']++;
-                        $table[$g]['points'] += 3;
+                        $table[$g]['points'] += $ptsWin;
                     } elseif ($gg == $hg) {
                         $table[$g]['draw']++;
-                        $table[$g]['points'] += 1;
+                        $table[$g]['points'] += $ptsDraw;
                     } else {
                         $table[$g]['lost']++;
+                        $table[$g]['points'] += $ptsLost;
                     }
                 }
             }
@@ -192,6 +241,7 @@ class LmoParser
         foreach ($table as &$row) {
             $row['diff'] = $row['goals_for'] - $row['goals_against'];
         }
+        unset($row);
 
         usort($table, function ($a, $b) {
             if ($a['points'] != $b['points']) {
@@ -202,6 +252,12 @@ class LmoParser
             }
             return $b['goals_for'] - $a['goals_for'];
         });
+
+        $rank = 1;
+        foreach ($table as &$row) {
+            $row['rank'] = $rank++;
+        }
+        unset($row);
 
         return $table;
     }

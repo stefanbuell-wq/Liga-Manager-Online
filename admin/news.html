@@ -438,6 +438,60 @@
             border-radius: 0 0 var(--radius-md) var(--radius-md);
         }
 
+        .editor-toolbar .toggle-view {
+            margin-left: auto;
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .editor-toolbar .toggle-view:hover {
+            background: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+        }
+
+        #newsContentFormatted {
+            min-height: 250px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 12px 16px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            color: var(--color-text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        #newsContentFormatted:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        #newsContentFormatted h3 {
+            color: var(--color-primary);
+            margin: 16px 0 8px;
+            font-size: 1.15rem;
+        }
+
+        #newsContentFormatted p {
+            margin: 8px 0;
+        }
+
+        #newsContentFormatted a {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+
+        #newsContentFormatted b, #newsContentFormatted strong {
+            color: #fff;
+        }
+
+        #newsContentFormatted.hidden {
+            display: none;
+        }
+
         /* Match Links Section */
         .match-links-section {
             background: var(--color-bg-elevated);
@@ -926,8 +980,10 @@
                                 <button type="button" onclick="format('p')">Absatz</button>
                                 <button type="button" onclick="format('a')">Link</button>
                                 <button type="button" onclick="format('br')">Umbruch</button>
+                                <button type="button" class="toggle-view" id="btnToggleView" onclick="toggleHtmlView()">Formatiert</button>
                             </div>
                             <textarea id="newsContent" class="large with-toolbar" placeholder="Der vollstaendige Bericht..."></textarea>
+                            <div id="newsContentFormatted" contenteditable="true" class="hidden"></div>
                         </div>
                     </div>
 
@@ -1318,11 +1374,103 @@
                 renderLinkedMatches(linkedMatchesData);
                 document.getElementById('matchSearchResults').innerHTML = '';
 
-                // Reset to HTML tab when editing (reverse parsing not supported)
-                resetTemplateFields();
-                activeTab = 'html';
-                document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'html'));
-                document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
+                // Try to parse as match report
+                const linked = news.linked_matches || [];
+                const parsed = parseMatchHTML(news.content || '');
+
+                if (parsed) {
+                    // Match report detected - open in Spielbericht tab
+                    resetTemplateFields();
+
+                    // Load leagues if not cached
+                    if (!leaguesCache) await loadLeagues();
+
+                    // Determine league and team names
+                    let leagueFile = null;
+                    let homeName = parsed.homeName;
+                    let guestName = parsed.guestName;
+
+                    if (linked.length > 0 && linked[0].league_file) {
+                        // Use linked match data
+                        leagueFile = linked[0].league_file;
+                        homeName = linked[0].home;
+                        guestName = linked[0].guest;
+                    } else {
+                        // No linked match - find league by searching team names
+                        for (const league of (leaguesCache || [])) {
+                            document.getElementById('tplMatchLeague').value = league.file;
+                            await loadTeamsForTemplate('match');
+                            const teams = teamsCache[league.file] || [];
+                            const teamNames = teams.map(t => t.name);
+                            if (teamNames.includes(homeName) && teamNames.includes(guestName)) {
+                                leagueFile = league.file;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Set league dropdown
+                    if (leagueFile) {
+                        document.getElementById('tplMatchLeague').value = leagueFile;
+                        await loadTeamsForTemplate('match');
+                    }
+
+                    // Set team dropdowns
+                    document.getElementById('tplMatchHome').value = homeName;
+                    document.getElementById('tplMatchGuest').value = guestName;
+
+                    // Update team logos
+                    updateTeamLogo('tplMatchHome', 'tplMatchHomeLogo');
+                    updateTeamLogo('tplMatchGuest', 'tplMatchGuestLogo');
+
+                    // Fill parsed fields
+                    document.getElementById('tplMatchHomeGoals').value = parsed.homeGoals || '';
+                    document.getElementById('tplMatchGuestGoals').value = parsed.guestGoals || '';
+                    document.getElementById('tplMatchHomeHalf').value = parsed.homeHalf || '';
+                    document.getElementById('tplMatchGuestHalf').value = parsed.guestHalf || '';
+                    document.getElementById('tplMatchLineupHome').value = parsed.lineupHome || '';
+                    document.getElementById('tplMatchLineupGuest').value = parsed.lineupGuest || '';
+                    document.getElementById('tplMatchGoals').value = parsed.goals || '';
+                    document.getElementById('tplMatchCards').value = parsed.cards || '';
+                    document.getElementById('tplMatchReferee').value = parsed.referee || '';
+                    document.getElementById('tplMatchBestHome').value = parsed.bestHome || '';
+                    document.getElementById('tplMatchBestGuest').value = parsed.bestGuest || '';
+                    document.getElementById('tplMatchSpectators').value = parsed.spectators || '';
+                    document.getElementById('tplMatchReport').value = parsed.report || '';
+                    document.getElementById('tplMatchStats').value = parsed.stats || '';
+
+                    // Try to extract round from short_content
+                    const shortContent = news.short_content || '';
+                    const teamPart = homeName + ' \u2013 ' + guestName;
+                    const teamIdx = shortContent.indexOf(teamPart);
+                    if (teamIdx > 0) {
+                        const before = shortContent.substring(0, teamIdx).trim();
+                        if (before.endsWith(':')) {
+                            document.getElementById('tplMatchRound').value = before.slice(0, -1).trim();
+                        }
+                    }
+
+                    // Add quotes
+                    if (parsed.quotes && parsed.quotes.length > 0) {
+                        for (const q of parsed.quotes) {
+                            addQuote();
+                            const items = document.querySelectorAll('#tplMatchQuotes .repeater-item');
+                            const lastItem = items[items.length - 1];
+                            lastItem.querySelector('.quote-name').value = q.name;
+                            lastItem.querySelector('.quote-text').value = q.text;
+                        }
+                    }
+
+                    // Switch to match tab without warning
+                    suppressTabWarning = true;
+                    switchTab('match');
+                } else {
+                    // Not a match report - open in HTML tab
+                    resetTemplateFields();
+                    activeTab = 'html';
+                    document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'html'));
+                    document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
+                }
 
                 document.getElementById('editorModal').classList.add('show');
 
@@ -1334,6 +1482,13 @@
         // Close editor
         function closeEditor() {
             document.getElementById('editorModal').classList.remove('show');
+            // Reset formatted view
+            if (htmlViewFormatted) {
+                htmlViewFormatted = false;
+                document.getElementById('newsContent').style.display = '';
+                document.getElementById('newsContentFormatted').classList.add('hidden');
+                document.getElementById('btnToggleView').textContent = 'Formatiert';
+            }
         }
 
         // Save news
@@ -1552,7 +1707,24 @@
         }
 
         // Editor format helper
+        let htmlViewFormatted = false;
+
         function format(tag) {
+            if (htmlViewFormatted) {
+                // In formatted mode, use execCommand
+                const formatted = document.getElementById('newsContentFormatted');
+                formatted.focus();
+                if (tag === 'b') document.execCommand('bold');
+                else if (tag === 'i') document.execCommand('italic');
+                else if (tag === 'h3') document.execCommand('formatBlock', false, 'h3');
+                else if (tag === 'p') document.execCommand('formatBlock', false, 'p');
+                else if (tag === 'br') document.execCommand('insertHTML', false, '<br>');
+                else if (tag === 'a') {
+                    const url = prompt('URL eingeben:', 'https://');
+                    if (url) document.execCommand('createLink', false, url);
+                }
+                return;
+            }
             const editor = document.getElementById('newsContent');
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
@@ -1574,6 +1746,28 @@
                 editor.value = text.substring(0, start) + insertion + text.substring(end);
                 editor.focus();
                 editor.selectionStart = editor.selectionEnd = start + insertion.length;
+            }
+        }
+
+        function toggleHtmlView() {
+            const textarea = document.getElementById('newsContent');
+            const formatted = document.getElementById('newsContentFormatted');
+            const btn = document.getElementById('btnToggleView');
+
+            if (!htmlViewFormatted) {
+                // Switch to formatted view
+                formatted.innerHTML = textarea.value;
+                textarea.style.display = 'none';
+                formatted.classList.remove('hidden');
+                btn.textContent = 'Quelltext';
+                htmlViewFormatted = true;
+            } else {
+                // Switch back to source view
+                textarea.value = formatted.innerHTML;
+                formatted.classList.add('hidden');
+                textarea.style.display = '';
+                btn.textContent = 'Formatiert';
+                htmlViewFormatted = false;
             }
         }
 
@@ -1606,19 +1800,21 @@
         let activeTab = 'html';
         let leaguesCache = null;
         let teamsCache = {}; // keyed by league file
+        let suppressTabWarning = false;
 
         function switchTab(tab) {
             // When leaving a structured tab, generate HTML into the main fields
             if (activeTab !== 'html' && tab === 'html') {
                 generateFromActiveTab();
             }
-            if (activeTab === 'html' && tab !== 'html') {
+            if (activeTab === 'html' && tab !== 'html' && !suppressTabWarning) {
                 // Warn if there's existing content
                 const content = document.getElementById('newsContent').value.trim();
                 if (content && !confirm('Der HTML-Editor hat Inhalt. Beim Wechsel zum Template wird dieser ueberschrieben wenn du dort Felder ausfuellst.\n\nFortfahren?')) {
                     return;
                 }
             }
+            suppressTabWarning = false;
 
             activeTab = tab;
             document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === tab));
@@ -1668,7 +1864,7 @@
                 const teams = [];
                 if (data.teams) {
                     for (const id in data.teams) {
-                        teams.push({ id: id, name: data.teams[id].name });
+                        teams.push({ id: data.teams[id].db_id, name: data.teams[id].name });
                     }
                     teams.sort((a, b) => a.name.localeCompare(b.name));
                 }
@@ -1940,6 +2136,148 @@
             }
         }
 
+        // ===== Reverse Parser: HTML → Spielbericht-Felder =====
+        function htmlToText(html) {
+            if (!html) return '';
+            // Replace <br> <br> with double newline, single <br> with newline
+            html = html.replace(/\s*<br>\s*<br>\s*/gi, '\n\n');
+            html = html.replace(/\s*<br\s*\/?>\s*/gi, '\n');
+            // Decode HTML entities via DOM
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            return div.textContent.trim();
+        }
+
+        function parseMatchHTML(html) {
+            if (!html) return null;
+
+            // 1. Detect score line: <span><b>Home – Guest X:Y (HX:HY)</b></span>
+            //    Require spaces around the dash to avoid matching hyphens in team names
+            const scoreRegex = /<span><b>\s*(.+?)\s+[\u2013\u2014\u002D]\s+(.+?)\s+(\d+):(\d+)(?:\s*\((\d+):(\d+)\))?\s*<\/b><\/span>/;
+            const scoreMatch = html.match(scoreRegex);
+            if (!scoreMatch) return null;
+
+            const result = {
+                homeName: scoreMatch[1].trim(),
+                guestName: scoreMatch[2].trim(),
+                homeGoals: scoreMatch[3],
+                guestGoals: scoreMatch[4],
+                homeHalf: scoreMatch[5] || '',
+                guestHalf: scoreMatch[6] || ''
+            };
+
+            // 2. Get content after score line, strip leading <br> tags
+            let body = html.substring(scoreMatch.index + scoreMatch[0].length);
+            body = body.replace(/^(\s*<br>\s*)+/i, '');
+
+            // 3. Split on double-break to separate data block from text sections
+            //    The data block has labeled fields separated by single <br>
+            //    Text sections (report, quotes, stats) follow after a double <br>
+            const sections = body.split(/\s*<br>\s*<br>\s*/i);
+
+            // 4. Parse data block (first section) - contains labeled fields
+            const dataBlock = sections[0] || '';
+            const fieldParts = dataBlock.split(/<br>\s*(?=<b>)/i);
+
+            // Track unknown fields (team lineups)
+            const unknownFields = [];
+
+            for (const part of fieldParts) {
+                const fm = part.match(/^<b>\s*([^<]+?)\s*:\s*<\/b>\s*([\s\S]*)/i);
+                if (!fm) continue;
+
+                const label = fm[1].trim();
+                const val = htmlToText(fm[2].trim());
+
+                if (/^Tore?$/i.test(label)) {
+                    result.goals = val;
+                } else if (/Gelb-rot|Besonder/i.test(label)) {
+                    result.cards = val;
+                } else if (/Schiedsrichter/i.test(label)) {
+                    result.referee = val;
+                } else if (/Beste Spieler/i.test(label)) {
+                    // Split best players into home and guest (separated by en-dash or hyphen)
+                    if (val.includes('\u2013')) {
+                        const bp = val.split(/\s*\u2013\s*/);
+                        result.bestHome = bp[0] || '';
+                        result.bestGuest = bp.length > 1 ? bp.slice(1).join(' \u2013 ') : '';
+                    } else if (val.includes(' - ')) {
+                        const bp = val.split(/\s+-\s+/);
+                        result.bestHome = bp[0] || '';
+                        result.bestGuest = bp.length > 1 ? bp.slice(1).join(' - ') : '';
+                    } else {
+                        result.bestHome = val;
+                        result.bestGuest = '';
+                    }
+                } else if (/Zuschauer/i.test(label)) {
+                    // Extract numeric value for the number input
+                    const numMatch = val.replace(/\./g, '').match(/\d+/);
+                    result.spectators = numMatch ? numMatch[0] : val;
+                } else {
+                    // Unknown label = likely a team lineup
+                    unknownFields.push({ label, value: val });
+                }
+            }
+
+            // First two unknown fields are lineups (home, guest)
+            if (unknownFields.length >= 1) result.lineupHome = unknownFields[0].value;
+            if (unknownFields.length >= 2) result.lineupGuest = unknownFields[1].value;
+
+            // 5. Process remaining sections using state machine: report → quotes → stats
+            const remaining = sections.slice(1).filter(s => s.trim());
+            let phase = 'report';
+            result.quotes = [];
+            const reportParts = [];
+            const statsParts = [];
+
+            for (let i = 0; i < remaining.length; i++) {
+                const s = remaining[i];
+
+                // Detect quotes header
+                if (/<b>Stimmen|<span><b>Stimmen/i.test(s)) {
+                    phase = 'quotes';
+                    // First quote might be in the same section as the header
+                    const afterHeader = s
+                        .replace(/<b>Stimmen[^<]*?<\/b>|<span><b>Stimmen[^<]*?<\/b><\/span>/i, '')
+                        .replace(/^(\s*<br>\s*)+/i, '').trim();
+                    if (afterHeader) {
+                        const qm = afterHeader.match(/<u>\s*([^<]+?)\s*:\s*<\/u>\s*([\s\S]*)/i);
+                        if (qm) result.quotes.push({ name: qm[1].trim(), text: htmlToText(qm[2]) });
+                    }
+                    continue;
+                }
+
+                // Detect stats header (old format: <span><b>Statistik:</b></span>)
+                if (/<b>Statistik|<span><b>Statistik/i.test(s)) {
+                    phase = 'stats';
+                    const statsText = htmlToText(s).replace(/^Statistik:\s*/i, '').trim();
+                    if (statsText) statsParts.push(statsText);
+                    continue;
+                }
+
+                if (phase === 'report') {
+                    reportParts.push(htmlToText(s));
+                } else if (phase === 'quotes') {
+                    const qm = s.match(/<u>\s*([^<]+?)\s*:\s*<\/u>\s*([\s\S]*)/i);
+                    if (qm) {
+                        result.quotes.push({ name: qm[1].trim(), text: htmlToText(qm[2]) });
+                    } else {
+                        // Non-quote text after quotes = stats (template-generated HTML)
+                        const text = htmlToText(s).trim();
+                        if (text) statsParts.push(text);
+                    }
+                } else if (phase === 'stats') {
+                    const text = htmlToText(s).trim();
+                    if (text) statsParts.push(text);
+                }
+            }
+
+            result.report = reportParts.join('\n\n');
+            if (statsParts.length) result.stats = statsParts.join('\n\n');
+
+            return result;
+        }
+
         // ===== HTML Generation =====
         function textToHtml(text) {
             // Convert plain text to HTML: escape, convert double newlines to <br> <br>, single newlines to <br>
@@ -2193,6 +2531,11 @@
         function preSaveGenerate() {
             if (activeTab !== 'html') {
                 generateFromActiveTab();
+            }
+            // Sync formatted view back to textarea if active
+            if (htmlViewFormatted) {
+                document.getElementById('newsContent').value =
+                    document.getElementById('newsContentFormatted').innerHTML;
             }
         }
 

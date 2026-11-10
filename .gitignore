@@ -57,3 +57,7 @@ nul
 
 # Claude Code
 .claude/
+
+# SQLite WAL/Temp
+data/*.sqlite-shm
+data/*.sqlite-wal

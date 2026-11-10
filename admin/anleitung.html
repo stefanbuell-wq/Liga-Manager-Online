@@ -370,7 +370,9 @@
                 <a href="#teams"><span>6.</span> Teams</a>
                 <a href="#korrekturen"><span>7.</span> Punktekorrekturen</a>
                 <a href="#benutzer"><span>8.</span> Benutzerverwaltung</a>
-                <a href="#tipps"><span>9.</span> Tipps & Tricks</a>
+                <a href="#kader"><span>9.</span> Kaderverwaltung</a>
+                <a href="#design"><span>10.</span> Design-Editor</a>
+                <a href="#tipps"><span>11.</span> Tipps & Tricks</a>
             </div>
         </nav>
 
@@ -400,12 +402,20 @@
                     <p>Mannschaften bearbeiten, Logos zuweisen, Namen aendern</p>
                 </div>
                 <div class="feature-card">
+                    <h4>Kaderverwaltung</h4>
+                    <p>Spieler pro Team pflegen, fuer Aufstellungs-Checkboxen im Spielbericht</p>
+                </div>
+                <div class="feature-card">
                     <h4>Punktekorrekturen</h4>
                     <p>Punktabzuege oder Bonuspunkte fuer Teams eintragen</p>
                 </div>
                 <div class="feature-card">
                     <h4>Benutzer</h4>
                     <p>Benutzerkonten verwalten, Rollen zuweisen</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Design-Editor</h4>
+                    <p>Farben und Erscheinungsbild der oeffentlichen Seite anpassen</p>
                 </div>
             </div>
 
@@ -440,9 +450,19 @@
                         <td>Forum-Moderation</td>
                     </tr>
                     <tr>
+                        <td>Kader</td>
+                        <td><code>/admin/kader.html</code></td>
+                        <td>Spieler pro Team verwalten</td>
+                    </tr>
+                    <tr>
                         <td>Design</td>
                         <td><code>/admin/design.html</code></td>
                         <td>Farben und Aussehen anpassen</td>
+                    </tr>
+                    <tr>
+                        <td>Anleitung</td>
+                        <td><code>/admin/anleitung.html</code></td>
+                        <td>Diese Dokumentation</td>
                     </tr>
                 </tbody>
             </table>
@@ -640,6 +660,69 @@
 
             <h3>Suche und Filter</h3>
             <p>Nutzen Sie das Suchfeld oben, um nach Titel, Inhalt oder Autor zu suchen. Die Ergebnisse werden paginiert angezeigt (20 pro Seite).</p>
+
+            <h3>Template-Tabs</h3>
+            <p>Der Editor bietet vier Tabs, um verschiedene Arten von News komfortabel zu erstellen:</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>HTML-Editor</h4>
+                    <p>Direktes Bearbeiten des HTML-Codes. Standard fuer importierte und manuelle News.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Spielbericht</h4>
+                    <p>Strukturierte Felder fuer Matchberichte: Aufstellung, Tore, Stimmen etc.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Vorschau</h4>
+                    <p>Spieltags-Vorschau mit mehreren Spielen, Tipps und Einleitungstext.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Allgemein</h4>
+                    <p>Einfacher Text mit Formatierung (*fett*, _kursiv_, ~unterstrichen~, [Links]).</p>
+                </div>
+            </div>
+
+            <h3>Spielbericht erstellen</h3>
+            <ol class="steps">
+                <li><strong>Tab "Spielbericht" waehlen:</strong> Klicken Sie auf den Spielbericht-Tab</li>
+                <li><strong>Liga und Teams waehlen:</strong> Liga-Dropdown waehlen, dann Heim- und Gast-Team</li>
+                <li><strong>Ergebnis eintragen:</strong> Endergebnis und optional Halbzeitstand</li>
+                <li><strong>Aufstellung eingeben:</strong> Spieler per Checkbox aus dem Kader waehlen oder manuell tippen</li>
+                <li><strong>Details ausfuellen:</strong> Tore, Karten, Schiedsrichter, Beste Spieler, Zuschauer</li>
+                <li><strong>Berichtstext schreiben:</strong> Freitext, Absaetze mit Leerzeile trennen</li>
+                <li><strong>Stimmen hinzufuegen:</strong> Ueber "+ Stimme hinzufuegen" Trainer-Zitate eintragen</li>
+                <li><strong>Speichern:</strong> HTML wird automatisch aus den Feldern generiert</li>
+            </ol>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Aufstellungen:</strong> Wenn fuer das Team ein Kader in der Kaderverwaltung hinterlegt ist, erscheinen Checkboxen zur schnellen Spielerauswahl. Ausgewaehlte Spieler werden automatisch ins Textfeld uebernommen.</p>
+            </div>
+
+            <h3>Bestehenden Spielbericht bearbeiten</h3>
+            <p>Wenn Sie eine bestehende News bearbeiten, die als Spielbericht erkannt wird, oeffnet der Editor automatisch den Spielbericht-Tab mit allen Feldern vorbefuellt:</p>
+            <ul>
+                <li>Ergebnis, Halbzeit, Aufstellungen, Tore etc. werden aus dem HTML extrahiert</li>
+                <li>Liga und Teams werden automatisch erkannt</li>
+                <li>Stimmen zum Spiel und Statistik werden ebenfalls befuellt</li>
+                <li>Falls die News nicht als Spielbericht erkannt wird, oeffnet sie wie gewohnt im HTML-Tab</li>
+            </ul>
+
+            <div class="info-box info">
+                <span class="icon">ℹ️</span>
+                <p>Der Reverse-Parser erkennt Spielberichte an der Score-Zeile im Format "Team – Team X:Y". Aeltere Berichte mit abweichendem Format oeffnen im HTML-Tab.</p>
+            </div>
+
+            <h3>Spieltags-Vorschau erstellen</h3>
+            <ol class="steps">
+                <li><strong>Tab "Vorschau" waehlen</strong></li>
+                <li><strong>Liga und Spieltag angeben</strong></li>
+                <li><strong>Einleitung schreiben:</strong> Einfuehrungstext zum Spieltag</li>
+                <li><strong>Spiele hinzufuegen:</strong> Ueber "+ Spiel hinzufuegen" einzelne Partien mit Heim/Gast, Datum, Ort, Text und HAFO-Tipp eintragen</li>
+                <li><strong>Schlusswort verfassen</strong></li>
+                <li><strong>Speichern</strong></li>
+            </ol>
         </section>
 
         <!-- 5. Forum -->
@@ -828,9 +911,62 @@
             </div>
         </section>
 
-        <!-- 9. Tipps -->
+        <!-- 9. Kaderverwaltung -->
+        <section class="section" id="kader">
+            <h2><span class="icon">👕</span> 9. Kaderverwaltung</h2>
+
+            <p>In der Kaderverwaltung werden die Spieler pro Team gepflegt. Die hinterlegten Kader werden im Spielbericht-Tab als Checkboxen fuer die Aufstellungsauswahl angezeigt.</p>
+
+            <h3>Kader bearbeiten</h3>
+            <ol class="steps">
+                <li><strong>Kaderverwaltung oeffnen:</strong> <code>/admin/kader.html</code></li>
+                <li><strong>Liga waehlen:</strong> Im Dropdown oben die gewuenschte Liga auswaehlen</li>
+                <li><strong>Team anklicken:</strong> Die Team-Karten zeigen Logo und aktuelle Spieleranzahl</li>
+                <li><strong>Spieler hinzufuegen:</strong> Trikotnummer, Name und Position (TW/AB/MF/ST) eingeben</li>
+                <li><strong>Speichern:</strong> Der Spieler erscheint in der Kaderliste</li>
+            </ol>
+
+            <h3>Positionen</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kuerzel</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>TW</td><td>Torwart</td></tr>
+                    <tr><td>AB</td><td>Abwehr</td></tr>
+                    <tr><td>MF</td><td>Mittelfeld</td></tr>
+                    <tr><td>ST</td><td>Sturm</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Tipp:</strong> Pflegen Sie die Kader vor der Saison ein. Dann koennen Sie bei Spielberichten die Aufstellung bequem per Checkbox zusammenklicken, statt jeden Namen manuell zu tippen.</p>
+            </div>
+        </section>
+
+        <!-- 10. Design-Editor -->
+        <section class="section" id="design">
+            <h2><span class="icon">🎨</span> 10. Design-Editor</h2>
+
+            <p>Im Design-Editor koennen Sie das Erscheinungsbild der oeffentlichen Seite anpassen.</p>
+
+            <h3>Anpassbare Einstellungen</h3>
+            <ul>
+                <li><strong>Primaerfarbe:</strong> Hauptfarbe fuer Buttons, Links und Akzente</li>
+                <li><strong>Hintergrundfarben:</strong> Dunkler Hintergrund und Karten-Hintergrund</li>
+                <li><strong>Textfarben:</strong> Primaer-, Sekundaer- und gedaempfte Textfarbe</li>
+            </ul>
+
+            <p>Oeffnen Sie den Design-Editor unter <code>/admin/design.html</code>. Aenderungen werden sofort in der Vorschau angezeigt und nach dem Speichern oeffentlich wirksam.</p>
+        </section>
+
+        <!-- 11. Tipps -->
         <section class="section" id="tipps">
-            <h2><span class="icon">💡</span> 9. Tipps & Tricks</h2>
+            <h2><span class="icon">💡</span> 11. Tipps & Tricks</h2>
 
             <h3>Allgemeine Tipps</h3>
             <ul>
@@ -878,7 +1014,7 @@
             </table>
 
             <h3>Backup</h3>
-            <p>Die Datenbank liegt unter <code>/data/lmo.sqlite</code>. Regelmaessige Backups dieser Datei werden empfohlen.</p>
+            <p>Die Datenbank liegt unter <code>/data/database.sqlite</code>. Regelmaessige Backups dieser Datei werden empfohlen.</p>
 
             <div class="info-box tip">
                 <span class="icon">💡</span>

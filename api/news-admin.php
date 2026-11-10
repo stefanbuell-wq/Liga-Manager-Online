@@ -146,9 +146,11 @@ try {
 
                 // Verknüpfte Matches laden
                 $stmt = $pdo->prepare("
-                    SELECT m.id, m.match_date, t1.name as home, t2.name as guest, mn.confidence
+                    SELECT m.id, m.match_date, m.round_nr, l.file as league_file,
+                           t1.name as home, t2.name as guest, mn.confidence
                     FROM match_news mn
                     JOIN matches m ON mn.match_id = m.id
+                    JOIN leagues l ON m.league_id = l.id
                     JOIN teams t1 ON m.home_team_id = t1.id
                     JOIN teams t2 ON m.guest_team_id = t2.id
                     WHERE mn.news_id = ?
