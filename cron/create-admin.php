@@ -9,7 +9,8 @@ require_once __DIR__ . '/../lib/AccountService.php';
 $user = $argv[1] ?? '';
 if (!preg_match('/^[\p{L}0-9 ._-]{3,30}$/u', $user)) { fwrite(STDERR, "Aufruf: php cron/create-admin.php <benutzername>\n"); exit(1); }
 fwrite(STDOUT, "Neues Passwort fuer $user: ");
-system('stty -echo'); $pw = trim(fgets(STDIN)); system('stty echo'); fwrite(STDOUT, "\n");
+$tty = function_exists('system'); // Hostinger sperrt system(): dann 'php -d disable_functions= ...' nutzen
+if ($tty) system('stty -echo'); $pw = trim((string)fgets(STDIN)); if ($tty) system('stty echo'); fwrite(STDOUT, "\n");
 if ($err = Security::validatePassword($pw)) { fwrite(STDERR, implode('. ', $err) . "\n"); exit(1); }
 $pdo = LmoDatabase::getInstance(); new AccountService();
 $st = $pdo->prepare("SELECT id FROM users WHERE username = ?"); $st->execute([$user]);

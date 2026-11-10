@@ -56,10 +56,9 @@ This document outlines the security features and best practices for HAFO.de (LMO
 
 ### For Deployment
 1. **Change default credentials immediately**
-   ```bash
-   Edit config/auth.php with new admin password
-   Use PASSWORD_DEFAULT for bcrypt hashing
-   ```
+   Es gibt keine Standard-Zugangsdaten mehr; Logins laufen nur ueber die Tabelle `users` (bcrypt).
+   Admin anlegen / Passwort setzen: `php -d disable_functions= cron/create-admin.php "Benutzername"` (nur CLI).
+   `config/auth.php`, `login.override` und `ratelimit.off` werden nicht mehr ausgewertet und gehoeren nicht auf den Server.
 
 2. **Enable HTTPS**
    - Redirect HTTP to HTTPS via .htaccess
@@ -68,7 +67,7 @@ This document outlines the security features and best practices for HAFO.de (LMO
 
 3. **Protect sensitive files**
    ```bash
-   chmod 600 config/auth.php
+   chmod 600 config/mail.php
    chmod 700 data/
    chmod 700 data/cache/
    ```
@@ -85,7 +84,7 @@ This document outlines the security features and best practices for HAFO.de (LMO
 
 ### For Development
 1. **Never commit sensitive files**
-   - Add config/auth.php to .gitignore
+   - config/mail.php (SMTP-Passwort) nie committen; Vorlage: config/mail.example.php
    - Add data/ to .gitignore (local development)
    - Use .example files for configuration templates
 

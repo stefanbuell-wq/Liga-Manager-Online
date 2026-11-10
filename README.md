@@ -35,9 +35,16 @@ chmod 755 data/
 
 4. Admin-Panel öffnen: `http://your-domain/admin/`
 
-5. Standard-Login:
-   - Benutzer: `admin`
-   - Passwort: `hafo` (bitte sofort ändern!)
+5. Anmelden unter `/konto.html` mit einem Konto aus der Datenbank (Benutzername oder E-Mail).
+   Es gibt **keinen** Standard-Login mehr (`config/auth.php` wird nicht mehr verwendet).
+   Erstes Admin-Konto bzw. vergessenes Admin-Passwort:
+
+   Admin-Konto anlegen oder Passwort neu setzen (nur per SSH/hPanel-Terminal, im Ordner `public_html`):
+   ```bash
+   php -d disable_functions= cron/create-admin.php "Benutzername"
+   ```
+   Das Passwort wird verdeckt abgefragt (beim Tippen erscheint nichts). `-d disable_functions=` ist bei Hostinger noetig, weil dort `system()` gesperrt ist.
+   Vorher DB sichern: `php -r '$p=new PDO("sqlite:data/database.sqlite");$p->exec("VACUUM INTO ".$p->quote(getenv("HOME")."/backups/database-pre-x.sqlite"));'`
 
 ## Struktur
 
