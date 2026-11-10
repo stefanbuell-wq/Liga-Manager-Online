@@ -52,7 +52,7 @@ class LmoRepository
         return $stmt->fetchAll();
     }
 
-    public function getLeagueDataFull($file)
+    public function getLeagueDataFull($file, $round = null)
     {
         $league = $this->getLeagueByFile($file);
         $teams = $this->getTeams($league['id']);
@@ -136,18 +136,68 @@ class LmoRepository
             }
         }
 
+        // Bereichsvalidierung für optionalen Parameter round (1..Rounds)
+        $maxRounds = (int)($league['options']['Rounds'] ?? 0);
+        if ($maxRounds <= 0 && !empty($matchesOut)) {
+            $maxRounds = (int)max(array_keys($matchesOut));
+        }
+        if ($round !== null) {
+            if (!is_int($round) || $round < 1 || ($maxRounds > 0 && $round > $maxRounds)) {
+                throw new InvalidArgumentException("Invalid round parameter: must be between 1 and $maxRounds");
+            }
+        }
+
+        // Letzten gespielten Spieltag ermitteln
+        $playedRounds = [];
+        foreach ($matchesOut as $rNr => $rGames) {
+            foreach ($rGames as $g) {
+                if (!empty($g['played'])) {
+                    $playedRounds[] = (int)$rNr;
+                    break;
+                }
+            }
+        }
+        $lastPlayedRound = !empty($playedRounds)
+            ? max($playedRounds)
+            : ((int)($league['options']['Actual'] ?? 1) ?: 1);
+
         // Punktekorrekturen laden
         $corrections = $this->getPointCorrections($league['id']);
 
         // Calculate Table (On the fly)
-        $table = $this->calculateTable($teamsOut, $matchesOut, $corrections);
+        $effectiveRound = $round !== null ? $round : $lastPlayedRound;
+        $table = $this->calculateTable($teamsOut, $matchesOut, $corrections, $round);
+
+        // Platzierungsveränderung ggü. Vorspieltag berechnen
+        if ($effectiveRound > 1) {
+            $prevTable = $this->calculateTable($teamsOut, $matchesOut, $corrections, $effectiveRound - 1);
+            $prevRanks = [];
+            foreach ($prevTable as $idx => $prevRow) {
+                $prevRanks[$prevRow['name']] = $idx + 1;
+            }
+            foreach ($table as $idx => &$row) {
+                $currRank = $idx + 1;
+                $prevRank = $prevRanks[$row['name']] ?? null;
+                $row['prev_rank'] = $prevRank;
+                $row['rank_change'] = $prevRank !== null ? ($prevRank - $currRank) : 0;
+            }
+            unset($row);
+        } else {
+            foreach ($table as &$row) {
+                $row['prev_rank'] = null;
+                $row['rank_change'] = 0;
+            }
+            unset($row);
+        }
 
         return [
             'league_id' => $league['id'],
             'options' => $league['options'],
             'teams' => $teamsOut,
             'matches' => $matchesOut,
-            'table' => $table
+            'table' => $table,
+            'table_round' => $effectiveRound,
+            'last_played_round' => $lastPlayedRound
         ];
     }
 
@@ -377,7 +427,7 @@ class LmoRepository
         return $corrections;
     }
 
-    private function calculateTable($teams, $matches, $corrections = [])
+    private function calculateTable($teams, $matches, $corrections = [], $maxRound = null)
     {
         // Re-use logic from LmoParser roughly
         $table = [];
@@ -396,6 +446,9 @@ class LmoRepository
         }
 
         foreach ($matches as $round => $games) {
+            if ($maxRound !== null && (int)$round > $maxRound) {
+                continue;
+            }
             foreach ($games as $game) {
                 if (!$game['played'])
                     continue;

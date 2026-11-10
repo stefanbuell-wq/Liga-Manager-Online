@@ -201,9 +201,13 @@
                         </div>
                         <aside>
                             <div class="table-card">
-                                <div class="table-header">
+                                <div class="table-header table-round-bar">
                                     <h3>Tabelle</h3>
-                                    <a href="javascript:void(0)" onclick="switchTab('table')" class="btn btn-ghost" style="font-size: 0.85rem;">Vollständig &rarr;</a>
+                                    <div class="table-round-control">
+                                        <select id="overview-table-round-select" class="btn btn-secondary table-round-select-sm" aria-label="Stand nach Spieltag" onchange="loadTableForRound(this.value)">
+                                        </select>
+                                        <a href="javascript:void(0)" onclick="switchTab('table')" class="btn btn-ghost" style="font-size: 0.85rem;">Vollständig &rarr;</a>
+                                    </div>
                                 </div>
                                 <table class="league-table" id="league-table">
                                     <thead>
@@ -286,6 +290,17 @@
                 <!-- Tab: Tabelle -->
                 <div id="tab-table" class="tab-content">
                     <div class="table-card" style="max-width: 900px;">
+                        <div class="table-header table-round-bar">
+                            <div>
+                                <h3>Tabelle</h3>
+                                <span id="full-table-subtitle" class="table-subtitle"></span>
+                            </div>
+                            <div class="table-round-control">
+                                <label for="table-round-select" class="table-round-label">Stand nach Spieltag</label>
+                                <select id="table-round-select" class="btn btn-secondary table-round-select" onchange="loadTableForRound(this.value)">
+                                </select>
+                            </div>
+                        </div>
                         <table class="league-table" id="full-table">
                             <thead>
                                 <tr>
@@ -431,6 +446,9 @@
         const API_BASE = 'api';
         let leagueData = null;
         let currentRound = 1;
+        let currentLigaFile = '';
+        let lastPlayedRound = 1;
+        let selectedTableRound = 1;
 
         // === INITIALIZATION ===
         document.addEventListener('DOMContentLoaded', () => {
@@ -527,6 +545,78 @@
         }
 
         // === LOAD LEAGUE DATA ===
+        function getLastPlayedRound(data) {
+            if (data.last_played_round) {
+                return parseInt(data.last_played_round, 10) || 1;
+            }
+            if (data.matches) {
+                const rounds = Object.keys(data.matches).map(Number).sort((a, b) => a - b);
+                const played = rounds.filter(r => (data.matches[r] || []).some(m => m.played));
+                if (played.length > 0) {
+                    return played[played.length - 1];
+                }
+            }
+            return parseInt(data.options?.Actual, 10) || 1;
+        }
+
+        function updateTableRoundSelectors() {
+            const fullSelect = document.getElementById('table-round-select');
+            const overviewSelect = document.getElementById('overview-table-round-select');
+            const subtitle = document.getElementById('full-table-subtitle');
+
+            const rounds = Array.from({ length: lastPlayedRound }, (_, i) => i + 1);
+            if (fullSelect) {
+                fullSelect.innerHTML = rounds.map(r =>
+                    `<option value="${r}" ${r === selectedTableRound ? 'selected' : ''}>Spieltag ${r}</option>`
+                ).join('');
+            }
+            if (overviewSelect) {
+                overviewSelect.innerHTML = rounds.map(r =>
+                    `<option value="${r}" ${r === selectedTableRound ? 'selected' : ''}>Stand nach Spieltag ${r}</option>`
+                ).join('');
+            }
+            if (subtitle) {
+                subtitle.textContent = `Stand nach Spieltag ${selectedTableRound} von ${lastPlayedRound}`;
+            }
+        }
+
+        function formatRankTrend(team) {
+            if (!selectedTableRound || selectedTableRound <= 1 || team.prev_rank == null) {
+                return '';
+            }
+            const change = parseInt(team.rank_change, 10) || 0;
+            if (change > 0) {
+                return `<span class="rank-trend rank-up" title="Vorspieltag: Platz ${team.prev_rank}">▲${change}</span>`;
+            }
+            if (change < 0) {
+                return `<span class="rank-trend rank-down" title="Vorspieltag: Platz ${team.prev_rank}">▼${Math.abs(change)}</span>`;
+            }
+            return `<span class="rank-trend rank-same" title="Unverändert (Platz ${team.prev_rank})">•</span>`;
+        }
+
+        async function loadTableForRound(roundValue) {
+            const round = parseInt(roundValue, 10);
+            if (!round || round < 1 || round > lastPlayedRound || !currentLigaFile) return;
+
+            selectedTableRound = round;
+            updateTableRoundSelectors();
+
+            try {
+                const res = await fetch(`${API_BASE}/get-league-data.php?liga=${encodeURIComponent(currentLigaFile)}&round=${round}`);
+                const data = await res.json();
+                if (data.error || !data.table) {
+                    console.error(data.error || 'Keine Tabellendaten');
+                    return;
+                }
+                leagueData.table = data.table;
+                leagueData.table_round = data.table_round || round;
+                renderTable(leagueData.table);
+                renderFullTable();
+            } catch (e) {
+                console.error('Error loading table for round:', e);
+            }
+        }
+
         async function loadLeague(ligaFile) {
             try {
                 const res = await fetch(`${API_BASE}/get-league-data.php?liga=${ligaFile}`);
@@ -538,7 +628,11 @@
                 }
 
                 leagueData = data;
+                currentLigaFile = ligaFile;
                 currentRound = parseInt(data.options.Actual) || 1;
+                lastPlayedRound = getLastPlayedRound(data);
+                selectedTableRound = lastPlayedRound;
+                updateTableRoundSelectors();
 
                 // Update title
                 const title = data.options.Name || 'Liga';
@@ -575,7 +669,7 @@
 
                 return `
                     <tr>
-                        <td class="table-rank ${rankClass}">${rank}</td>
+                        <td class="table-rank ${rankClass}">${rank}${formatRankTrend(team)}</td>
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
@@ -846,6 +940,8 @@
         function renderFullTable() {
             if (!leagueData || !leagueData.table) return;
 
+            updateTableRoundSelectors();
+
             const tbody = document.querySelector('#full-table tbody');
             tbody.innerHTML = leagueData.table.map((team, idx) => {
                 const rank = idx + 1;
@@ -855,7 +951,7 @@
 
                 return `
                     <tr>
-                        <td class="table-rank ${rankClass}">${rank}</td>
+                        <td class="table-rank ${rankClass}">${rank}${formatRankTrend(team)}</td>
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
