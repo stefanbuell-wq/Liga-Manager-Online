@@ -130,6 +130,7 @@
             <h1>Sponsoren-Banner</h1>
             <div class="header-actions">
                 <button class="btn" onclick="openForm()">+ Neues Banner</button>
+                <a href="anfragen.html" class="btn btn-secondary" id="reqBtn">Anfragen</a>
                 <a href="index.html" class="btn btn-secondary">Zurück</a>
             </div>
         </div>
@@ -279,6 +280,10 @@
             }
             initMonths();
             loadBanners();
+            fetch('../api/kontakt.php?action=count', { credentials: 'include' })
+                .then(r => r.json())
+                .then(r => { if (r.success && r.data.open) document.getElementById('reqBtn').textContent = `Anfragen (${r.data.open} neu)`; })
+                .catch(() => {});
         });
 
         function initMonths() {

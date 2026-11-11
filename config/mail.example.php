@@ -15,6 +15,8 @@ return [
     'reply_to'  => 'noreply@buell-digital.de',
     // Empfaenger fuer "Neue Registrierung wartet auf Freigabe"
     'admin_notify' => '',
+    // Empfaenger fuer neue Kontaktanfragen (kontakt.html); leer = admin_notify
+    'contact_notify' => '',
     // Basis-URL fuer Links in Mails
     'base_url'  => 'https://hafo.buell-digital.de',
 ];

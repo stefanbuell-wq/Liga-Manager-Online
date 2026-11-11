@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontakt - HAFO.de</title>
+    <meta name="description" content="Kontakt zu HAFO.de – Sponsoring, Fragen und Hinweise zum Hamburger Amateurfußball.">
+
+    <!-- Fonts (lokal eingebunden) -->
+    <link rel="stylesheet" href="css/fonts.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/portal.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <!-- Theme Loader -->
+    <script>
+        (function() {
+            const cached = localStorage.getItem('hafo_theme');
+            if (cached) {
+                try {
+                    const theme = JSON.parse(cached);
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                } catch(e) {}
+            }
+            fetch('api/theme.php')
+                .then(r => r.json())
+                .then(theme => {
+                    localStorage.setItem('hafo_theme', JSON.stringify(theme));
+                    if (theme.cssVariables) {
+                        Object.entries(theme.cssVariables).forEach(([key, value]) => {
+                            document.documentElement.style.setProperty(key, value);
+                        });
+                    }
+                })
+                .catch(() => {});
+        })();
+    </script>
+    <style>
+        .contact-wrap { max-width: 1000px; margin: var(--spacing-2xl) auto; padding: 0 var(--spacing-md); display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--spacing-xl); align-items: start; }
+        .contact-intro h1 { font-family: var(--font-display); font-size: 2rem; margin: 0 0 var(--spacing-md); }
+        .contact-intro p { color: var(--color-text-secondary); line-height: 1.6; }
+        .contact-box { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-lg); margin-top: var(--spacing-lg); }
+        .contact-box h3 { margin: 0 0 var(--spacing-sm); font-size: 1rem; }
+        .contact-box ul { margin: 0; padding-left: 1.2em; color: var(--color-text-secondary); line-height: 1.7; font-size: .92rem; }
+        .contact-card { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-xl); box-shadow: var(--shadow-card); }
+        .contact-form label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary); margin: var(--spacing-md) 0 var(--spacing-xs); }
+        .contact-form label .opt { font-weight: 400; color: var(--color-text-muted); }
+        .contact-form input[type=text], .contact-form input[type=email], .contact-form input[type=tel], .contact-form select, .contact-form textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border-color-hover, rgba(0,0,0,.18)); border-radius: var(--radius-sm, 8px);
+            background: var(--color-bg-elevated); color: var(--color-text-primary); font: inherit; box-sizing: border-box; }
+        .contact-form textarea { min-height: 160px; resize: vertical; }
+        .contact-form .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); }
+        .contact-form .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-top: 4px; }
+        .contact-form .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; color: var(--color-text-primary); margin: 0; font-size: .9rem; cursor: pointer; }
+        .contact-form .check input { margin-top: 3px; accent-color: var(--color-primary); }
+        .contact-form .consent { margin-top: var(--spacing-lg); }
+        .contact-form .counter { font-size: .75rem; color: var(--color-text-muted); text-align: right; margin-top: 2px; }
+        .contact-form button[type=submit] { margin-top: var(--spacing-lg); width: 100%; }
+        .contact-form button[disabled] { opacity: .6; cursor: wait; }
+        .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+        .contact-msg { padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-sm, 8px); margin-bottom: var(--spacing-md); font-size: 0.9rem; display: none; }
+        .contact-msg.err { display: block; background: rgba(239,68,68,0.12); color: #991b1b; }
+        .contact-done { text-align: center; padding: var(--spacing-xl) 0; }
+        .contact-done .icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(34,197,94,.15); color: #16a34a; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: var(--spacing-md); }
+        @media (max-width: 800px) {
+            .contact-wrap { grid-template-columns: 1fr; }
+            .contact-form .row, .contact-form .checks { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                </a>
+
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                </nav>
+
+                <div class="header-actions">
+                    
+                    <button class="mobile-menu-btn" style="display:none">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="contact-wrap">
+            <section class="contact-intro">
+                <h1 id="intro-title">Kontakt</h1>
+                <p id="intro-text">Fragen, Hinweise oder Interesse an einer Zusammenarbeit? Schreiben Sie uns – wir melden uns so schnell wie möglich.</p>
+
+                <div class="contact-box" id="sponsor-box">
+                    <h3>Sponsor werden</h3>
+                    <ul>
+                        <li>Banner im Header (728×90) – auf jeder Seite ganz oben</li>
+                        <li>Banner links und rechts (160×600) neben dem Inhalt</li>
+                        <li>Auf Smartphones in angepasster Größe</li>
+                        <li>Monatliche Auswertung: Sichtkontakte und Klicks</li>
+                    </ul>
+                    <p style="margin:var(--spacing-sm) 0 0; font-size:.9rem;">Ihr Beitrag deckt die Hosting-Kosten von HAFO.de und hält das Portal für alle frei zugänglich.</p>
+                </div>
+            </section>
+
+            <section class="contact-card">
+                <div id="msg" class="contact-msg" role="alert"></div>
+
+                <form class="contact-form" id="contact-form" novalidate>
+                    <label for="c-topic">Thema</label>
+                    <select id="c-topic" name="topic" required>
+                        <option value="sponsoring">Sponsoring / Werbung</option>
+                        <option value="allgemein">Allgemeine Anfrage</option>
+                        <option value="fehler">Fehler oder Korrektur melden</option>
+                    </select>
+
+                    <div class="row">
+                        <div>
+                            <label for="c-name">Name</label>
+                            <input type="text" id="c-name" name="name" required maxlength="100" autocomplete="name">
+                        </div>
+                        <div>
+                            <label for="c-company"><span id="company-label">Firma / Verein</span> <span class="opt">(optional)</span></label>
+                            <input type="text" id="c-company" name="company" maxlength="150" autocomplete="organization">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div>
+                            <label for="c-email">E-Mail</label>
+                            <input type="email" id="c-email" name="email" required maxlength="200" autocomplete="email">
+                        </div>
+                        <div>
+                            <label for="c-phone">Telefon <span class="opt">(optional)</span></label>
+                            <input type="tel" id="c-phone" name="phone" maxlength="40" autocomplete="tel">
+                        </div>
+                    </div>
+
+                    <div id="interest-group">
+                        <label>Interesse an <span class="opt">(optional, mehrere möglich)</span></label>
+                        <div class="checks">
+                            <label class="check"><input type="checkbox" name="interests" value="header"> Banner im Header</label>
+                            <label class="check"><input type="checkbox" name="interests" value="seite"> Banner links/rechts</label>
+                            <label class="check"><input type="checkbox" name="interests" value="news"> Präsentation in News</label>
+                            <label class="check"><input type="checkbox" name="interests" value="sonst"> Andere Idee</label>
+                        </div>
+                    </div>
+
+                    <label for="c-message">Nachricht</label>
+                    <textarea id="c-message" name="message" required minlength="10" maxlength="5000"></textarea>
+                    <div class="counter"><span id="c-count">0</span> / 5000</div>
+
+                    <div class="hp" aria-hidden="true">
+                        <label for="c-website">Website</label>
+                        <input type="text" id="c-website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <label class="check consent">
+                        <input type="checkbox" id="c-consent" name="consent" required>
+                        <span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage gespeichert werden.
+                        Erledigte Anfragen werden nach 12 Monaten gelöscht. Details in der <a href="datenschutz.html" target="_blank">Datenschutzerklärung</a>.</span>
+                    </label>
+
+                    <button type="submit" class="btn btn-primary" id="c-submit">Nachricht senden</button>
+                </form>
+
+                <div class="contact-done" id="contact-done" style="display:none">
+                    <div class="icon">✓</div>
+                    <h2 style="margin:0 0 var(--spacing-sm)">Vielen Dank!</h2>
+                    <p style="color:var(--color-text-secondary)">Ihre Nachricht ist bei uns angekommen. Wir melden uns per E-Mail.</p>
+                    <a href="index.html" class="btn btn-secondary" style="margin-top:var(--spacing-md)">Zur Startseite</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon">⚽</div>
+                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    </a>
+                    <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Forum</h4>
+                    <div class="footer-links">
+                        <a href="forum.html">Übersicht</a>
+                        <a href="javascript:void(0)">Regeln</a>
+                        <a href="javascript:void(0)">FAQ</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Service</h4>
+                    <div class="footer-links">
+                        <a href="index.html#news-section">Spielberichte</a>
+                        <a href="index.html#league-section">Statistiken</a>
+                        <a href="kontakt.html">Kontakt</a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Rechtliches</h4>
+                    <div class="footer-links">
+                        <a href="impressum.html">Impressum</a>
+                        <a href="datenschutz.html">Datenschutz</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    (function () {
+        const loadedAt = Date.now();
+        const form = document.getElementById('contact-form');
+        const topic = document.getElementById('c-topic');
+        const msgBox = document.getElementById('msg');
+        const message = document.getElementById('c-message');
+
+        const params = new URLSearchParams(location.search);
+        const t = params.get('thema');
+        if (t && [...topic.options].some(o => o.value === t)) topic.value = t;
+
+        function applyTopic() {
+            const sp = topic.value === 'sponsoring';
+            document.getElementById('interest-group').style.display = sp ? '' : 'none';
+            document.getElementById('sponsor-box').style.display = sp ? '' : 'none';
+            document.getElementById('intro-title').textContent = sp ? 'Sponsor werden' : 'Kontakt';
+            document.getElementById('intro-text').textContent = sp
+                ? 'HAFO.de wird durch Sponsoren finanziert. Mit einem Banner erreichen Sie die Hamburger Amateurfußball-Szene – Spieler, Trainer, Vereine und Fans.'
+                : 'Fragen, Hinweise oder ein falsches Ergebnis entdeckt? Schreiben Sie uns – wir melden uns so schnell wie möglich.';
+            document.getElementById('company-label').textContent = sp ? 'Firma' : 'Verein / Firma';
+            message.placeholder = sp
+                ? 'z. B. gewünschte Position, Zeitraum, Fragen zu Preisen …'
+                : (topic.value === 'fehler' ? 'Welche Seite, welche Liga/welches Spiel, was ist falsch?' : '');
+        }
+        topic.addEventListener('change', applyTopic);
+        applyTopic();
+
+        message.addEventListener('input', () => {
+            document.getElementById('c-count').textContent = message.value.length;
+        });
+
+        function showError(text) {
+            msgBox.textContent = text;
+            msgBox.className = 'contact-msg err';
+            msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msgBox.className = 'contact-msg';
+            const v = id => document.getElementById(id).value.trim();
+            if (v('c-name').length < 2) return showError('Bitte Ihren Namen angeben.');
+            if (!v('c-email') || !document.getElementById('c-email').checkValidity()) return showError('Bitte eine gültige E-Mail-Adresse angeben.');
+            if (v('c-message').length < 10) return showError('Bitte eine Nachricht mit mindestens 10 Zeichen schreiben.');
+            if (!document.getElementById('c-consent').checked) return showError('Bitte der Verarbeitung Ihrer Angaben zustimmen.');
+
+            const btn = document.getElementById('c-submit');
+            btn.disabled = true;
+            btn.textContent = 'Wird gesendet …';
+            try {
+                const res = await fetch('api/kontakt.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'omit',
+                    body: JSON.stringify({
+                        action: 'send',
+                        topic: topic.value,
+                        name: v('c-name'),
+                        company: v('c-company'),
+                        email: v('c-email'),
+                        phone: v('c-phone'),
+                        interests: [...form.querySelectorAll('input[name=interests]:checked')].map(i => i.value),
+                        message: message.value,
+                        consent: true,
+                        website: document.getElementById('c-website').value,
+                        elapsed: Date.now() - loadedAt
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) throw new Error(data.error || 'Senden fehlgeschlagen. Bitte später erneut versuchen.');
+                form.style.display = 'none';
+                document.getElementById('contact-done').style.display = '';
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Nachricht senden';
+            }
+        });
+    })();
+    </script>
+    <script src="js/foerderer.js" defer></script>
+</body>
+</html>
