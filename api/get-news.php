@@ -69,7 +69,7 @@ try {
         $teams = ($link && $link['match_count'] == 1 && $link['home'] && $link['guest']) ? [$link['home'], $link['guest']] : null;
         $news['author'] = NewsContent::displayAuthor($news['author'] ?? '', $news['content'] ?? '');
         $news['content'] = NewsContent::prepare($news['content'] ?? '', $teams);
-        $news['short_content'] = NewsContent::rewriteImages($news['short_content'] ?? '');
+        $news['short_content'] = NewsContent::sanitize(NewsContent::rewriteImages($news['short_content'] ?? ''));
         $news['league_name'] = $link['league_name'] ?? null;
         $news['league_file'] = $link['league_file'] ?? null;
         unset($news['email']);

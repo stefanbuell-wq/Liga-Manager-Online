@@ -41,7 +41,83 @@ class NewsContent
         if (!$html) return '';
         $html = self::rewriteImages($html);
         $html = self::addMissingLogos($html, $teams);
-        return $html;
+        return self::sanitize($html);
+    }
+
+    /** Erlaubte Tags fuer Artikel (alles andere wird entfernt, Inhalt bleibt) */
+    private const ALLOWED_TAGS = [
+        'a', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'sub', 'sup', 'br', 'p', 'div', 'span', 'center',
+        'font', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'hr', 'img', 'small', 'big',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'caption', 'pre', 'code', 'cite', 'q',
+    ];
+    private const DROP_WITH_CONTENT = ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button',
+        'textarea', 'select', 'link', 'meta', 'base', 'svg', 'math', 'frame', 'frameset', 'applet', 'template', 'noscript'];
+    private const ALLOWED_ATTRS = ['href', 'src', 'alt', 'title', 'style', 'class', 'align', 'width', 'height',
+        'border', 'colspan', 'rowspan', 'cellpadding', 'cellspacing', 'valign', 'color', 'size', 'face', 'target', 'rel', 'loading'];
+
+    /**
+     * Allowlist-Filter gegen Skript-Einschleusung (Redaktions-HTML wird per innerHTML angezeigt):
+     * keine Skripte/Event-Handler, Links nur http(s)/mailto/relativ, Bilder nur lokal (nach rewriteImages).
+     */
+    public static function sanitize(string $html): string
+    {
+        if (trim($html) === '') return '';
+        $doc = new DOMDocument();
+        $prev = libxml_use_internal_errors(true);
+        $doc->loadHTML('<?xml encoding="UTF-8"?><div id="__root">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+        $root = $doc->getElementById('__root');
+        if (!$root) return htmlspecialchars(strip_tags($html), ENT_QUOTES, 'UTF-8');
+        self::cleanNode($root);
+        $out = '';
+        foreach ($root->childNodes as $child) $out .= $doc->saveHTML($child);
+        return $out;
+    }
+
+    private static function cleanNode(DOMNode $node): void
+    {
+        for ($i = $node->childNodes->length - 1; $i >= 0; $i--) {
+            $child = $node->childNodes->item($i);
+            if ($child instanceof DOMElement) {
+                $tag = strtolower($child->tagName);
+                if (in_array($tag, self::DROP_WITH_CONTENT, true)) {
+                    $node->removeChild($child);
+                    continue;
+                }
+                self::cleanNode($child);
+                if (!in_array($tag, self::ALLOWED_TAGS, true)) {
+                    // Unbekanntes Tag aufloesen, Inhalt behalten
+                    while ($child->firstChild) $node->insertBefore($child->firstChild, $child);
+                    $node->removeChild($child);
+                    continue;
+                }
+                foreach (iterator_to_array($child->attributes) as $attr) {
+                    $name = strtolower($attr->name);
+                    $val = trim($attr->value);
+                    $ok = in_array($name, self::ALLOWED_ATTRS, true);
+                    if ($ok && $name === 'href') {
+                        $ok = (bool)preg_match('#^(https?://|mailto:|\?|/|\#|[a-z0-9._\-]+(/|\.|$))#i', $val)
+                            && !preg_match('#^\s*(javascript|data|vbscript):#i', $val);
+                    }
+                    if ($ok && $name === 'src') {
+                        $ok = (bool)preg_match('#^(img/|legacy/|icons/|api/img-proxy\.php\?)#', $val);
+                    }
+                    if ($ok && $name === 'style') {
+                        $ok = !preg_match('#expression|javascript:|url\s*\(|behavior|@import#i', $val);
+                    }
+                    if (!$ok) $child->removeAttribute($attr->name);
+                }
+                if ($tag === 'a' && $child->getAttribute('target') === '_blank') {
+                    $child->setAttribute('rel', 'noopener noreferrer');
+                }
+                if ($tag === 'img' && !$child->hasAttribute('src')) {
+                    $node->removeChild($child);
+                }
+            } elseif ($child instanceof DOMComment || $child instanceof DOMProcessingInstruction) {
+                $node->removeChild($child);
+            }
+        }
     }
 
     /** Bildquelle -> anzeigbare Quelle (oder null = Bild entfernen) */
