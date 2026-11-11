@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sponsoren - HAFO Admin</title>
+    <link rel="stylesheet" href="../css/fonts.css">
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-bg-dark: #F5F5F5;
+            --color-bg-card: #FFFFFF;
+            --color-bg-elevated: #FAFAFA;
+            --color-border: rgba(0, 0, 0, 0.10);
+            --color-text-primary: #111111;
+            --color-text-secondary: #555555;
+            --color-text-muted: #767676;
+            --color-success: #16a34a;
+            --color-warning: #b45309;
+            --color-danger: #dc3545;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        a { color: var(--color-primary); text-decoration: none; }
+
+        .admin-container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+        }
+        .header h1 { margin: 0; font-family: 'Urbanist', sans-serif; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .card {
+            background: var(--color-bg-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: 24px;
+        }
+        .card h2 { margin: 0 0 16px; font-size: 1.15rem; }
+
+        .btn {
+            padding: 10px 18px; background: var(--color-primary); color: #fff; border: none;
+            border-radius: var(--radius-md); cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 6px; font-family: inherit;
+        }
+        .btn:hover { background: var(--color-primary-hover); }
+        .btn-secondary { background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: var(--color-text-primary); }
+        .btn-secondary:hover { background: #eee; }
+        .btn-danger { background: var(--color-danger); }
+        .btn-danger:hover { background: #b02a37; }
+        .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+        .btn:disabled { opacity: .6; cursor: wait; }
+
+        .hidden { display: none !important; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.wide { grid-column: 1 / -1; }
+        label { font-weight: 600; font-size: 0.85rem; color: var(--color-text-secondary); }
+        input[type=text], input[type=url], input[type=date], input[type=number], select {
+            padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px;
+            font: inherit; background: #fff;
+        }
+        .hint { font-size: 0.8rem; color: var(--color-text-muted); }
+        .check { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+
+        .preview { margin-top: 6px; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px; padding: 8px; border-radius: 8px; border: 1px dashed var(--color-border); text-align: center; }
+        .preview img { max-width: 100%; max-height: 260px; display: inline-block; }
+        .preview .msg { font-size: .8rem; margin-top: 4px; }
+        .ok { color: var(--color-success); }
+        .err { color: var(--color-danger); }
+
+        .filter { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+
+        .pos-title { margin: 28px 0 12px; font-size: 1rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+        .banner {
+            display: grid; grid-template-columns: 200px 1fr auto; gap: 18px; align-items: center;
+            padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+            background: var(--color-bg-elevated); margin-bottom: 12px;
+        }
+        .banner .thumb { text-align: center; line-height: 0; }
+        .banner .thumb img { max-width: 200px; max-height: 120px; }
+        .banner h3 { margin: 0 0 4px; font-size: 1rem; }
+        .meta { font-size: .85rem; color: var(--color-text-secondary); line-height: 1.6; }
+        .stats { display: flex; gap: 18px; margin-top: 6px; font-size: .85rem; }
+        .stats b { font-size: 1.05rem; color: var(--color-text-primary); }
+        .actions { display: flex; flex-direction: column; gap: 6px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .75rem; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+        .b-live { background: #dcfce7; color: #166534; }
+        .b-plan { background: #e0f2fe; color: #075985; }
+        .b-end { background: #f3f4f6; color: #4b5563; }
+        .b-off { background: #fef3c7; color: #92400e; }
+
+        .empty { color: var(--color-text-muted); padding: 12px 0; }
+
+        #toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #111; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: .9rem;
+            opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 1000;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { background: var(--color-danger); }
+
+        @media (max-width: 700px) {
+            .banner { grid-template-columns: 1fr; }
+            .actions { flex-direction: row; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <div class="header">
+            <h1>Sponsoren-Banner</h1>
+            <div class="header-actions">
+                <button class="btn" onclick="openForm()">+ Neues Banner</button>
+                <a href="index.html" class="btn btn-secondary">Zurück</a>
+            </div>
+        </div>
+
+        <div id="denied" class="card hidden">
+            <p>Die Sponsorenverwaltung ist nur für Administratoren freigegeben.</p>
+        </div>
+
+        <!-- Formular -->
+        <div class="card hidden" id="formCard">
+            <h2 id="formTitle">Neues Banner</h2>
+            <form id="bannerForm" onsubmit="saveBanner(event)">
+                <input type="hidden" name="id" id="f_id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="f_sponsor">Sponsor *</label>
+                        <input type="text" name="sponsor" id="f_sponsor" maxlength="120" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_position">Position *</label>
+                        <select name="position" id="f_position" onchange="updateSizeHints()">
+                            <option value="top">Header – 728×90</option>
+                            <option value="left">Links – 160×600</option>
+                            <option value="right">Rechts – 160×600</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_link">Link (Website des Sponsors)</label>
+                        <input type="url" name="link_url" id="f_link" placeholder="https://…">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_alt">Alternativtext</label>
+                        <input type="text" name="alt_text" id="f_alt" maxlength="200" placeholder="z. B. Autohaus Muster – Ihr Partner in Hamburg">
+                        <span class="hint">Für Screenreader; leer = Sponsorname</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f_image">Bannerbild <span id="mainSize"></span></label>
+                        <input type="file" name="image" id="f_image" accept="image/jpeg,image/png,image/gif,image/webp" onchange="previewFile(this, 'main')">
+                        <span class="hint">JPG, PNG, GIF oder WebP, max. 1 MB. Auch doppelte Größe für scharfe Darstellung erlaubt.</span>
+                        <div class="preview hidden" id="prev_main"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_image_alt"><span id="altLabel">Mobil-Bild</span> <span id="altSize"></span> (optional)</label>
+                        <input type="file" name="image_alt" id="f_image_alt" accept="image/jpeg,image/png,image/gif,image/webp" onchange="previewFile(this, 'alt')">
+                        <span class="hint" id="altHint"></span>
+                        <div class="preview hidden" id="prev_alt"></div>
+                        <label class="check hidden" id="removeAltWrap"><input type="checkbox" name="remove_image_alt" value="1"> vorhandenes Bild entfernen</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f_start">Laufzeit von</label>
+                        <input type="date" name="start_date" id="f_start">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_end">Laufzeit bis</label>
+                        <input type="date" name="end_date" id="f_end">
+                        <span class="hint">Leer = unbegrenzt</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_weight">Gewichtung</label>
+                        <input type="number" name="weight" id="f_weight" min="1" max="10" value="1">
+                        <span class="hint">1–10: höher = wird bei der Rotation häufiger gezeigt</span>
+                    </div>
+                    <div class="form-group" style="justify-content:center;">
+                        <label class="check"><input type="checkbox" name="active" id="f_active" value="1" checked> Aktiv</label>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="submit" class="btn" id="saveBtn">Speichern</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeForm()">Abbrechen</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Zeitraum / Statistik -->
+        <div class="card" id="filterCard">
+            <h2>Statistik-Zeitraum</h2>
+            <div class="filter">
+                <div class="form-group">
+                    <label for="r_month">Monat</label>
+                    <select id="r_month" onchange="applyMonth()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="r_from">von</label>
+                    <input type="date" id="r_from" onchange="loadBanners()">
+                </div>
+                <div class="form-group">
+                    <label for="r_to">bis</label>
+                    <input type="date" id="r_to" onchange="loadBanners()">
+                </div>
+                <button class="btn btn-secondary" onclick="downloadCsv()">CSV-Export (Tageswerte)</button>
+            </div>
+            <p class="hint" style="margin:12px 0 0;">
+                Sichtkontakt = Banner war mindestens 1 Sekunde zu mindestens 50 % im sichtbaren Bereich bei aktivem Browser-Tab.
+                Bots werden nicht gezählt. Klicks werden über eine Weiterleitung gezählt.
+            </p>
+        </div>
+
+        <div id="list"></div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        const API = '../api/foerderer.php';
+        let csrfToken = '';
+        let banners = [];
+        let positions = {};
+
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function toast(msg, isError) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'show' + (isError ? ' error' : '');
+            clearTimeout(t._h);
+            t._h = setTimeout(() => t.className = '', 3500);
+        }
+
+        function fmtDate(d) {
+            if (!d) return '';
+            const [y, m, day] = d.split('-');
+            return `${day}.${m}.${y}`;
+        }
+
+        function isoDate(d) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const auth = await (await fetch('../api/check-auth.php', { credentials: 'include' })).json();
+                csrfToken = auth.csrf_token || '';
+                if (!auth.authenticated) { location.href = 'index.html'; return; }
+                if ((auth.user && auth.user.role) !== 'admin') {
+                    document.getElementById('denied').classList.remove('hidden');
+                    document.getElementById('filterCard').classList.add('hidden');
+                    document.querySelector('.header-actions .btn').classList.add('hidden');
+                    return;
+                }
+            } catch (e) {
+                toast('Anmeldestatus konnte nicht geprüft werden', true);
+                return;
+            }
+            initMonths();
+            loadBanners();
+        });
+
+        function initMonths() {
+            const sel = document.getElementById('r_month');
+            const now = new Date();
+            sel.appendChild(new Option('Gesamter Zeitraum', 'all'));
+            for (let i = 0; i < 24; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const label = d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+                sel.appendChild(new Option(label, isoDate(d)));
+            }
+            sel.value = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+            applyMonth(true);
+        }
+
+        function applyMonth(skipLoad) {
+            const v = document.getElementById('r_month').value;
+            const from = document.getElementById('r_from');
+            const to = document.getElementById('r_to');
+            if (v === 'all') {
+                from.value = '';
+                to.value = '';
+            } else {
+                const d = new Date(v + 'T00:00:00');
+                from.value = v;
+                to.value = isoDate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+            }
+            if (!skipLoad) loadBanners();
+        }
+
+        async function loadBanners() {
+            const from = document.getElementById('r_from').value;
+            const to = document.getElementById('r_to').value;
+            const qs = new URLSearchParams({ action: 'list' });
+            if (from) qs.set('from', from);
+            if (to) qs.set('to', to);
+            try {
+                const res = await (await fetch(`${API}?${qs}`, { credentials: 'include' })).json();
+                if (!res.success) throw new Error(res.error || 'Fehler');
+                if (res.csrf_token) csrfToken = res.csrf_token;
+                banners = res.data.banners;
+                positions = res.data.positions;
+                renderList();
+            } catch (e) {
+                toast('Laden fehlgeschlagen: ' + e.message, true);
+            }
+        }
+
+        function status(b) {
+            const today = isoDate(new Date());
+            if (!Number(b.active)) return ['pausiert', 'b-off'];
+            if (b.start_date && b.start_date > today) return ['geplant', 'b-plan'];
+            if (b.end_date && b.end_date < today) return ['abgelaufen', 'b-end'];
+            return ['läuft', 'b-live'];
+        }
+
+        function renderList() {
+            const list = document.getElementById('list');
+            let html = '';
+            for (const [key, pos] of Object.entries(positions)) {
+                const items = banners.filter(b => b.position === key);
+                const live = items.filter(b => status(b)[0] === 'läuft').length;
+                html += `<h3 class="pos-title">${esc(pos.label)} – ${pos.main[0]}×${pos.main[1]}
+                    <span style="text-transform:none;letter-spacing:0;font-weight:400;">(${live} aktiv${live > 1 ? ', rotierend' : ''})</span></h3>`;
+                if (!items.length) {
+                    html += '<div class="empty">Noch kein Banner an dieser Position.</div>';
+                    continue;
+                }
+                for (const b of items) {
+                    const [st, cls] = status(b);
+                    const views = Number(b.views), clicks = Number(b.clicks);
+                    const ctr = views ? (clicks / views * 100).toFixed(2).replace('.', ',') + ' %' : '–';
+                    const period = (b.start_date || b.end_date)
+                        ? `${b.start_date ? fmtDate(b.start_date) : 'offen'} – ${b.end_date ? fmtDate(b.end_date) : 'unbegrenzt'}`
+                        : 'unbegrenzt';
+                    html += `<div class="banner">
+                        <div class="thumb"><img src="../${esc(b.image_url)}" alt=""></div>
+                        <div>
+                            <h3>${esc(b.sponsor)}<span class="badge ${cls}">${st}</span></h3>
+                            <div class="meta">
+                                Laufzeit: ${period} · Gewichtung ${Number(b.weight)}
+                                ${b.image_alt_url ? ` · ${esc(pos.altLabel)}-Bild ✓` : ` · <span class="err">kein ${esc(pos.altLabel)}-Bild</span>`}<br>
+                                ${b.link_url ? `<a href="${esc(b.link_url)}" target="_blank" rel="noopener">${esc(b.link_url)}</a>` : '<i>kein Link</i>'}
+                            </div>
+                            <div class="stats">
+                                <span>Sichtkontakte <b>${views.toLocaleString('de-DE')}</b></span>
+                                <span>Klicks <b>${clicks.toLocaleString('de-DE')}</b></span>
+                                <span>Klickrate <b>${ctr}</b></span>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-secondary btn-sm" onclick="openForm(${Number(b.id)})">Bearbeiten</button>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleBanner(${Number(b.id)}, ${Number(b.active) ? 0 : 1})">${Number(b.active) ? 'Pausieren' : 'Aktivieren'}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="downloadCsv(${Number(b.id)})">CSV</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteBanner(${Number(b.id)})">Löschen</button>
+                        </div>
+                    </div>`;
+                }
+            }
+            list.innerHTML = html;
+        }
+
+        /* ---------- Formular ---------- */
+        function updateSizeHints() {
+            const p = positions[document.getElementById('f_position').value];
+            if (!p) return;
+            document.getElementById('mainSize').textContent = `(${p.main[0]}×${p.main[1]})`;
+            document.getElementById('altLabel').textContent = p.altLabel + '-Bild';
+            document.getElementById('altSize').textContent = `(${p.alt[0]}×${p.alt[1]})`;
+            document.getElementById('altHint').textContent = p.altLabel === 'Mobil'
+                ? 'Wird auf Smartphones statt des 728×90-Banners gezeigt. Ohne dieses Bild wird das große Banner verkleinert.'
+                : 'Wird auf kleineren Bildschirmen im Inhalt gezeigt, wo kein Platz für die Seitenleiste ist. Ohne dieses Bild erscheint dort der Skyscraper.';
+            // Vorschauen erneut gegen neue Größe pruefen
+            ['main', 'alt'].forEach(k => {
+                const input = document.getElementById(k === 'main' ? 'f_image' : 'f_image_alt');
+                if (input.files.length) previewFile(input, k);
+            });
+        }
+
+        function openForm(id) {
+            const form = document.getElementById('bannerForm');
+            form.reset();
+            ['main', 'alt'].forEach(k => {
+                const p = document.getElementById('prev_' + k);
+                p.classList.add('hidden');
+                p.innerHTML = '';
+            });
+            document.getElementById('removeAltWrap').classList.add('hidden');
+            document.getElementById('f_id').value = '';
+
+            const b = id ? banners.find(x => Number(x.id) === id) : null;
+            document.getElementById('formTitle').textContent = b ? `Banner bearbeiten: ${b.sponsor}` : 'Neues Banner';
+            document.getElementById('f_image').required = !b;
+            if (b) {
+                document.getElementById('f_id').value = b.id;
+                document.getElementById('f_sponsor').value = b.sponsor;
+                document.getElementById('f_position').value = b.position;
+                document.getElementById('f_link').value = b.link_url || '';
+                document.getElementById('f_alt').value = b.alt_text || '';
+                document.getElementById('f_start').value = b.start_date || '';
+                document.getElementById('f_end').value = b.end_date || '';
+                document.getElementById('f_weight').value = b.weight;
+                document.getElementById('f_active').checked = !!Number(b.active);
+                showExisting('main', b.image_url);
+                if (b.image_alt_url) {
+                    showExisting('alt', b.image_alt_url);
+                    document.getElementById('removeAltWrap').classList.remove('hidden');
+                }
+            }
+            updateSizeHints();
+            const card = document.getElementById('formCard');
+            card.classList.remove('hidden');
+            card.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showExisting(kind, url) {
+            const p = document.getElementById('prev_' + kind);
+            p.innerHTML = `<img src="../${esc(url)}" alt=""><div class="msg">aktuelles Bild – neue Datei wählen, um es zu ersetzen</div>`;
+            p.classList.remove('hidden');
+        }
+
+        function closeForm() {
+            document.getElementById('formCard').classList.add('hidden');
+        }
+
+        function previewFile(input, kind) {
+            const p = document.getElementById('prev_' + kind);
+            const file = input.files[0];
+            if (!file) { p.classList.add('hidden'); return; }
+            const pos = positions[document.getElementById('f_position').value];
+            const [w, h] = kind === 'main' ? pos.main : pos.alt;
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                const okSize = (img.naturalWidth === w && img.naturalHeight === h) || (img.naturalWidth === 2 * w && img.naturalHeight === 2 * h);
+                const okBytes = file.size <= 1048576;
+                let msg = `${img.naturalWidth}×${img.naturalHeight} px, ${(file.size / 1024).toFixed(0)} KB – `;
+                msg += okSize && okBytes ? '<span class="ok">passt</span>'
+                    : `<span class="err">${!okSize ? `erwartet ${w}×${h} oder ${2 * w}×${2 * h}` : 'größer als 1 MB'}</span>`;
+                p.innerHTML = `<img src="${url}" alt=""><div class="msg">${msg}</div>`;
+                p.classList.remove('hidden');
+            };
+            img.onerror = () => {
+                p.innerHTML = '<div class="msg err">Datei ist kein lesbares Bild</div>';
+                p.classList.remove('hidden');
+            };
+            img.src = url;
+        }
+
+        async function saveBanner(ev) {
+            ev.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            const fd = new FormData(document.getElementById('bannerForm'));
+            fd.set('action', 'save');
+            fd.set('csrf_token', csrfToken);
+            fd.set('active', document.getElementById('f_active').checked ? '1' : '0');
+            btn.disabled = true;
+            try {
+                const res = await (await fetch(API, { method: 'POST', body: fd, credentials: 'include' })).json();
+                if (!res.success) throw new Error(res.error || 'Fehler');
+                toast('Gespeichert');
+                closeForm();
+                loadBanners();
+            } catch (e) {
+                toast(e.message, true);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function post(data) {
+            const res = await (await fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ ...data, csrf_token: csrfToken })
+            })).json();
+            if (!res.success) throw new Error(res.error || 'Fehler');
+            return res;
+        }
+
+        async function toggleBanner(id, active) {
+            try {
+                await post({ action: 'toggle', id, active });
+                loadBanners();
+            } catch (e) { toast(e.message, true); }
+        }
+
+        async function deleteBanner(id) {
+            const b = banners.find(x => Number(x.id) === id);
+            if (!confirm(`Banner „${b ? b.sponsor : id}“ endgültig löschen?\nBild und gesamte Statistik dieses Banners gehen verloren. Zum vorübergehenden Abschalten lieber „Pausieren“ nutzen.`)) return;
+            try {
+                await post({ action: 'delete', id });
+                toast('Gelöscht');
+                loadBanners();
+            } catch (e) { toast(e.message, true); }
+        }
+
+        function downloadCsv(id) {
+            let from = document.getElementById('r_from').value;
+            let to = document.getElementById('r_to').value;
+            if (!from) from = '2000-01-01';
+            if (!to) to = isoDate(new Date());
+            const qs = new URLSearchParams({ action: 'csv', from, to });
+            if (id) qs.set('id', id);
+            location.href = `${API}?${qs}`;
+        }
+    </script>
+</body>
+
+</html>

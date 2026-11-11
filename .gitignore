@@ -38,6 +38,10 @@ datenschutz.html
 
 # Cache & Data
 data/cache/
+
+# Hochgeladene Sponsorenbilder (nur auf dem Server, nicht im Repo)
+img/foerderer/*
+!img/foerderer/.htaccess
 config/
 data/login.override
 data/ratelimit.off
