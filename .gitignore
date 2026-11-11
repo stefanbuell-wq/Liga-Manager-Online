@@ -67,3 +67,7 @@ data/*.sqlite-wal
 
 # Deploy-Konfiguration (lokal)
 deploy/deploy.config.psd1
+
+# Altbilder der frueheren hafo.de-Seite (scripts/build-legacy-images.php, separat hochladen)
+legacy/*
+!legacy/.htaccess

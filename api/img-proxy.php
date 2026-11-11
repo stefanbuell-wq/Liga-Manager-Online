@@ -29,6 +29,16 @@ if (!$host || !in_array(strtolower($host), $allowedHosts, true)) {
     exit;
 }
 
+// Dateicache (30 Tage): Wappen/Banner aendern sich praktisch nie
+$cacheDir = __DIR__ . '/../data/cache/img';
+$cacheKey = $cacheDir . '/' . sha1($url);
+if (is_file($cacheKey . '.bin') && is_file($cacheKey . '.type') && filemtime($cacheKey . '.bin') > time() - 30 * 86400) {
+    header('Cache-Control: public, max-age=604800');
+    header('Content-Type: ' . trim((string)file_get_contents($cacheKey . '.type')));
+    readfile($cacheKey . '.bin');
+    exit;
+}
+
 // Fetch with cURL and small safety limits
 function curl_fetch($url, $host, $verify = true) {
     $ch = curl_init($url);
@@ -102,7 +112,16 @@ if (!$contentType || stripos($contentType, 'image/') !== 0) {
     $contentType = $map[$ext] ?? 'image/octet-stream';
 }
 
-header('Cache-Control: public, max-age=86400, immutable');
+// Nur echte Bilder bis 2 MB ausliefern und cachen
+if (stripos($contentType, 'image/') !== 0 || stripos($contentType, 'svg') !== false || strlen($body) > 2 * 1024 * 1024) {
+    http_response_code(415);
+    exit;
+}
+if (is_dir($cacheDir) || @mkdir($cacheDir, 0755, true)) {
+    @file_put_contents($cacheKey . '.bin', $body, LOCK_EX);
+    @file_put_contents($cacheKey . '.type', $contentType, LOCK_EX);
+}
+
+header('Cache-Control: public, max-age=604800');
 header('Content-Type: ' . $contentType);
 echo $body;
-?> 

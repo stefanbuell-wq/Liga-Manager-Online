@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/portal.css?v=20261111">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -128,6 +128,22 @@
             </div>
         </section>
 
+        <!-- Alle Artikel chronologisch -->
+        <section class="section" id="news-section" style="padding-top: var(--spacing-lg);">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Alle <span>Berichte</span></h2>
+                    <span class="text-muted" style="font-size:0.9rem;">neueste zuerst</span>
+                </div>
+                <div class="article-list" id="news-grid">
+                    <p class="text-muted">Berichte werden geladen …</p>
+                </div>
+                <div style="text-align:center; margin-top: var(--spacing-lg);">
+                    <button type="button" class="btn btn-secondary article-more" id="news-more" onclick="loadNews(true)" hidden>Ältere Berichte anzeigen</button>
+                </div>
+            </div>
+        </section>
+
         <!-- Live Ticker -->
         <section class="live-ticker" id="live-section">
             <div class="container">
@@ -186,12 +202,18 @@
                     <button class="tab-btn" data-tab="news">Spielberichte</button>
                 </div>
 
-                <!-- Liga Selector -->
+                <!-- Liga Selector: aktuelle Saison als Knoepfe, aeltere Saisons im Archiv -->
+                <div class="league-picker">
+                    <div class="league-chips" id="league-chips" role="group" aria-label="Ligen der aktuellen Saison"></div>
+                    <label class="league-archive">
+                        <span>Archiv / alle Ligen:</span>
+                        <select id="league-select" class="btn btn-secondary" style="padding-right: 32px;">
+                            <option>Liga wählen...</option>
+                        </select>
+                    </label>
+                </div>
                 <div class="section-header">
                     <h2 class="section-title" id="league-title">Hamburg <span>Oberliga</span></h2>
-                    <select id="league-select" class="btn btn-secondary" style="padding-right: 32px;">
-                        <option>Liga wählen...</option>
-                    </select>
                 </div>
 
                 <!-- Tab: Aktuell -->
@@ -332,26 +354,17 @@
 
                 <!-- Tab: Spielberichte -->
                 <div id="tab-news" class="tab-content">
-                    <div id="reports-grid" class="news-grid">
+                    <p class="text-muted" id="reports-hint" style="margin-bottom: var(--spacing-md);"></p>
+                    <div id="reports-grid" class="article-list">
                         <!-- News loaded by JS -->
+                    </div>
+                    <div style="text-align:center; margin-top: var(--spacing-lg);">
+                        <button type="button" class="btn btn-secondary article-more" id="reports-more" onclick="renderReports(true)" hidden>Weitere Berichte dieser Liga</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- News Section -->
-        <section class="section" id="news-section" style="background: var(--color-bg-elevated);">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Aktuelle <span>News</span></h2>
-                    <a href="javascript:void(0)" onclick="goToTab('news')" class="btn btn-secondary">Alle News →</a>
-                </div>
-
-                <div class="news-grid" id="news-grid">
-                    <!-- News cards will be loaded by JS -->
-                </div>
-            </div>
-        </section>
     </main>
 
     <!-- Footer -->
@@ -460,6 +473,8 @@
             loadLiveMatches();
             loadNews();
             loadForumPreview();
+            const linkNews = parseInt(new URLSearchParams(location.search).get('news'), 10);
+            if (linkNews > 0) showNews(linkNews);
         });
 
         // === MOBILE MENU ===
@@ -517,6 +532,21 @@
         }
 
         // === LEAGUE SELECTOR ===
+        function leagueSeason(l) {
+            const m = String(l.name || '').match(/(\d{2})\/(\d{2})\s*$/) || String(l.file).match(/(\d{2})(\d{2})\.l98$/);
+            return m ? `${m[1]}/${m[2]}` : '';
+        }
+        function seasonSortKey(season) {
+            const y = parseInt(season.slice(0, 2), 10);
+            return isNaN(y) ? -1 : (y > 50 ? 1900 + y : 2000 + y);
+        }
+        function shortLeagueName(name) {
+            return String(name).replace(/\s*\d{2}\/\d{2}\s*$/, '')
+                .replace(/^Hamburg-Oberliga$/i, 'Oberliga')
+                .replace(/Landesliga\s+Hammoniastaffel/i, 'Landesliga Hammonia')
+                .replace(/Landesliga\s+Hansastaffel/i, 'Landesliga Hansa');
+        }
+
         async function initLeagueSelector() {
             const select = document.getElementById('league-select');
             try {
@@ -527,12 +557,33 @@
                     const oberliga = data.leagues
                         .filter(l => /^hhoberliga\d{4}\.l98$/i.test(l.file))
                         .sort((a, b) => b.file.localeCompare(a.file));
-                    const defaultFile = (oberliga[0] || data.leagues[0]).file;
-                    select.innerHTML = data.leagues.map(l =>
-                        `<option value="${l.file}" ${l.file === defaultFile ? 'selected' : ''}>${l.name}</option>`
-                    ).join('');
+                    const urlLiga = new URLSearchParams(location.search).get('liga');
+                    const defaultFile = (urlLiga && data.leagues.some(l => l.file === urlLiga))
+                        ? urlLiga : (oberliga[0] || data.leagues[0]).file;
 
-                    // Load default league
+                    // Nach Saison gruppieren, neueste zuerst
+                    const groups = {};
+                    data.leagues.forEach(l => { const s = leagueSeason(l); (groups[s] = groups[s] || []).push(l); });
+                    const seasons = Object.keys(groups).sort((a, b) => seasonSortKey(b) - seasonSortKey(a));
+                    const order = n => /oberliga/i.test(n) ? 0 : /regionalliga/i.test(n) ? 1 : /landesliga/i.test(n) ? 2 : 3;
+                    seasons.forEach(s => groups[s].sort((a, b) => order(a.name) - order(b.name) || a.name.localeCompare(b.name)));
+
+                    select.innerHTML = seasons.map((s, i) => `
+                        <optgroup label="${s ? 'Saison ' + s : 'Sonstige'}${i === 0 ? ' (aktuell)' : ''}">
+                            ${groups[s].map(l => `<option value="${sqEsc(l.file)}" ${l.file === defaultFile ? 'selected' : ''}>${sqEsc(l.name)}</option>`).join('')}
+                        </optgroup>`).join('');
+
+                    // Schnellwahl: Ligen der aktuellen Saison als grosse Knoepfe
+                    const current = groups[seasons[0]] || [];
+                    const chips = document.getElementById('league-chips');
+                    chips.innerHTML = current.map(l =>
+                        `<button type="button" class="league-chip" data-file="${sqEsc(l.file)}">${sqEsc(shortLeagueName(l.name))}</button>`
+                    ).join('');
+                    chips.querySelectorAll('.league-chip').forEach(b => b.addEventListener('click', () => {
+                        select.value = b.dataset.file;
+                        loadLeague(b.dataset.file);
+                    }));
+
                     loadLeague(select.value);
                 } else {
                     select.innerHTML = '<option>Keine Ligen gefunden</option>';
@@ -632,6 +683,7 @@
 
                 leagueData = data;
                 currentLigaFile = ligaFile;
+                document.querySelectorAll('.league-chip').forEach(b => b.classList.toggle('active', b.dataset.file === ligaFile));
                 currentRound = parseInt(data.options.Actual) || 1;
                 lastPlayedRound = getLastPlayedRound(data);
                 selectedTableRound = lastPlayedRound;
@@ -655,6 +707,7 @@
                     if (tabId === 'table') renderFullTable();
                     if (tabId === 'schedule') renderSchedule();
                     if (tabId === 'stats') renderStats();
+                    if (tabId === 'news') renderReports();
                 }
             } catch (e) {
                 console.error('Error loading league:', e);
@@ -819,6 +872,8 @@
             const [top, ...rest] = news;
             const main = document.getElementById('hero-main');
             document.getElementById('hero-title').textContent = top.title;
+            const badge = document.querySelector('#hero-main .hero-badge');
+            if (badge) badge.textContent = top.kind === 'Vorschau' ? 'Neueste Vorschau' : top.kind === 'News' ? 'Neueste Meldung' : 'Neuester Spielbericht';
             document.getElementById('hero-meta').textContent =
                 `${top.date_formatted || ''}${top.author ? ' • von ' + top.author : ''}`;
             main.onclick = () => showNews(top.id);
@@ -835,38 +890,50 @@
         }
 
         // === NEWS ===
-        async function loadNews() {
+        // Eine Zeile der Artikelliste (Startseite und Tab "Spielberichte")
+        function articleRow(n) {
+            const logos = (n.logos || []).length === 2
+                ? `<div class="article-logos"><img src="${sqEsc(n.logos[0])}" alt=""><img src="${sqEsc(n.logos[1])}" alt=""></div>`
+                : `<div class="article-logos article-logos-empty">${n.kind === 'Vorschau' ? '🔭' : '📰'}</div>`;
+            const meta = [n.date_formatted, n.author, n.league_name].filter(Boolean).map(sqEsc).join(' · ');
+            return `
+                <a href="?news=${Number(n.id)}" onclick="showNews(${Number(n.id)}); return false;" class="article-row">
+                    ${logos}
+                    <div class="article-text">
+                        <div class="article-meta"><span class="article-kind article-kind-${sqEsc((n.kind || 'News').toLowerCase())}">${sqEsc(n.kind || 'News')}</span> ${meta}</div>
+                        <h3 class="article-title">${sqEsc(n.title)}</h3>
+                        ${n.preview ? `<p class="article-preview">${sqEsc(n.preview)}</p>` : ''}
+                    </div>
+                </a>`;
+        }
+
+        // Startseite: alle Artikel chronologisch, 10 pro Schritt
+        const NEWS_PAGE = 10;
+        let newsOffset = 0;
+        async function loadNews(more = false) {
+            const container = document.getElementById('news-grid');
+            const btn = document.getElementById('news-more');
             try {
-                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=6`);
+                if (!more) newsOffset = 0;
+                btn.disabled = true;
+                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=${NEWS_PAGE}&offset=${newsOffset}`);
                 const data = await res.json();
-
-                renderHero(data.news);
-
-                const container = document.getElementById('news-grid');
-                if (!data.news || data.news.length === 0) {
-                    container.innerHTML = '<p class="text-muted">Keine News vorhanden.</p>';
-                    return;
+                const list = data.news || [];
+                if (!more) {
+                    renderHero(list);
+                    container.innerHTML = '';
                 }
-
-                // Local SVG images for news cards
-                const newsImages = [
-                    'img/news/match-1.svg', 'img/news/match-2.svg', 'img/news/match-3.svg',
-                    'img/news/match-4.svg', 'img/news/match-5.svg', 'img/news/match-6.svg'
-                ];
-                container.innerHTML = data.news.map((n, idx) => `
-                    <a href="javascript:void(0)" onclick="showNews(${n.id})" class="news-card animate-fade-in" style="opacity: 0; animation-delay: ${idx * 0.1}s;">
-                        <div class="news-card-image">
-                            <img src="${newsImages[idx % newsImages.length]}" alt="">
-                        </div>
-                        <div class="news-card-content">
-                            <span class="news-card-category">Spielbericht</span>
-                            <h3 class="news-card-title">${n.title}</h3>
-                            <span class="news-card-meta">${n.date_formatted || 'Datum unbekannt'} • ${n.author || 'Redaktion'}</span>
-                        </div>
-                    </a>
-                `).join('');
+                if (!list.length && !more) {
+                    container.innerHTML = '<p class="text-muted">Keine Berichte vorhanden.</p>';
+                }
+                container.insertAdjacentHTML('beforeend', list.map(articleRow).join(''));
+                newsOffset += list.length;
+                btn.hidden = newsOffset >= (data.total || 0);
+                btn.disabled = false;
             } catch (e) {
-                console.warn('Could not load news');
+                console.warn('Could not load news', e);
+                if (!more) container.innerHTML = '<p class="text-muted">Berichte konnten nicht geladen werden.</p>';
+                btn.disabled = false;
             }
         }
 
@@ -883,15 +950,20 @@
                 const modal = document.getElementById('news-modal');
                 const body = document.getElementById('news-modal-body');
 
+                const n = data.news;
+                const meta = [n.date_formatted, n.author || 'Redaktion', n.league_name].filter(Boolean).map(sqEsc).join(' · ');
+                // Inhalt kommt aus der Redaktion (HTML); Bilder wurden serverseitig umgeschrieben
                 body.innerHTML = `
-                    <div style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: var(--spacing-md);">
-                        ${data.news.date_formatted || ''} • ${data.news.author || 'Redaktion'}
-                    </div>
-                    <h2 style="margin-bottom: var(--spacing-lg);">${data.news.title}</h2>
-                    <div style="line-height: 1.8; color: var(--color-text-secondary);">
-                        ${data.news.content || data.news.short_content || ''}
+                    <div style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: var(--spacing-md);">${meta}</div>
+                    <h2 style="margin-bottom: var(--spacing-lg);">${sqEsc(n.title)}</h2>
+                    <div class="news-body" style="line-height: 1.8; color: var(--color-text-secondary);">
+                        ${n.content || n.short_content || ''}
                     </div>
                 `;
+                // Teilbarer Link auf den Artikel
+                if (new URLSearchParams(location.search).get('news') !== String(newsId)) {
+                    history.replaceState(null, '', '?news=' + Number(newsId));
+                }
 
                 modal.style.display = 'block';
                 setTimeout(() => modal.classList.add('active'), 10);
@@ -973,6 +1045,7 @@
             const modal = document.getElementById('news-modal');
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
+            if (new URLSearchParams(location.search).has('news')) history.replaceState(null, '', location.pathname);
         }
 
         // === TABS ===
@@ -1414,38 +1487,35 @@
             `;
         }
 
-        // === REPORTS (Spielberichte) ===
-        async function renderReports() {
+        // === REPORTS (Spielberichte der gewaehlten Liga) ===
+        let reportsOffset = 0;
+        let reportsLeague = '';
+        async function renderReports(more = false) {
             const container = document.getElementById('reports-grid');
-
+            const btn = document.getElementById('reports-more');
+            const hint = document.getElementById('reports-hint');
+            const league = currentLigaFile;
+            if (!league) return;
+            if (!more || league !== reportsLeague) { reportsOffset = 0; reportsLeague = league; more = false; }
+            const leagueName = (leagueData && leagueData.options && leagueData.options.Name) || 'diese Liga';
             try {
-                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=12`);
+                btn.disabled = true;
+                if (!more) container.innerHTML = '<p class="text-muted">Berichte werden geladen …</p>';
+                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=12&offset=${reportsOffset}&league=${encodeURIComponent(league)}`);
                 const data = await res.json();
-
-                if (!data.news || data.news.length === 0) {
-                    container.innerHTML = '<p class="text-muted">Keine Spielberichte vorhanden.</p>';
-                    return;
+                if (league !== currentLigaFile) return; // inzwischen andere Liga gewaehlt
+                const list = data.news || [];
+                if (!more) {
+                    container.innerHTML = list.length ? '' : `<p class="text-muted">Für ${sqEsc(leagueName)} sind noch keine Berichte mit Spielen verknüpft.</p>`;
+                    hint.textContent = list.length ? `${data.total} Bericht${data.total === 1 ? '' : 'e'} zu Spielen der ${leagueName}, neueste zuerst.` : '';
                 }
-
-                const newsImages = [
-                    'img/news/match-1.svg', 'img/news/match-2.svg', 'img/news/match-3.svg',
-                    'img/news/match-4.svg', 'img/news/match-5.svg', 'img/news/match-6.svg'
-                ];
-
-                container.innerHTML = data.news.map((n, idx) => `
-                    <a href="javascript:void(0)" onclick="showNews(${n.id})" class="news-card">
-                        <div class="news-card-image">
-                            <img src="${newsImages[idx % newsImages.length]}" alt="">
-                        </div>
-                        <div class="news-card-content">
-                            <span class="news-card-category">Spielbericht</span>
-                            <h3 class="news-card-title">${n.title}</h3>
-                            <span class="news-card-meta">${n.date_formatted || 'Datum unbekannt'} &bull; ${n.author || 'Redaktion'}</span>
-                        </div>
-                    </a>
-                `).join('');
+                container.insertAdjacentHTML('beforeend', list.map(articleRow).join(''));
+                reportsOffset += list.length;
+                btn.hidden = reportsOffset >= (data.total || 0);
+                btn.disabled = false;
             } catch (e) {
                 container.innerHTML = '<p class="text-muted">Fehler beim Laden der Spielberichte.</p>';
+                btn.disabled = false;
             }
         }
 

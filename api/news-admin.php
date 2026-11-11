@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../lib/LmoDatabase.php';
 require_once __DIR__ . '/../lib/Security.php';
+require_once __DIR__ . '/../lib/NewsContent.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -163,6 +164,11 @@ try {
                     'success' => true,
                     'news' => $news
                 ]);
+                break;
+
+            case 'banners':
+                // Banner aus den Berichten der letzten Jahre (Auswahl im Editor)
+                echo json_encode(['success' => true, 'banners' => NewsContent::bannerCatalog($pdo)], JSON_UNESCAPED_UNICODE);
                 break;
 
             case 'search_matches':
@@ -363,6 +369,8 @@ try {
             default:
                 throw new Exception('Unbekannte Aktion');
         }
+        // Liga-Cache leeren, damit Spielplan/Tabelle den Bericht sofort verlinken
+        foreach (glob(__DIR__ . '/../data/cache/*.json') ?: [] as $f) @unlink($f);
 
     } else {
         throw new Exception('Methode nicht erlaubt');

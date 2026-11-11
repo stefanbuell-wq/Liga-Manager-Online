@@ -493,6 +493,11 @@
         }
 
         /* Match Links Section */
+        .search-advanced { margin-bottom: 16px; }
+        .search-advanced summary { cursor: pointer; color: var(--color-text-muted, #777); font-size: 0.9rem; margin-bottom: 8px; }
+        .banner-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .banner-row select { min-width: 260px; }
+        #newsBannerPreview { max-height: 60px; max-width: 100%; border: 1px solid rgba(0,0,0,.1); }
         .match-links-section {
             background: var(--color-bg-elevated);
             border: 1px solid var(--color-border);
@@ -856,7 +861,7 @@
         <div class="header">
             <h1>News & Spielberichte</h1>
             <div class="header-actions">
-                <button onclick="showEditor()" class="btn">+ Neue News</button>
+                <button onclick="showEditor()" class="btn">+ Neuen Bericht schreiben</button>
                 <a href="index.html" class="btn btn-secondary">Zurueck</a>
             </div>
         </div>
@@ -879,6 +884,8 @@
             <button class="btn btn-secondary" onclick="loadNews(1)">Suchen</button>
             <button class="btn btn-secondary" onclick="clearSearch()">Reset</button>
         </div>
+        <details class="search-advanced">
+            <summary>Erweiterte Suche (Gewichtung)</summary>
         <div class="weight-bar">
             <div class="weight-item">
                 <div class="weight-row">
@@ -919,6 +926,7 @@
             <button class="btn btn-secondary btn-sm" onclick="applyPreset()">Übernehmen</button>
             <button class="btn btn-secondary btn-sm" onclick="resetWeights()">Zurücksetzen</button>
         </div>
+        </details>
 
         <!-- News List -->
         <div class="card" id="newsListCard">
@@ -937,10 +945,10 @@
 
             <!-- Template Tabs -->
             <div class="template-tabs">
-                <button class="template-tab active" data-template="html" onclick="switchTab('html')">HTML-Editor</button>
-                <button class="template-tab" data-template="match" onclick="switchTab('match')">Spielbericht</button>
-                <button class="template-tab" data-template="preview" onclick="switchTab('preview')">Vorschau</button>
-                <button class="template-tab" data-template="general" onclick="switchTab('general')">Allgemeine News</button>
+                <button class="template-tab" data-template="match" onclick="switchTab('match')">⚽ Spielbericht</button>
+                <button class="template-tab" data-template="preview" onclick="switchTab('preview')">🔭 Vorschau</button>
+                <button class="template-tab" data-template="general" onclick="switchTab('general')">📝 Freier Text (z.&nbsp;B. aus Word)</button>
+                <button class="template-tab active" data-template="html" onclick="switchTab('html')">HTML (für Profis)</button>
             </div>
 
             <div class="modal-body">
@@ -950,7 +958,7 @@
                     <!-- Shared: Title, Author, Date -->
                     <div class="form-group">
                         <label>Titel *</label>
-                        <input type="text" id="newsTitle" required placeholder="Titel der News">
+                        <input type="text" id="newsTitle" placeholder="Wird beim Spielbericht automatisch gebildet – kann geändert werden">
                     </div>
 
                     <div class="form-row">
@@ -1006,7 +1014,7 @@
                             <div class="form-group">
                                 <label>Heim-Team *</label>
                                 <div class="team-select-row">
-                                    <select id="tplMatchHome" onchange="updateTeamLogo('tplMatchHome', 'tplMatchHomeLogo'); loadLineupPlayers('home')">
+                                    <select id="tplMatchHome" onchange="updateTeamLogo('tplMatchHome', 'tplMatchHomeLogo'); loadLineupPlayers('home'); onMatchTeamsChanged()">
                                         <option value="">-- Team waehlen --</option>
                                     </select>
                                     <img id="tplMatchHomeLogo" src="about:blank" onerror="this.style.display='none'" onload="this.style.display='block'" style="display:none">
@@ -1015,7 +1023,7 @@
                             <div class="form-group">
                                 <label>Gast-Team *</label>
                                 <div class="team-select-row">
-                                    <select id="tplMatchGuest" onchange="updateTeamLogo('tplMatchGuest', 'tplMatchGuestLogo'); loadLineupPlayers('guest')">
+                                    <select id="tplMatchGuest" onchange="updateTeamLogo('tplMatchGuest', 'tplMatchGuestLogo'); loadLineupPlayers('guest'); onMatchTeamsChanged()">
                                         <option value="">-- Team waehlen --</option>
                                     </select>
                                     <img id="tplMatchGuestLogo" src="about:blank" onerror="this.style.display='none'" onload="this.style.display='block'" style="display:none">
@@ -1093,7 +1101,8 @@
 
                         <div class="form-group">
                             <label>Spielbericht-Text</label>
-                            <textarea id="tplMatchReport" class="large" placeholder="Der Fliesstext des Berichts. Absaetze mit Leerzeile trennen."></textarea>
+                            <textarea id="tplMatchReport" class="large" placeholder="Bericht hier schreiben oder aus Word einfügen (Strg+V)."></textarea>
+                            <div class="form-hint">Aus Word kopieren und hier einfügen geht: Absätze bleiben erhalten, <b>Fett</b> wird zu *Sternchen*, <i>Kursiv</i> zu _Unterstrichen_. Weitere Formatierungen sind nicht nötig.</div>
                             <div class="form-hint">Leerzeilen werden automatisch zu Absaetzen. Kein HTML noetig.</div>
                         </div>
 
@@ -1155,14 +1164,27 @@
                                 <button type="button" onclick="simpleFormat('underline')"><u>Unterstrichen</u></button>
                                 <button type="button" onclick="simpleFormat('link')">Link</button>
                             </div>
-                            <textarea id="tplGeneralText" class="large" placeholder="Schreibe deinen Text hier. Absaetze mit Leerzeile trennen. Kein HTML noetig."></textarea>
-                            <div class="form-hint">Leerzeilen = Absaetze. Fett/Kursiv ueber die Buttons oben oder *fett* und _kursiv_ im Text.</div>
+                            <textarea id="tplGeneralText" class="large" placeholder="Text hier schreiben oder aus Word einfügen (Strg+V)."></textarea>
+                            <div class="form-hint">Text einfach aus Word kopieren und hier einfügen (Strg+V). Absätze bleiben erhalten, Fett wird zu *Sternchen*, Kursiv zu _Unterstrichen_. Weitere Formatierungen sind nicht nötig.</div>
                         </div>
+                    </div>
+
+                    <!-- Sponsoren-Banner (alle Tabs) -->
+                    <div class="match-links-section">
+                        <h4>Sponsoren-Banner oben im Bericht</h4>
+                        <div class="banner-row">
+                            <select id="newsBanner" onchange="bannerTouched = true; showBannerPreview()">
+                                <option value="">Kein Banner</option>
+                            </select>
+                            <img id="newsBannerPreview" alt="" hidden>
+                        </div>
+                        <div class="form-hint" id="newsBannerHint">Beim Spielbericht wird der Banner passend zum Verein vorgeschlagen. Neue Banner richtet ein Administrator ein.</div>
                     </div>
 
                     <!-- Match Links (shared, all tabs) -->
                     <div class="match-links-section">
-                        <h4>Verknuepfte Spiele</h4>
+                        <h4>Verknüpfte Spiele</h4>
+                        <div class="form-hint" style="margin-bottom:8px;">Beim Spielbericht und bei der Vorschau werden die Spiele beim Speichern automatisch verknüpft. Dann erscheint der Bericht im Spielplan (📰).</div>
                         <div id="linkedMatchesList">
                             <em style="color: var(--color-text-muted);">Keine Spiele verknuepft</em>
                         </div>
@@ -1188,6 +1210,7 @@
     <script>
         let currentPage = 1;
         let csrfToken = '';
+        let currentUserName = '';
         let linkedMatchIds = [];
         let linkedMatchesData = [];
 
@@ -1198,6 +1221,7 @@
                 const res = await fetch('../api/check-auth.php');
                 const auth = await res.json();
                 csrfToken = auth.csrf_token || '';
+                currentUserName = (auth.user && auth.user.name) || auth.display_name || '';
                 if (!auth.authenticated) {
                     window.location.href = 'index.html';
                     return;
@@ -1325,10 +1349,10 @@
 
         // Show editor (new)
         function showEditor() {
-            document.getElementById('editorTitle').textContent = 'Neue News erstellen';
+            document.getElementById('editorTitle').textContent = 'Neuen Bericht schreiben';
             document.getElementById('newsId').value = '';
             document.getElementById('newsTitle').value = '';
-            document.getElementById('newsAuthor').value = 'Redaktion';
+            document.getElementById('newsAuthor').value = currentUserName || 'Redaktion';
             document.getElementById('newsMatchDate').value = '';
             document.getElementById('newsShortContent').value = '';
             document.getElementById('newsContent').value = '';
@@ -1339,11 +1363,12 @@
             renderLinkedMatches([]);
             document.getElementById('matchSearchResults').innerHTML = '';
 
-            // Reset to HTML tab and clear template fields
+            // Neuer Bericht startet im Spielbericht-Tab
             resetTemplateFields();
             activeTab = 'html';
-            document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'html'));
-            document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
+            suppressTabWarning = true;
+            switchTab('match');
+            resetBanner('');
 
             document.getElementById('editorModal').classList.add('show');
         }
@@ -1369,6 +1394,7 @@
                 document.getElementById('newsContent').value = news.content || '';
                 document.getElementById('deleteBtn').style.display = 'block';
 
+                resetBanner(news.content || '');
                 linkedMatchIds = (news.linked_matches || []).map(m => m.id);
                 linkedMatchesData = news.linked_matches || [];
                 renderLinkedMatches(linkedMatchesData);
@@ -1497,6 +1523,13 @@
 
             // Generate HTML from active template tab before saving
             preSaveGenerate();
+            await autoLinkMatches();
+            document.getElementById('newsContent').value = applyBanner(document.getElementById('newsContent').value);
+            if (!document.getElementById('newsTitle').value.trim()) {
+                alert('Bitte oben einen Titel eintragen (beim Spielbericht reicht es, Heim- und Gast-Team zu wählen).');
+                document.getElementById('newsTitle').focus();
+                return;
+            }
 
             const id = document.getElementById('newsId').value;
             const data = {
@@ -1776,7 +1809,7 @@
             if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
-            return div.innerHTML;
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function escapeJs(text) {
@@ -2142,10 +2175,9 @@
             // Replace <br> <br> with double newline, single <br> with newline
             html = html.replace(/\s*<br>\s*<br>\s*/gi, '\n\n');
             html = html.replace(/\s*<br\s*\/?>\s*/gi, '\n');
-            // Decode HTML entities via DOM
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            return div.textContent.trim();
+            html = html.replace(/<(b|strong)>([\s\S]*?)<\/\1>/gi, '*$2*').replace(/<(i|em)>([\s\S]*?)<\/\1>/gi, '_$2_');
+            // Entities dekodieren ohne das HTML auszufuehren
+            return new DOMParser().parseFromString(html, 'text/html').body.textContent.trim();
         }
 
         function parseMatchHTML(html) {
@@ -2283,10 +2315,18 @@
             // Convert plain text to HTML: escape, convert double newlines to <br> <br>, single newlines to <br>
             if (!text) return '';
             let html = escapeHtml(text.trim());
+            html = applyInlineMarkers(html);
             // Double newlines → paragraph break
             html = html.replace(/\n\s*\n/g, ' <br> <br>');
             // Remaining single newlines → line break
             html = html.replace(/\n/g, ' <br>');
+            return html;
+        }
+
+        // *fett* und _kursiv_ nur an Wortgrenzen (nicht in Namen wie Spieler_1)
+        function applyInlineMarkers(html) {
+            html = html.replace(/(^|[\s(„])\*(?=\S)([^*\n]*?\S)\*(?=$|[\s.,;:!?)“&])/gm, '$1<b>$2</b>');
+            html = html.replace(/(^|[\s(„])_(?=\S)([^_\n]*?\S)_(?=$|[\s.,;:!?)“&])/gm, '$1<i>$2</i>');
             return html;
         }
 
@@ -2506,6 +2546,7 @@
             return { title: '', short_content, content };
         }
 
+        let lastAutoTitle = '';
         function generateFromActiveTab() {
             let result = null;
 
@@ -2518,7 +2559,12 @@
             }
 
             if (result) {
-                if (result.title) document.getElementById('newsTitle').value = result.title;
+                // Titel nur setzen, wenn er leer ist oder noch der automatisch gebildete ist
+                const titleEl = document.getElementById('newsTitle');
+                if (result.title && (!titleEl.value.trim() || titleEl.value === lastAutoTitle)) {
+                    titleEl.value = result.title;
+                    lastAutoTitle = result.title;
+                }
                 if (result.short_content) document.getElementById('newsShortContent').value = result.short_content;
                 if (result.content) document.getElementById('newsContent').value = result.content;
             }
@@ -2539,8 +2585,184 @@
             }
         }
 
+        // ===== Spiele automatisch verknuepfen (Spielbericht, Vorschau) =====
+        const leagueDataCache = {};
+        async function getLeagueData(file) {
+            if (!leagueDataCache[file]) {
+                leagueDataCache[file] = await (await fetch('../api/get-league-data.php?liga=' + encodeURIComponent(file))).json();
+            }
+            return leagueDataCache[file];
+        }
+
+        function findMatch(data, home, guest) {
+            for (const round in (data.matches || {})) {
+                const m = (data.matches[round] || []).find(x => x.home === home && x.guest === guest);
+                if (m) return { ...m, round: Number(round) };
+            }
+            return null;
+        }
+
+        function addLinkedMatch(m) {
+            if (linkedMatchIds.includes(m.id)) return;
+            linkedMatchIds.push(m.id);
+            linkedMatchesData.push({ id: m.id, home: m.home, guest: m.guest, match_date: m.date });
+        }
+
+        async function autoLinkMatches() {
+            try {
+                let file = '', pairs = [];
+                if (activeTab === 'match') {
+                    file = document.getElementById('tplMatchLeague').value;
+                    const h = document.getElementById('tplMatchHome').value, g = document.getElementById('tplMatchGuest').value;
+                    if (h && g) pairs.push([h, g]);
+                } else if (activeTab === 'preview') {
+                    file = document.getElementById('tplPreviewLeague').value;
+                    document.querySelectorAll('#tplPreviewGames .repeater-item').forEach(item => {
+                        const h = item.querySelector('.pgame-home').value, g = item.querySelector('.pgame-guest').value;
+                        if (h && g) pairs.push([h, g]);
+                    });
+                }
+                if (!file || !pairs.length) return null;
+                const data = await getLeagueData(file);
+                let first = null;
+                pairs.forEach(([h, g]) => { const m = findMatch(data, h, g); if (m) { addLinkedMatch(m); first = first || m; } });
+                renderLinkedMatches(linkedMatchesData);
+                return first;
+            } catch (e) {
+                console.warn('Automatische Verknuepfung fehlgeschlagen', e);
+                return null;
+            }
+        }
+
+        // Teams gewaehlt: Spiel verknuepfen, leere Felder aus dem Spielplan fuellen, Banner vorschlagen
+        async function onMatchTeamsChanged() {
+            const home = document.getElementById('tplMatchHome').value;
+            const guest = document.getElementById('tplMatchGuest').value;
+            suggestBanner([home, guest]);
+            if (!home || !guest) return;
+            const m = await autoLinkMatches();
+            if (!m) return;
+            const setIfEmpty = (id, v) => { const el = document.getElementById(id); if (el && el.value === '' && v !== null && v !== undefined && v !== '') el.value = v; };
+            if (m.played) {
+                setIfEmpty('tplMatchHomeGoals', m.home_goals);
+                setIfEmpty('tplMatchGuestGoals', m.guest_goals);
+            }
+            setIfEmpty('tplMatchRound', m.round ? m.round + '. Spieltag' : '');
+            setIfEmpty('newsMatchDate', m.date);
+        }
+
+        // ===== Sponsoren-Banner =====
+        let bannerCatalog = null;
+        let originalBanner = null;   // im gespeicherten Inhalt gefundener Banner
+        let bannerTouched = false;
+
+        const fileBase = src => decodeURIComponent(String(src).split('?')[0].split('/').pop() || '');
+
+        async function loadBannerCatalog() {
+            if (bannerCatalog) return bannerCatalog;
+            try {
+                const data = await (await fetch('../api/news-admin.php?action=banners')).json();
+                bannerCatalog = data.banners || [];
+            } catch (e) { bannerCatalog = []; }
+            const sel = document.getElementById('newsBanner');
+            sel.innerHTML = '<option value="">Kein Banner</option>' + bannerCatalog.map((b, i) =>
+                `<option value="${i}">${escapeHtml(b.label)}${b.teams.length ? ' (' + escapeHtml(b.teams.slice(0, 2).join(', ')) + ')' : ''}</option>`).join('');
+            return bannerCatalog;
+        }
+
+        async function resetBanner(content) {
+            const list = await loadBannerCatalog();
+            bannerTouched = false;
+            originalBanner = null;
+            const head = String(content || '').slice(0, 2000);
+            const idx = list.findIndex(b => fileBase(b.src) && head.includes(fileBase(b.src)));
+            if (idx >= 0) originalBanner = list[idx];
+            document.getElementById('newsBanner').value = idx >= 0 ? String(idx) : '';
+            showBannerPreview();
+        }
+
+        function suggestBanner(teams) {
+            if (bannerTouched || !bannerCatalog || originalBanner) return;
+            const idx = bannerCatalog.findIndex(b => teams.some(t => t && b.teams.includes(t)));
+            document.getElementById('newsBanner').value = idx >= 0 ? String(idx) : '';
+            showBannerPreview();
+        }
+
+        function selectedBanner() {
+            const v = document.getElementById('newsBanner').value;
+            return v === '' || !bannerCatalog ? null : bannerCatalog[Number(v)];
+        }
+
+        function showBannerPreview() {
+            const b = selectedBanner();
+            const img = document.getElementById('newsBannerPreview');
+            img.hidden = !b;
+            if (b) img.src = '../' + b.src;
+        }
+
+        function applyBanner(content) {
+            const b = selectedBanner();
+            // Selbst eingesetzten Banner-Block immer erneuern
+            content = content.replace(/<center class="hafo-banner">[\s\S]*?<\/center>(<br>)?/g, '');
+            // Alten Banner nur entfernen, wenn bewusst ein anderer gewaehlt wurde
+            if (originalBanner && (!b || b.src !== originalBanner.src)) {
+                const name = fileBase(originalBanner.src).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                content = content.replace(new RegExp('<center>(?:(?!<\\/center>)[\\s\\S])*?' + name + '(?:(?!<\\/center>)[\\s\\S])*?<\\/center>(\\s*<br>)?', 'i'), '');
+            }
+            if (!b || content.includes(fileBase(b.src))) return content;
+            const img = `<img src="${escapeHtml(b.src)}" alt="Sponsor">`;
+            const link = /^https?:\/\//i.test(b.link) ? b.link : '';
+            return `<center class="hafo-banner">${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${img}</a>` : img}</center><br>` + content;
+        }
+
+        // ===== Einfuegen aus Word: Absaetze, Fett, Kursiv behalten =====
+        function wordHtmlToMarkup(html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            doc.querySelectorAll('style, script, meta, link, title, xml, o\\:p').forEach(n => n.remove());
+            const block = /^(P|DIV|H[1-6]|LI|TR|TABLE|UL|OL|BLOCKQUOTE)$/;
+            function walk(node) {
+                if (node.nodeType === 3) return node.nodeValue.replace(/\s+/g, ' ');
+                if (node.nodeType !== 1) return '';
+                if (node.tagName === 'BR') return '\n';
+                let inner = Array.from(node.childNodes).map(walk).join('');
+                const st = (node.getAttribute('style') || '').toLowerCase();
+                const bold = /^(B|STRONG)$/.test(node.tagName) || /font-weight:\s*(bold|[6-9]00)/.test(st);
+                const ital = /^(I|EM)$/.test(node.tagName) || /font-style:\s*italic/.test(st);
+                if (inner.trim() && !block.test(node.tagName)) {
+                    const m = inner.match(/^(\s*)([\s\S]*?)(\s*)$/);
+                    if (bold && !/\n/.test(m[2])) inner = m[1] + '*' + m[2] + '*' + m[3];
+                    if (ital && !/\n/.test(m[2])) inner = m[1] + '_' + m[2] + '_' + m[3];
+                }
+                if (node.tagName === 'LI') return '- ' + inner.trim() + '\n';
+                if (block.test(node.tagName)) return '\n' + inner.trim() + '\n\n';
+                return inner;
+            }
+            return walk(doc.body)
+                .replace(/ /g, ' ')
+                .replace(/\*\*|__/g, '')
+                .replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+        }
+
+        document.addEventListener('paste', (e) => {
+            const ta = e.target;
+            if (!(ta instanceof HTMLTextAreaElement) || !ta.closest('#editorModal')) return;
+            if (ta.id === 'newsContent' || ta.id === 'newsShortContent') return; // HTML-Feld: unveraendert
+            const html = e.clipboardData && e.clipboardData.getData('text/html');
+            if (!html) return;
+            const text = wordHtmlToMarkup(html);
+            if (!text) return;
+            e.preventDefault();
+            const start = ta.selectionStart, end = ta.selectionEnd;
+            ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
+            ta.selectionStart = ta.selectionEnd = start + text.length;
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
         // ===== Reset template fields =====
         function resetTemplateFields() {
+            lastAutoTitle = "";
             // Match fields - reset selection but keep league options
             document.getElementById('tplMatchLeague').selectedIndex = 0;
             document.getElementById('tplMatchRound').value = '';

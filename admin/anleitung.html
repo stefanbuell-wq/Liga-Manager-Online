@@ -362,6 +362,7 @@
         <nav class="toc">
             <h2>Inhaltsverzeichnis</h2>
             <div class="toc-grid">
+                <a href="#kurzanleitung" style="grid-column: 1 / -1; font-weight: 700;"><span>✍️</span> Kurzanleitung für Redakteure: Spielbericht &amp; Vorschau</a>
                 <a href="#uebersicht"><span>1.</span> Uebersicht</a>
                 <a href="#login"><span>2.</span> Anmeldung</a>
                 <a href="#liga-editor"><span>3.</span> Liga-Editor</a>
@@ -378,6 +379,62 @@
                 <a href="#tipps"><span>14.</span> Tipps & Tricks</a>
             </div>
         </nav>
+
+        <!-- Kurzanleitung fuer Redakteure -->
+        <section class="section" id="kurzanleitung" style="border: 2px solid var(--color-primary, #E2001A);">
+            <h2><span class="icon">✍️</span> Kurzanleitung für Redakteure</h2>
+            <p>Diese Seite erklärt nur das, was Sie als Redakteur brauchen: <strong>Spielbericht</strong> und <strong>Vorschau</strong> schreiben. Alles andere (Sponsoren, Benutzer, Design …) erledigt ein Administrator. Diese Menüpunkte sehen Sie deshalb gar nicht.</p>
+
+            <h3>Spielbericht schreiben – Schritt für Schritt</h3>
+            <ol class="steps">
+                <li><strong>Anmelden</strong> unter <code>/admin/</code> und links auf <strong>„📰 News &amp; Berichte“</strong> klicken.</li>
+                <li>Oben rechts auf <strong>„+ Neuen Bericht schreiben“</strong> klicken. Es öffnet sich ein Fenster, der Reiter <strong>„⚽ Spielbericht“</strong> ist schon gewählt. Ihr Name steht bereits bei „Autor“.</li>
+                <li><strong>Liga</strong> auswählen, dann <strong>Heim-Team</strong> und <strong>Gast-Team</strong>. Danach füllt sich einiges von selbst:
+                    <ul>
+                        <li>Spieltag, Spieldatum und – falls schon eingetragen – das Ergebnis,</li>
+                        <li>die beiden <strong>Vereinswappen</strong>,</li>
+                        <li>der passende <strong>Sponsoren-Banner</strong> (weiter unten im Fenster, falls der Verein bisher einen hatte),</li>
+                        <li>die <strong>Verknüpfung mit dem Spiel</strong>: Der Bericht erscheint später im Spielplan beim Spiel (📰).</li>
+                    </ul>
+                </li>
+                <li>Aufstellungen, Tore, Schiedsrichter usw. eintragen – nur was Sie haben. Leere Felder erscheinen nicht im Bericht.</li>
+                <li>Den <strong>Berichtstext</strong> in das große Feld schreiben – oder <strong>in Word schreiben, kopieren und einfügen</strong> (siehe unten).</li>
+                <li>Unten auf <strong>„Speichern“</strong> klicken. Der Bericht ist sofort auf der Startseite zu sehen. Die Überschrift wird automatisch aus Teams und Ergebnis gebildet, Sie können sie aber oben bei „Titel“ ändern.</li>
+            </ol>
+
+            <h3>Vorschau schreiben</h3>
+            <ol class="steps">
+                <li>„+ Neuen Bericht schreiben“, dann den Reiter <strong>„🔭 Vorschau“</strong> wählen.</li>
+                <li>Liga wählen und den Spieltag eintragen (z. B. „12. Spieltag“).</li>
+                <li>Einleitung schreiben bzw. aus Word einfügen.</li>
+                <li>Für jedes Spiel auf <strong>„+ Spiel hinzufügen“</strong> klicken, Heim und Gast wählen und den Text dazu schreiben. Die Wappen kommen automatisch dazu.</li>
+                <li>Banner auswählen (unten im Fenster) und <strong>„Speichern“</strong>. Die Spiele werden automatisch verknüpft.</li>
+            </ol>
+
+            <h3>Text aus Word übernehmen</h3>
+            <p>Ja, das geht wie bisher: Bericht in Word schreiben, Text markieren, <strong>Strg + C</strong> (kopieren), ins Textfeld klicken, <strong>Strg + V</strong> (einfügen).</p>
+            <ul>
+                <li><strong>Absätze</strong> bleiben erhalten.</li>
+                <li><strong>Fett</strong> erscheint im Feld als <code>*Sternchen*</code>, <em>kursiv</em> als <code>_Unterstrich_</code>. Auf der Website steht es dann wieder fett bzw. kursiv.</li>
+                <li><strong>Zwingend ist keine Formatierung.</strong> Schriftart, Farben und Größen aus Word werden bewusst nicht übernommen, damit alle Berichte gleich aussehen.</li>
+                <li>Bilder aus Word werden nicht übernommen. Wappen und Banner kommen über die Auswahlfelder.</li>
+            </ul>
+
+            <h3>Sponsoren-Banner</h3>
+            <p>Unten im Fenster bei <strong>„Sponsoren-Banner oben im Bericht“</strong> steht eine Liste der Banner, die in den letzten Jahren verwendet wurden (z. B. St. Pauli Coffee, Curslack-Förderkreis, Paloma/Helle). Beim Spielbericht wird der passende Banner automatisch vorgeschlagen. Sie können einen anderen wählen oder „Kein Banner“. <strong>Neue Banner</strong> richtet ein Administrator ein – dafür einfach Bescheid geben.</p>
+
+            <h3>Bericht nachträglich ändern</h3>
+            <p>In der Liste auf den Bericht klicken, ändern, „Speichern“. Ältere Berichte öffnen im Reiter „HTML (für Profis)“ – dort bitte nur den Text ändern und die Zeichen in spitzen Klammern (<code>&lt;b&gt;</code>, <code>&lt;br&gt;</code> …) stehen lassen.</p>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Ergebnisse eintragen</strong> (und Verlegungen/Spieldatum) funktioniert wie gewohnt über das Dashboard: Liga anklicken, Spieltag wählen, eintragen, speichern.</p>
+            </div>
+            <div class="info-box info">
+                <span class="icon">ℹ️</span>
+                <p>Meldung „nur für Administratoren“? Diese Bereiche brauchen Redakteure nicht. Ein zweites Passwort ist nicht nötig.</p>
+            </div>
+        </section>
 
         <!-- 1. Uebersicht -->
         <section class="section" id="uebersicht">
@@ -647,16 +704,14 @@
             <h3>Neue News erstellen</h3>
             <ol class="steps">
                 <li><strong>News-Bereich oeffnen:</strong> Gehen Sie zu <code>/admin/news.html</code></li>
-                <li><strong>"+ Neue News" klicken:</strong> Das Editor-Fenster oeffnet sich</li>
-                <li><strong>Titel eingeben:</strong> Aussagekraeftiger Titel fuer den Bericht</li>
-                <li><strong>Autor angeben:</strong> Name des Verfassers</li>
-                <li><strong>Kurztext schreiben:</strong> Wird als Vorschau angezeigt (2-3 Saetze)</li>
-                <li><strong>Volltext verfassen:</strong> Der komplette Spielbericht</li>
-                <li><strong>Speichern:</strong> Klicken Sie auf "Speichern"</li>
+                <li><strong>"+ Neuen Bericht schreiben" klicken:</strong> Das Editor-Fenster oeffnet sich im Reiter "Spielbericht"; als Autor ist der angemeldete Name eingetragen</li>
+                <li><strong>Reiter waehlen:</strong> Spielbericht, Vorschau, Freier Text (auch aus Word) oder HTML (fuer Profis)</li>
+                <li><strong>Felder ausfuellen:</strong> siehe <a href="#kurzanleitung">Kurzanleitung</a></li>
+                <li><strong>Banner waehlen</strong> (optional) und <strong>Speichern</strong></li>
             </ol>
 
             <h3>News mit Spielen verknuepfen</h3>
-            <p>Damit ein Spielbericht direkt beim Spiel erscheint:</p>
+            <p>Bei Spielbericht und Vorschau geschieht das beim Speichern automatisch (Liga + Heim/Gast). Von Hand, z. B. fuer freie Texte:</p>
             <ol class="steps">
                 <li><strong>News bearbeiten:</strong> Oeffnen Sie die entsprechende News</li>
                 <li><strong>Spiel suchen:</strong> Im Bereich "Verknuepfte Spiele" Team oder Datum eingeben</li>
@@ -721,8 +776,8 @@
 
             <div class="feature-grid">
                 <div class="feature-card">
-                    <h4>HTML-Editor</h4>
-                    <p>Direktes Bearbeiten des HTML-Codes. Standard fuer importierte und manuelle News.</p>
+                    <h4>HTML (fuer Profis)</h4>
+                    <p>Direktes Bearbeiten des HTML-Codes. Aeltere, importierte Berichte oeffnen hier.</p>
                 </div>
                 <div class="feature-card">
                     <h4>Spielbericht</h4>
@@ -733,8 +788,8 @@
                     <p>Spieltags-Vorschau mit mehreren Spielen, Tipps und Einleitungstext.</p>
                 </div>
                 <div class="feature-card">
-                    <h4>Allgemein</h4>
-                    <p>Einfacher Text mit Formatierung (*fett*, _kursiv_, ~unterstrichen~, [Links]).</p>
+                    <h4>Freier Text (z. B. aus Word)</h4>
+                    <p>Einfacher Text; aus Word eingefuegt bleiben Absaetze, Fett (*fett*) und Kursiv (_kursiv_) erhalten. Ausserdem ~unterstrichen~ und [Links](https://...).</p>
                 </div>
             </div>
 

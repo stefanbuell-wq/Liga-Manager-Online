@@ -16,111 +16,32 @@ header('Access-Control-Allow-Origin: *');
 
 require_once __DIR__ . '/../lib/LmoRepository.php';
 
-function injectLocalTeamLogos($html) {
-    if (!$html) return $html;
-    $original = $html;
-    $teamLogoMap = [
-        'TuS Dassendorf' => 'TuSDassendorf.gif',
-        'TuRa Harksheide' => 'TuRaHarksheide.gif',
-        'SC V/W 04 Billstedt' => 'SCVorwrtsWackerBillstedt.gif',
-        'SC V/W Billstedt' => 'SCVorwrtsWackerBillstedt.gif',
-        'SC VW 04 Billstedt' => 'SCVorwrtsWackerBillstedt.gif',
-        'V/W 04 Billstedt' => 'SCVorwrtsWackerBillstedt.gif',
-        'Billstedt' => 'SCVorwrtsWackerBillstedt.gif',
-        'SC Vier- und Marschlande' => 'SCVierundMarschlande.gif',
-        'SC V/M' => 'SCVierundMarschlande.gif',
-        'SCVM' => 'SCVierundMarschlande.gif',
-        'Altona 93' => 'Altona93.gif',
-        'ETSV Hamburg' => 'ETSVHamburg.gif',
-        'Niendorfer TSV' => 'NiendorferTSV.gif',
-        'Rahlstedter SC' => 'RahlstedterSC.gif',
-        'SC Victoria' => 'SCVictoria.gif',
-        'SC Condor' => 'SCCondor.gif',
-        'Hamm United FC' => 'HammUnitedFC.gif',
-        'USC Paloma' => 'USCPaloma.gif',
-        'HEBC' => 'HEBC.gif',
-        'TSV Sasel' => 'TSVSasel.gif',
-        'SV Curslack-Neuengamme' => 'SVCurslackNeuengamme.gif',
-        'SV Rugenbergen' => 'SVRugenbergen.gif',
-        'TSV Buchholz 08' => 'TSVBuchholz08.gif',
-        'VfL Lohbrügge' => 'VfLLohbrgge.gif',
-        'VfL Lohbruegge' => 'VfLLohbrgge.gif'
-    ];
-    // Aus fetter Kopfzeile Teamnamen extrahieren: "<b>TeamA – TeamB ...</b>"
-    $teams = null;
-    if (preg_match('/<b>\s*([^<>\n\r]+?)\s*[–\-]\s*([^<>\n\r]+?)\s*(?:\d|\\(|$)/u', $html, $m)) {
-        $t1 = trim($m[1]);
-        $t2 = trim($m[2]);
-        $teams = [$t1, $t2];
-    }
-    // Alternativ aus "vs."-Zeile extrahieren
-    if (!$teams && preg_match('/>\s*([^<>]+?)\s*vs\.?\s*([^<>]+?)\s*</i', $html, $m)) {
-        $t1 = trim($m[1]);
-        $t2 = trim($m[2]);
-        $teams = [$t1, $t2];
-    }
-    if (!$teams) return $original;
-    // Map auf lokale Dateien
-    $logos = [];
-    foreach ($teams as $t) {
-        $found = null;
-        // 1. Direkter Treffer
-        if (isset($teamLogoMap[$t])) $found = $teamLogoMap[$t];
-        // 2. Grobe Heuristiken
-        if (!$found) {
-            // Normalize Umlaute zu einfachen Buchstaben für heuristische Suche
-            $n = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $t);
-            $n = strtolower(preg_replace('/[^a-z0-9]+/i', '', $n ?? $t));
-            foreach ($teamLogoMap as $name => $file) {
-                $nn = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
-                $nn = strtolower(preg_replace('/[^a-z0-9]+/i', '', $nn ?? $name));
-                if ($nn && $n && (strpos($n, $nn) !== false || strpos($nn, $n) !== false)) {
-                    $found = $file;
-                    break;
-                }
-            }
-        }
-        if ($found) {
-            $logos[] = '<img src="img/teams/' . $found . '" alt="' . htmlspecialchars($t, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '" style="max-height:60px;vertical-align:middle;" onerror="this.src=\'img/teams/blank.png\';">';
-        } else {
-            $logos[] = '<img src="img/teams/blank.png" alt="" style="max-height:60px;vertical-align:middle;">';
-        }
-    }
-    if (count($logos) === 2) {
-        $block = '<center>' . $logos[0] . ' &nbsp;vs.&nbsp; ' . $logos[1] . '</center>';
-        // Vorhandene Vereinswappen/Proxy-Zeilen ersetzen
-        $html = preg_replace('/<center>.*?vs\.?.*?<\/center>/is', $block, $html, 1, $replaced);
-        if (!$replaced) {
-            $html = $block . "<br>\n" . $html;
-        }
-    }
-    return $html;
-}
+require_once __DIR__ . '/../lib/NewsContent.php';
+require_once __DIR__ . '/../lib/LmoDatabase.php';
 
-function rewriteContentForCSP($html) {
-    if (!$html) return $html;
-    // Unzulässige oder nicht vorhandene Relativpfade entfernen (../images/*)
-    $html = preg_replace('#<img[^>]+src=["\']\.\./images/[^"\']+["\'][^>]*>#i', '', $html);
-    // Erlaubte externe Domains via Proxy einbinden
-    $allowedHosts = [
-        'www.vereinswappen.de',
-        'vereinswappen.de',
-        'www.stpaulicoffee.de',
-        'stpaulicoffee.de',
-        'www.lotto-hh.de',
-        'lotto-hh.de'
-    ];
-    $html = preg_replace_callback('#<img([^>]+)src=["\'](https?://[^"\']+)["\']([^>]*)>#i', function ($m) use ($allowedHosts) {
-        $pre = $m[1]; $url = $m[2]; $post = $m[3];
-        $host = parse_url($url, PHP_URL_HOST);
-        if ($host && in_array(strtolower($host), $allowedHosts, true)) {
-            $proxied = 'api/img-proxy.php?u=' . rawurlencode($url);
-            return '<img' . $pre . 'src="' . $proxied . '"' . $post . '>';
-        }
-        // Für nicht erlaubte Fremdquellen Bild entfernen
-        return '';
-    }, $html);
-    return $html;
+/** Erstes verknuepftes Spiel (Liga, Heim, Gast) je News-ID */
+function linkedMatchInfo(PDO $pdo, array $ids): array
+{
+    if (!$ids) return [];
+    $in = implode(',', array_map('intval', $ids));
+    $rows = $pdo->query("
+        SELECT mn.news_id, l.file AS league_file, l.name AS league_name,
+               th.name AS home, tg.name AS guest
+        FROM match_news mn
+        JOIN matches m ON m.id = mn.match_id
+        JOIN leagues l ON l.id = m.league_id
+        LEFT JOIN teams th ON th.id = m.home_team_id
+        LEFT JOIN teams tg ON tg.id = m.guest_team_id
+        WHERE mn.news_id IN ($in)
+        ORDER BY mn.news_id, mn.confidence DESC, m.id
+    ")->fetchAll(PDO::FETCH_ASSOC);
+    $out = [];
+    foreach ($rows as $r) {
+        $id = $r['news_id'];
+        if (!isset($out[$id])) { $r['match_count'] = 0; $out[$id] = $r; }
+        $out[$id]['match_count']++;
+    }
+    return $out;
 }
 
 try {
@@ -142,10 +63,16 @@ try {
             ? date('d.m.Y H:i', $news['timestamp'])
             : null;
 
-        // Inhalte für CSP aufbereiten
-        $news['content'] = injectLocalTeamLogos($news['content'] ?? '');
-        $news['content'] = rewriteContentForCSP($news['content'] ?? '');
-        $news['short_content'] = rewriteContentForCSP($news['short_content'] ?? '');
+        // Anzeige aufbereiten: Altbilder, Wappen, Autor (Inhalt selbst bleibt unveraendert)
+        $pdo = LmoDatabase::getInstance();
+        $link = linkedMatchInfo($pdo, [$id])[$id] ?? null;
+        $teams = ($link && $link['match_count'] == 1 && $link['home'] && $link['guest']) ? [$link['home'], $link['guest']] : null;
+        $news['author'] = NewsContent::displayAuthor($news['author'] ?? '', $news['content'] ?? '');
+        $news['content'] = NewsContent::prepare($news['content'] ?? '', $teams);
+        $news['short_content'] = NewsContent::rewriteImages($news['short_content'] ?? '');
+        $news['league_name'] = $link['league_name'] ?? null;
+        $news['league_file'] = $link['league_file'] ?? null;
+        unset($news['email']);
 
         echo json_encode([
             'success' => true,
@@ -163,7 +90,11 @@ try {
             $news['date_formatted'] = $news['timestamp'] > 0
                 ? date('d.m.Y H:i', $news['timestamp'])
                 : null;
+            $news['author'] = NewsContent::displayAuthor($news['author'] ?? '', $news['content'] ?? '');
+            $news['content'] = NewsContent::prepare($news['content'] ?? '');
+            unset($news['email']);
         }
+        unset($news);
 
         echo json_encode([
             'success' => true,
@@ -196,24 +127,56 @@ try {
         exit;
     }
 
-    // News-Liste (Paginierung)
+    // News-Liste (Paginierung), optional nur Artikel mit Spielen einer Liga
     if (isset($_GET['list'])) {
-        $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
-        $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
+        $limit = max(1, min(50, isset($_GET['limit']) ? (int) $_GET['limit'] : 20));
+        $offset = max(0, isset($_GET['offset']) ? (int) $_GET['offset'] : 0);
+        $leagueFile = isset($_GET['league']) ? trim((string)$_GET['league']) : '';
+        $pdo = LmoDatabase::getInstance();
 
-        $newsList = $repo->getNewsList($limit, $offset);
-
-        foreach ($newsList as &$news) {
-            $news['date_formatted'] = $news['timestamp'] > 0
-                ? date('d.m.Y', $news['timestamp'])
-                : null;
-            $news['preview'] = rewriteContentForCSP($news['preview'] ?? '');
+        $where = '';
+        $params = [];
+        if ($leagueFile !== '') {
+            $where = 'WHERE EXISTS (SELECT 1 FROM match_news mn JOIN matches m ON m.id = mn.match_id
+                       JOIN leagues l ON l.id = m.league_id WHERE mn.news_id = n.id AND l.file = :league)';
+            $params[':league'] = $leagueFile;
         }
+        $cnt = $pdo->prepare("SELECT COUNT(*) FROM news n $where");
+        $cnt->execute($params);
+        $total = (int)$cnt->fetchColumn();
+
+        $stmt = $pdo->prepare("SELECT n.id, n.title, n.short_content, n.author, n.timestamp, n.match_date,
+                                      substr(n.content, 1, 4000) AS head
+                               FROM news n $where
+                               ORDER BY n.timestamp DESC, n.id DESC LIMIT :limit OFFSET :offset");
+        foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $newsList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $links = linkedMatchInfo($pdo, array_column($newsList, 'id'));
+        foreach ($newsList as &$news) {
+            $head = $news['head'] ?? '';
+            unset($news['head']);
+            $link = $links[$news['id']] ?? null;
+            $news['date_formatted'] = $news['timestamp'] > 0 ? date('d.m.Y', $news['timestamp']) : null;
+            $news['author'] = NewsContent::displayAuthor($news['author'], $head);
+            $news['preview'] = NewsContent::excerpt($news['short_content'], $head);
+            $news['kind'] = NewsContent::kind((string)$news['title'], $head, (bool)$link);
+            $news['league_name'] = $link['league_name'] ?? null;
+            $news['league_file'] = $link['league_file'] ?? null;
+            $teams = ($link && $link['match_count'] == 1) ? [$link['home'], $link['guest']] : NewsContent::teamsFromScoreLine($head);
+            $news['logos'] = $teams ? array_values(array_filter([NewsContent::teamLogo($teams[0]), NewsContent::teamLogo($teams[1])])) : [];
+            if (count($news['logos']) !== 2) $news['logos'] = [];
+        }
+        unset($news);
 
         echo json_encode([
             'success' => true,
             'limit' => $limit,
             'offset' => $offset,
+            'total' => $total,
             'count' => count($newsList),
             'news' => $newsList
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
