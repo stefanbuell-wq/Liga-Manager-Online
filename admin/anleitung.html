@@ -373,7 +373,9 @@
                 <a href="#kader"><span>9.</span> Kaderverwaltung</a>
                 <a href="#saison"><span>10.</span> Neue Saison</a>
                 <a href="#design"><span>11.</span> Design-Editor</a>
-                <a href="#tipps"><span>12.</span> Tipps & Tricks</a>
+                <a href="#sponsoren"><span>12.</span> Sponsoren-Banner</a>
+                <a href="#anfragen"><span>13.</span> Kontaktanfragen</a>
+                <a href="#tipps"><span>14.</span> Tipps & Tricks</a>
             </div>
         </nav>
 
@@ -413,6 +415,14 @@
                 <div class="feature-card">
                     <h4>Benutzer</h4>
                     <p>Benutzerkonten verwalten, Rollen zuweisen</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Sponsoren</h4>
+                    <p>Banner fuer Header und Seiten verwalten, Rotation, Statistik fuer Sponsoren</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Kontaktanfragen</h4>
+                    <p>Anfragen aus dem Kontaktformular lesen, beantworten und abhaken</p>
                 </div>
                 <div class="feature-card">
                     <h4>Design-Editor</h4>
@@ -464,6 +474,21 @@
                         <td>Mein Konto</td>
                         <td><code>/konto.html</code></td>
                         <td>Eigenes Passwort und E-Mail aendern</td>
+                    </tr>
+                    <tr>
+                        <td>Sponsoren</td>
+                        <td><code>/admin/sponsoren.html</code></td>
+                        <td>Banner, Laufzeiten, Statistik (nur Admin)</td>
+                    </tr>
+                    <tr>
+                        <td>Anfragen</td>
+                        <td><code>/admin/anfragen.html</code></td>
+                        <td>Kontaktanfragen bearbeiten (nur Admin)</td>
+                    </tr>
+                    <tr>
+                        <td>Kontaktformular</td>
+                        <td><code>/kontakt.html</code></td>
+                        <td>Oeffentliches Formular, <code>?thema=sponsoring</code> waehlt Sponsoring vor</td>
                     </tr>
                     <tr>
                         <td>Design</td>
@@ -1065,9 +1090,124 @@
             <p>Oeffnen Sie den Design-Editor unter <code>/admin/design.html</code>. Aenderungen werden sofort in der Vorschau angezeigt und nach dem Speichern oeffentlich wirksam.</p>
         </section>
 
-        <!-- 11. Tipps -->
+        <!-- 12. Sponsoren-Banner -->
+        <section class="section" id="sponsoren">
+            <h2><span class="icon">🤝</span> 12. Sponsoren-Banner</h2>
+
+            <p>Die Hosting-Kosten von HAFO.de tragen Sponsoren. Ihre Banner verwalten Sie unter <strong>"🤝 Sponsoren"</strong> bzw. <code>/admin/sponsoren.html</code>. Der Bereich ist nur fuer Admins freigegeben.</p>
+
+            <h3>Positionen und Bildgroessen</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Bannerbild</th>
+                        <th>Zusatzbild (optional)</th>
+                        <th>Wo sichtbar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Header</td>
+                        <td>728&times;90</td>
+                        <td>Mobil 320&times;50</td>
+                        <td>Unter der Navigation auf Startseite, Forum, Konto und Kontakt. Auf Smartphones wird das Mobil-Bild gezeigt, sonst das grosse Bild verkleinert.</td>
+                    </tr>
+                    <tr>
+                        <td>Links / Rechts</td>
+                        <td>160&times;600</td>
+                        <td>Kompakt 300&times;250</td>
+                        <td>Fest neben dem Inhalt, wenn das Browserfenster mindestens 1780&times;720 Pixel gross ist. Bei kleineren Fenstern erscheinen die Banner im Inhalt (Startseite: unter dem Spiele-Ticker, sonst ueber dem Footer), dann mit dem Kompakt-Bild.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Erlaubt sind JPG, PNG, GIF und WebP bis 1 MB. Die Groesse muss exakt passen oder genau doppelt so gross sein (z. B. 1456&times;180 statt 728&times;90), damit das Banner auf hochaufloesenden Displays scharf ist. Bilder in anderen Groessen werden mit einer Meldung abgelehnt. Die Vorschau im Formular zeigt schon vor dem Speichern, ob die Groesse passt.</p>
+
+            <h3>Neues Banner anlegen</h3>
+            <ol class="steps">
+                <li><strong>"+ Neues Banner"</strong> klicken.</li>
+                <li><strong>Sponsor</strong> und <strong>Position</strong> waehlen. Neben dem Bildfeld steht die passende Groesse.</li>
+                <li><strong>Bannerbild</strong> hochladen, optional das <strong>Mobil- bzw. Kompakt-Bild</strong>.</li>
+                <li><strong>Link</strong> zur Website des Sponsors eintragen (muss mit <code>https://</code> oder <code>http://</code> beginnen). Ohne Link ist das Banner nicht anklickbar.</li>
+                <li>Optional: <strong>Laufzeit von/bis</strong> (leer = unbegrenzt), <strong>Gewichtung</strong> und <strong>Alternativtext</strong> fuer Screenreader.</li>
+                <li><strong>Speichern.</strong> Das Banner erscheint spaetestens nach etwa 2 Minuten auf der Website.</li>
+            </ol>
+
+            <h3>Rotation und Gewichtung</h3>
+            <p>Sind an einer Position mehrere Banner aktiv, wechseln sie alle 9 Sekunden. Die Gewichtung (1&ndash;10) bestimmt, wie oft ein Banner im Verhaeltnis zu den anderen drankommt: Ein Banner mit Gewichtung 2 erscheint etwa doppelt so oft wie eines mit 1. Gewechselt wird nur, solange das Banner sichtbar und der Browser-Tab aktiv ist.</p>
+
+            <h3>Status der Banner</h3>
+            <ul>
+                <li><strong>laeuft:</strong> aktiv und innerhalb der Laufzeit, wird angezeigt</li>
+                <li><strong>geplant:</strong> Laufzeit beginnt erst in der Zukunft</li>
+                <li><strong>abgelaufen:</strong> Laufzeit vorbei, wird nicht mehr angezeigt</li>
+                <li><strong>pausiert:</strong> von Hand abgeschaltet ("Pausieren"), Statistik bleibt erhalten</li>
+            </ul>
+
+            <h3>Statistik fuer Sponsoren</h3>
+            <p>Zu jedem Banner sehen Sie <strong>Sichtkontakte</strong>, <strong>Klicks</strong> und die <strong>Klickrate</strong> fuer den gewaehlten Monat oder Zeitraum.</p>
+            <ul>
+                <li><strong>Sichtkontakt:</strong> Das Banner war mindestens 1 Sekunde zu mindestens 50 % sichtbar, bei aktivem Browser-Tab. Banner, die niemand sieht (z. B. ausserhalb des Bildschirms), werden nicht gezaehlt.</li>
+                <li><strong>Klick:</strong> wird gezaehlt, bevor der Besucher zum Sponsor weitergeleitet wird.</li>
+                <li>Suchmaschinen und andere Bots werden herausgefiltert.</li>
+                <li><strong>CSV-Export:</strong> Tageswerte fuer den Zeitraum, fuer alle Banner (oben) oder nur ein Banner (Button "CSV" am Banner). Die Datei laesst sich direkt in Excel oeffnen und an den Sponsor schicken.</li>
+            </ul>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>Loeschen statt Pausieren?</strong> "Loeschen" entfernt Bild <em>und</em> die gesamte Statistik des Banners endgueltig. Wenn ein Sponsor nur voruebergehend aussetzt, lieber "Pausieren" oder die Laufzeit nutzen.</p>
+            </div>
+
+            <div class="info-box info">
+                <span class="icon">ℹ️</span>
+                <p><strong>Platzhalter:</strong> Solange keine echten Sponsoren da sind, laufen drei Platzhalter ("Platzhalter Header/Links/Rechts"), die auf das Kontaktformular mit Thema Sponsoring verlinken. Sobald ein echter Sponsor die Position belegt, den Platzhalter pausieren oder loeschen.</p>
+            </div>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Werbeblocker:</strong> Manche Besucher nutzen Werbeblocker. Die Banner sind so gebaut, dass sie von den ueblichen Filterlisten nicht pauschal ausgeblendet werden. Ganz ausschliessen laesst sich das nicht, Sichtkontakte von Besuchern mit Blocker fehlen dann in der Statistik.</p>
+            </div>
+        </section>
+
+        <!-- 13. Kontaktanfragen -->
+        <section class="section" id="anfragen">
+            <h2><span class="icon">✉️</span> 13. Kontaktanfragen</h2>
+
+            <p>Besucher erreichen Sie ueber das Kontaktformular <code>/kontakt.html</code> (Link "Kontakt" im Footer jeder Seite). Die Anfragen sehen Sie unter <strong>"✉️ Anfragen"</strong> bzw. <code>/admin/anfragen.html</code> (nur Admins). In der Sponsorenverwaltung zeigt der Button "Anfragen" die Zahl neuer Anfragen an.</p>
+
+            <h3>Themen im Formular</h3>
+            <ul>
+                <li><strong>Sponsoring / Werbung:</strong> mit Uebersicht der Werbeplaetze und Auswahl, wofuer sich der Interessent interessiert. Direktlink: <code>/kontakt.html?thema=sponsoring</code></li>
+                <li><strong>Allgemeine Anfrage</strong> &ndash; <code>?thema=allgemein</code></li>
+                <li><strong>Fehler oder Korrektur melden</strong> &ndash; <code>?thema=fehler</code>, z. B. falsches Ergebnis</li>
+            </ul>
+
+            <h3>Anfragen bearbeiten</h3>
+            <ol class="steps">
+                <li>Liste oeffnen. Standardmaessig werden offene Anfragen gezeigt (neu und in Bearbeitung). Filter fuer Status und Thema stehen oben.</li>
+                <li><strong>Antworten:</strong> Auf die E-Mail-Adresse klicken &ndash; Ihr Mailprogramm oeffnet sich mit Betreff und zitierter Nachricht.</li>
+                <li><strong>Status</strong> setzen (neu, in Bearbeitung, erledigt) und bei Bedarf eine <strong>interne Notiz</strong> eintragen, z. B. "Angebot geschickt am &hellip;". Mit "Speichern" uebernehmen.</li>
+            </ol>
+
+            <h3>Datenschutz und Loeschfristen</h3>
+            <ul>
+                <li>Erledigte Anfragen werden 12 Monate nach Abschluss automatisch geloescht, alle anderen spaetestens 24 Monate nach Eingang.</li>
+                <li>Bittet jemand um Loeschung, die Anfrage mit "Loeschen" sofort entfernen.</li>
+                <li>Diese Fristen stehen so in der Datenschutzerklaerung (Abschnitt 4). Wer sie aendert, muss auch den Text dort anpassen.</li>
+            </ul>
+
+            <h3>Schutz vor Spam</h3>
+            <p>Das Formular kommt ohne CAPTCHA aus: Ein fuer Menschen unsichtbares Feld faengt Bots ab, das Formular muss mindestens 3 Sekunden offen sein, und pro Anschluss gehen hoechstens 5 Anfragen pro Stunde durch.</p>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>Keine Benachrichtigung per E-Mail:</strong> Derzeit landen Anfragen nur hier im Admin. Schauen Sie deshalb regelmaessig hinein. Eine Mail bei jeder neuen Anfrage ist vorbereitet und wird aktiv, sobald in <code>config/mail.php</code> ein Empfaenger (<code>contact_notify</code>) eingetragen ist.</p>
+            </div>
+        </section>
+
+        <!-- 14. Tipps -->
         <section class="section" id="tipps">
-            <h2><span class="icon">💡</span> 12. Tipps & Tricks</h2>
+            <h2><span class="icon">💡</span> 14. Tipps & Tricks</h2>
 
             <h3>Allgemeine Tipps</h3>
             <ul>

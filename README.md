@@ -12,6 +12,8 @@ Moderne PHP 8 Neuimplementierung des klassischen Liga Manager Online - ein webba
 - **Team-Verwaltung** - Logos, Kurznamen
 - **Punktekorrekturen** - Abzüge/Boni mit Begründung
 - **News-System** - Integrierte Nachrichtenverwaltung
+- **Sponsoren-Banner** - Header (728×90) und Seiten (160×600), Rotation, Laufzeiten, Sichtkontakte/Klicks, CSV-Export – ohne Cookies und Drittanbieter
+- **Kontaktformular** - Themen Sponsoring/Allgemein/Fehler, Anfragen im Admin, Spamschutz ohne CAPTCHA
 
 ## Systemanforderungen
 
@@ -53,7 +55,9 @@ Liga Manager Online/
 ├── admin/           # Admin-Interface
 │   ├── index.html   # Hauptverwaltung
 │   ├── edit.html    # Spieltag-Editor
-│   └── news.html    # News-Editor
+│   ├── news.html    # News-Editor
+│   ├── sponsoren.html # Sponsoren-Banner
+│   └── anfragen.html  # Kontaktanfragen
 ├── api/             # REST API Endpoints
 ├── css/             # Stylesheets
 ├── data/            # SQLite Datenbank (wird auto-erstellt)
@@ -77,6 +81,8 @@ Liga Manager Online/
 | `/api/users.php` | GET/POST | Benutzerverwaltung |
 | `/api/news.php` | GET | News abrufen |
 | `/api/save-news.php` | POST | News speichern |
+| `/api/foerderer.php` | GET/POST | Sponsoren-Banner: öffentlich ausliefern, `?go=ID` Klick-Weiterleitung, Sichtkontakte melden; Verwaltung nur Admin |
+| `/api/kontakt.php` | GET/POST | Kontaktformular absenden (öffentlich); Anfragen verwalten (nur Admin) |
 
 ## Sicherheit
 
