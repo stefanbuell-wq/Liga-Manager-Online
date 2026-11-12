@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261112">
+    <link rel="stylesheet" href="css/portal.css?v=20261113">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -135,6 +135,22 @@
                     <h2 class="section-title">Alle <span>Berichte</span></h2>
                     <span class="text-muted" style="font-size:0.9rem;">neueste zuerst</span>
                 </div>
+                <form class="news-filter" id="news-filter" role="search" onsubmit="loadNews(); return false;">
+                    <div class="news-search">
+                        <input type="search" id="news-q" placeholder="Suchen: Verein, Spieler, Stichwort …" aria-label="Berichte durchsuchen" autocomplete="off">
+                        <button type="submit" class="btn btn-primary">Suchen</button>
+                    </div>
+                    <div class="league-chips" id="news-kind" role="group" aria-label="Art">
+                        <button type="button" class="league-chip active" data-kind="">Alle</button>
+                        <button type="button" class="league-chip" data-kind="bericht">⚽ Spielberichte</button>
+                        <button type="button" class="league-chip" data-kind="vorschau">🔭 Vorschauen</button>
+                        <button type="button" class="league-chip" data-kind="news">📰 News</button>
+                        <select id="news-year" class="btn btn-secondary" aria-label="Jahr" onchange="loadNews()">
+                            <option value="">Alle Jahre</option>
+                        </select>
+                    </div>
+                    <p class="news-filter-info text-muted" id="news-filter-info" hidden></p>
+                </form>
                 <div class="article-list" id="news-grid">
                     <p class="text-muted">Berichte werden geladen …</p>
                 </div>
@@ -471,6 +487,7 @@
             initLeagueSelector();
             initTabs();
             loadLiveMatches();
+            initNewsFilter();
             loadNews();
             loadForumPreview();
             const linkNews = parseInt(new URLSearchParams(location.search).get('news'), 10);
@@ -907,27 +924,68 @@
                 </a>`;
         }
 
-        // Startseite: alle Artikel chronologisch, 10 pro Schritt
+        // Startseite: alle Artikel chronologisch, 10 pro Schritt, mit Suche und Filter
         const NEWS_PAGE = 10;
         let newsOffset = 0;
+        let newsKind = '';
+        let heroDone = false;
+        let newsSearchTimer = null;
+
+        function initNewsFilter() {
+            const year = document.getElementById('news-year');
+            for (let y = new Date().getFullYear(); y >= 2003; y--) year.add(new Option(String(y), String(y)));
+            document.querySelectorAll('#news-kind .league-chip').forEach(b => b.addEventListener('click', () => {
+                newsKind = b.dataset.kind;
+                document.querySelectorAll('#news-kind .league-chip').forEach(x => x.classList.toggle('active', x === b));
+                loadNews();
+            }));
+            // Beim Tippen kurz warten, dann suchen
+            document.getElementById('news-q').addEventListener('input', () => {
+                clearTimeout(newsSearchTimer);
+                newsSearchTimer = setTimeout(() => loadNews(), 500);
+            });
+        }
+
+        function resetNewsFilter() {
+            document.getElementById('news-q').value = '';
+            document.getElementById('news-year').value = '';
+            newsKind = '';
+            document.querySelectorAll('#news-kind .league-chip').forEach(x => x.classList.toggle('active', x.dataset.kind === ''));
+            loadNews();
+        }
+
         async function loadNews(more = false) {
             const container = document.getElementById('news-grid');
             const btn = document.getElementById('news-more');
+            const info = document.getElementById('news-filter-info');
+            const q = document.getElementById('news-q').value.trim();
+            const year = document.getElementById('news-year').value;
+            const filtered = !!(q || year || newsKind);
             try {
                 if (!more) newsOffset = 0;
                 btn.disabled = true;
-                const res = await fetch(`${API_BASE}/get-news.php?list=1&limit=${NEWS_PAGE}&offset=${newsOffset}`);
+                const params = new URLSearchParams({ list: 1, limit: NEWS_PAGE, offset: newsOffset });
+                if (q) params.set('q', q);
+                if (year) params.set('year', year);
+                if (newsKind) params.set('kind', newsKind);
+                const res = await fetch(`${API_BASE}/get-news.php?${params}`);
                 const data = await res.json();
                 const list = data.news || [];
                 if (!more) {
-                    renderHero(list);
+                    if (!heroDone && !filtered) { renderHero(list); heroDone = true; }
                     container.innerHTML = '';
+                    const total = data.total || 0;
+                    info.hidden = !filtered;
+                    info.innerHTML = filtered
+                        ? `${total === 1 ? '1 Beitrag' : total.toLocaleString('de-DE') + ' Beiträge'} gefunden · <a href="#" onclick="resetNewsFilter(); return false;">Filter zurücksetzen</a>`
+                        : '';
                 }
                 if (!list.length && !more) {
-                    container.innerHTML = '<p class="text-muted">Keine Berichte vorhanden.</p>';
+                    container.innerHTML = `<p class="text-muted">${filtered ? 'Keine passenden Berichte gefunden.' : 'Keine Berichte vorhanden.'}</p>`;
                 }
                 container.insertAdjacentHTML('beforeend', list.map(articleRow).join(''));
                 newsOffset += list.length;
+                btn.textContent = filtered ? 'Weitere Treffer anzeigen' : 'Ältere Berichte anzeigen';
                 btn.hidden = newsOffset >= (data.total || 0);
                 btn.disabled = false;
             } catch (e) {

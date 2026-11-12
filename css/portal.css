@@ -1188,3 +1188,15 @@ h4 { font-size: 1.25rem; }
 .league-archive select { max-width: 280px; }
 
 .article-more[hidden] { display: none; }
+
+/* ===== Berichte: Suche und Filter ===== */
+.news-filter { display: flex; flex-direction: column; gap: 12px; margin-bottom: var(--spacing-md); }
+.news-search { display: flex; gap: 8px; }
+.news-search input {
+    flex: 1; min-width: 0; font: inherit; font-size: 1.05rem; padding: 12px 16px;
+    border: 2px solid var(--border-color); border-radius: 10px; background: var(--color-bg-card); color: var(--color-text-primary);
+}
+.news-search input:focus { outline: none; border-color: var(--color-primary); }
+.news-filter #news-year { font-size: 1rem; }
+.news-filter-info { margin: 0; font-size: .95rem; }
+.news-filter-info[hidden] { display: none; }

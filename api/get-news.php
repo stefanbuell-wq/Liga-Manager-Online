@@ -134,13 +134,39 @@ try {
         $leagueFile = isset($_GET['league']) ? trim((string)$_GET['league']) : '';
         $pdo = LmoDatabase::getInstance();
 
-        $where = '';
+        $conds = [];
         $params = [];
         if ($leagueFile !== '') {
-            $where = 'WHERE EXISTS (SELECT 1 FROM match_news mn JOIN matches m ON m.id = mn.match_id
+            $conds[] = 'EXISTS (SELECT 1 FROM match_news mn JOIN matches m ON m.id = mn.match_id
                        JOIN leagues l ON l.id = m.league_id WHERE mn.news_id = n.id AND l.file = :league)';
             $params[':league'] = $leagueFile;
         }
+        // Suche: jedes Wort muss vorkommen (Titel, Text, Autor), Wortanfang genuegt
+        $q = trim(mb_substr((string)($_GET['q'] ?? ''), 0, 100));
+        if ($q !== '') {
+            preg_match_all('/[\p{L}\p{N}]+/u', $q, $w);
+            $terms = array_slice(array_filter($w[0], fn($t) => mb_strlen($t) >= 2), 0, 6);
+            if ($terms) {
+                $conds[] = 'n.id IN (SELECT rowid FROM news_fts WHERE news_fts MATCH :q)';
+                $params[':q'] = implode(' ', array_map(fn($t) => '"' . $t . '"*', $terms));
+            }
+        }
+        // Art wie in der Liste angezeigt (NewsContent::kind), damit Filter und Kennzeichnung uebereinstimmen
+        $kinds = ['bericht' => 'Spielbericht', 'vorschau' => 'Vorschau', 'news' => 'News'];
+        $kind = $kinds[$_GET['kind'] ?? ''] ?? null;
+        if ($kind) {
+            $pdo->sqliteCreateFunction('news_kind', fn($t, $h, $l) => NewsContent::kind((string)$t, (string)$h, (bool)$l), 3);
+            $conds[] = "news_kind(n.title, substr(n.content, 1, 2500),
+                        EXISTS (SELECT 1 FROM match_news mn2 WHERE mn2.news_id = n.id)) = :kind";
+            $params[':kind'] = $kind;
+        }
+        $year = (int)($_GET['year'] ?? 0);
+        if ($year >= 2000 && $year <= 2100) {
+            $conds[] = 'n.timestamp >= :y1 AND n.timestamp < :y2';
+            $params[':y1'] = mktime(0, 0, 0, 1, 1, $year);
+            $params[':y2'] = mktime(0, 0, 0, 1, 1, $year + 1);
+        }
+        $where = $conds ? 'WHERE ' . implode(' AND ', $conds) : '';
         $cnt = $pdo->prepare("SELECT COUNT(*) FROM news n $where");
         $cnt->execute($params);
         $total = (int)$cnt->fetchColumn();
