@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261116">
+    <link rel="stylesheet" href="css/portal.css?v=20261117">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -730,7 +730,7 @@
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
-                            <span class="table-team-name" title="${sqEsc(team.name)}">${sqEsc(team.name)}</span>
+                            ${teamLink(team.name, 'table-team-name')}
                         </td>
                         <td class="table-stats">${team.played}</td>
                         <td class="table-stats">${team.diff > 0 ? '+' : ''}${team.diff}</td>
@@ -987,9 +987,9 @@
             const report = newsButton(m, 'mrow-report');
             return `
                 <div class="mrow">
-                    <span class="mrow-team home ${hw ? 'win' : ''}"><span class="mrow-name">${sqEsc(m.home)}</span>${logo(m.home)}</span>
+                    <span class="mrow-team home ${hw ? 'win' : ''}">${teamLink(m.home, 'mrow-name')}${logo(m.home)}</span>
                     <span class="mrow-score ${played ? '' : 'open'}">${score}</span>
-                    <span class="mrow-team guest ${gw ? 'win' : ''}">${logo(m.guest)}<span class="mrow-name">${sqEsc(m.guest)}</span></span>
+                    <span class="mrow-team guest ${gw ? 'win' : ''}">${logo(m.guest)}${teamLink(m.guest, 'mrow-name')}</span>
                     <span class="mrow-meta">${sqEsc(when)}${m.match_note ? ` <span title="${sqEsc(m.match_note)}">📝 ${sqEsc(m.match_note)}</span>` : ''}</span>
                     ${report}
                 </div>`;
@@ -1014,6 +1014,64 @@
             modal.style.display = 'block';
             resetModalScroll();
             setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        // === SAISON EINES VEREINS (Klick auf Vereinsnamen) ===
+        function teamLink(name, cls = '') {
+            const arg = sqEsc(JSON.stringify(String(name ?? '')));
+            return `<a href="javascript:void(0)" class="team-link ${cls}" onclick="showTeamSeason(${arg})" title="Alle Spiele von ${sqEsc(name)}">${sqEsc(name)}</a>`;
+        }
+
+        function showTeamSeason(teamName) {
+            if (!leagueData || !leagueData.matches) return;
+            const totalRounds = parseInt(leagueData.options.Rounds) || Object.keys(leagueData.matches).length;
+            const games = [];
+            for (let r = 1; r <= totalRounds; r++) {
+                (leagueData.matches[r] || []).forEach(m => {
+                    if (m.home === teamName || m.guest === teamName) games.push({ ...m, round: r });
+                });
+            }
+            const row = leagueData.table ? leagueData.table.find(t => t.name === teamName) : null;
+            const rank = row ? leagueData.table.indexOf(row) + 1 : null;
+            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
+
+            const lines = games.map(m => {
+                const isHome = m.home === teamName;
+                const own = Number(isHome ? m.home_goals : m.guest_goals);
+                const opp = Number(isHome ? m.guest_goals : m.home_goals);
+                const res = !m.played ? 'open' : own > opp ? 'w' : own < opp ? 'l' : 'd';
+                const resLabel = { w: 'S', d: 'U', l: 'N', open: '' }[res];
+                const shortDate = String(m.date || '').replace(/^(\d{1,2}\.\d{1,2}\.)\d{2,4}$/, '$1');
+                const name = (n) => n === teamName ? `<strong>${sqEsc(n)}</strong>` : sqEsc(n);
+                return `
+                    <div class="srow">
+                        <span class="srow-round">${m.round}.</span>
+                        <span class="srow-when">${sqEsc([shortDate, m.time || ''].filter(Boolean).join(' ') || 'offen')}</span>
+                        <span class="mrow-team home"><span class="mrow-name">${name(m.home)}</span>${logo(m.home)}</span>
+                        <span class="mrow-score ${m.played ? '' : 'open'}">${m.played ? sqEsc(m.home_goals + ':' + m.guest_goals) : '–:–'}</span>
+                        <span class="mrow-team guest">${logo(m.guest)}<span class="mrow-name">${name(m.guest)}</span></span>
+                        <span class="srow-res res-${res}">${resLabel}</span>
+                        ${newsButton(m, 'mrow-report')}
+                    </div>`;
+            }).join('');
+
+            const summary = row
+                ? `Platz ${rank} · ${row.played} Spiele · ${row.won} S / ${row.draw} U / ${row.lost} N · ${row.goals_for}:${row.goals_against} Tore · ${row.points} Punkte`
+                : '';
+            openInfoModal(`
+                <div class="season-head">
+                    <img src="img/teams/${String(teamName).replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                    <div>
+                        <h2 style="margin:0;">${sqEsc(teamName)}</h2>
+                        <div style="color: var(--color-text-muted); font-size: 0.9rem;">${sqEsc(leagueData.options.Name || '')}${summary ? ' · ' + sqEsc(summary) : ''}</div>
+                    </div>
+                </div>
+                <div style="margin: var(--spacing-md) 0;">
+                    <button type="button" class="btn btn-secondary" onclick="showTeamSquad(${sqEsc(JSON.stringify(teamName))})">👥 Kader anzeigen</button>
+                </div>
+                <div class="mlist season-list">${lines || '<p class="text-muted">Keine Spiele gefunden.</p>'}</div>
+                <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-top: var(--spacing-sm);">S = Sieg, U = Unentschieden, N = Niederlage · 📰 Spielbericht · 🔭 Vorschau</p>
+            `);
         }
 
         async function showTeamSquad(teamName) {
@@ -1129,8 +1187,7 @@
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
-                            <a href="javascript:void(0)" onclick="showTeamSquad(${JSON.stringify(team.name).replace(/"/g, '&quot;')})"
-                               title="Kader anzeigen" style="color:inherit; text-decoration:none; border-bottom:1px dotted var(--color-text-muted);">${sqEsc(team.name)}</a>
+                            ${teamLink(team.name)}
                         </td>
                         <td class="table-stats">${team.played}</td>
                         <td class="table-stats">${team.won}</td>
@@ -1194,11 +1251,11 @@
                     : '<span style="display:inline-block; width:28px;"></span>';
                 return `
                     <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
-                        <span style="flex: 1; text-align: right;">${scheduleEsc(m.home)}</span>
+                        <span style="flex: 1; text-align: right;">${teamLink(m.home)}</span>
                         <span style="min-width: 60px; text-align: center; font-weight: 700; background: var(--color-bg-elevated); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-sm);">
                             ${played ? sqEsc(m.home_goals + ' : ' + m.guest_goals) : '- : -'}
                         </span>
-                        <span style="flex: 1;">${scheduleEsc(m.guest)}</span>
+                        <span style="flex: 1;">${teamLink(m.guest)}</span>
                         <span style="min-width: 150px; text-align: right; color: var(--color-text-muted); font-size: 0.85rem;">${scheduleEsc(when)}</span>
                         ${report}
                     </div>`;

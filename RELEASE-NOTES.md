@@ -21,6 +21,10 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
   - Die Tabelle ist kompakter dargestellt.
   - Lange Namen sind gekürzt; wer mit der Maus darüberfährt, sieht den vollen Namen.
   - Der Link „Vollständig“ entfällt, weil die Tabelle jetzt ohnehin komplett ist.
+- **Saison eines Vereins:** Ein Klick auf einen Vereinsnamen in Tabelle, Spielplan oder Spieltag zeigt alle Partien dieses Vereins in der Saison, z. B. alle 34.
+  - Pro Partie stehen Spieltag, Datum, Uhrzeit, Gegner und Ergebnis.
+  - Kennzeichnung S/U/N in Grün, Grau und Rot; 📰 bzw. 🔭 führen zu Bericht oder Vorschau.
+  - Oben stehen Platz, Bilanz und Punkte, dazu der Knopf „Kader anzeigen“.
 
 ### Technik
 
@@ -28,6 +32,7 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 - CSS-Klassen `.mlist`/`.mrow` in `css/portal.css` (jetzt Version 20261115).
 - `LmoRepository::getMatchIdsWithNews` liefert `is_preview`. Die Spieldaten haben das neue Feld `news_is_preview`, das Frontend nutzt dafür `newsButton()`.
 - Spieltag-Leiste (`#live-section`) entfernt, `loadLiveMatches()` wird nicht mehr aufgerufen.
+- `teamLink()` und `showTeamSeason()` in `index.html` (Modal aus `leagueData.matches`); CSS `.srow`/`.team-link` (`portal.css` jetzt Version 20261117). Der Kader ist im Modal per Knopf erreichbar (`showTeamSquad`).
 - `renderTable()` zeigt alle Plätze. Neue CSS-Klasse `.league-table.compact` in `portal.css` (jetzt Version 20261116).
 
 ---

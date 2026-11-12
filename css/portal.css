@@ -1241,3 +1241,26 @@ h4 { font-size: 1.25rem; }
 .league-table.compact .table-team img { width: 18px; height: 18px; flex: none; }
 .league-table.compact .table-team-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
 .league-table.compact .table-stats, .league-table.compact .table-points { text-align: center; }
+
+/* ===== Vereinsnamen klickbar -> Saison des Vereins ===== */
+.team-link { color: inherit; text-decoration: none; cursor: pointer; }
+.team-link:hover { color: var(--color-primary); text-decoration: underline; }
+.season-head { display: flex; align-items: center; gap: 14px; padding-right: 40px; }
+.season-head img { width: 48px; height: 48px; object-fit: contain; }
+.season-list { padding: 2px 12px; }
+.srow {
+    display: grid; grid-template-columns: 30px 92px minmax(0, 1fr) 56px minmax(0, 1fr) 26px 30px;
+    align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border-color); font-size: 0.93rem;
+}
+.srow:last-child { border-bottom: none; }
+.srow-round { color: var(--color-text-muted); font-weight: 700; text-align: right; }
+.srow-when { color: var(--color-text-muted); font-size: 0.8rem; white-space: nowrap; }
+.srow-res { font-weight: 800; font-size: 0.8rem; text-align: center; border-radius: 4px; padding: 2px 0; color: #fff; }
+.srow-res.res-w { background: #1e9e4a; }
+.srow-res.res-d { background: #8a8a8a; }
+.srow-res.res-l { background: var(--color-primary); }
+.srow-res.res-open { background: transparent; }
+@media (max-width: 640px) {
+    .srow { grid-template-columns: 24px minmax(0, 1fr) 46px minmax(0, 1fr) 22px 24px; font-size: 0.85rem; gap: 5px; }
+    .srow-when { grid-column: 2 / -1; grid-row: 2; text-align: center; }
+}
