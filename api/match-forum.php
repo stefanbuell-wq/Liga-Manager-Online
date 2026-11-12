@@ -26,6 +26,23 @@ $pdo = LmoDatabase::getInstance();
 $userId = $_SESSION['lmo26_user_id'] ?? null;
 $userRole = $userId ? $repo->getUserRole($userId) : null;
 
+// Nur Themen aus Kategorien zeigen, die der Aufrufer sehen darf
+function visibleTopics($repo, $pdo, array $rows, $userRole, $idKey) {
+    static $catOfTopic = [];
+    $out = [];
+    foreach ($rows as $r) {
+        $tid = (int)($r[$idKey] ?? 0);
+        if (!isset($catOfTopic[$tid])) {
+            $st = $pdo->prepare('SELECT category_id FROM forum_topics WHERE id = ?');
+            $st->execute([$tid]);
+            $catOfTopic[$tid] = (int)$st->fetchColumn();
+        }
+        if ($catOfTopic[$tid] && $repo->canViewCategory($catOfTopic[$tid], $userRole)) $out[] = $r;
+    }
+    return $out;
+}
+
+
 try {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
@@ -59,8 +76,8 @@ try {
                     throw new Exception('Kein Spiel angegeben');
                 }
 
-                $topics = $repo->getTopicsByMatch($matchId);
-                $links = $repo->getForumLinksForMatch($matchId);
+                $topics = visibleTopics($repo, $pdo, $repo->getTopicsByMatch($matchId), $userRole, 'id');
+                $links = visibleTopics($repo, $pdo, $repo->getForumLinksForMatch($matchId), $userRole, 'forum_topic_id');
 
                 echo json_encode([
                     'success' => true,
@@ -79,8 +96,8 @@ try {
                     throw new Exception('Liga und Spieltag erforderlich');
                 }
 
-                $topics = $repo->getTopicsByMatchday($leagueId, $roundNr);
-                $links = $repo->getForumLinksForRound($leagueId, $roundNr);
+                $topics = visibleTopics($repo, $pdo, $repo->getTopicsByMatchday($leagueId, $roundNr), $userRole, 'id');
+                $links = visibleTopics($repo, $pdo, $repo->getForumLinksForRound($leagueId, $roundNr), $userRole, 'forum_topic_id');
 
                 echo json_encode([
                     'success' => true,
@@ -93,14 +110,14 @@ try {
             case 'league_topics':
                 // Topics für eine Liga abrufen
                 $leagueId = intval($_GET['league_id'] ?? 0);
-                $limit = min(50, intval($_GET['limit'] ?? 20));
+                $limit = max(1, min(50, intval($_GET['limit'] ?? 20)));
 
                 if ($leagueId <= 0) {
                     throw new Exception('Keine Liga angegeben');
                 }
 
-                $topics = $repo->getTopicsByLeague($leagueId, $limit);
-                $links = $repo->getForumLinksForLeague($leagueId, $limit);
+                $topics = visibleTopics($repo, $pdo, $repo->getTopicsByLeague($leagueId, $limit), $userRole, 'id');
+                $links = visibleTopics($repo, $pdo, $repo->getForumLinksForLeague($leagueId, $limit), $userRole, 'forum_topic_id');
 
                 echo json_encode([
                     'success' => true,

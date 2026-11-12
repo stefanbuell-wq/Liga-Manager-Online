@@ -13,6 +13,7 @@ class ForumRepository
     const PERMISSION_LEVELS = [
         'public' => 0,      // Jeder (auch Gäste)
         'registered' => 1,  // Registrierte Benutzer
+        'user' => 1,        // Rolle 'user' (Forennutzer) = registriert
         'editor' => 2,      // Redakteure
         'admin' => 3,       // Administratoren
         'none' => 99        // Niemand
@@ -371,7 +372,8 @@ class ForumRepository
     public function getPostsByTopic($topicId, $limit = 20, $offset = 0)
     {
         $stmt = $this->pdo->prepare("
-            SELECT p.*,
+            SELECT p.id, p.topic_id, p.user_id, p.guest_name, p.content, p.is_first_post,
+                   p.edited_at, p.edited_by, p.created_at,
                    u.username as author_name,
                    u.display_name as author_display_name,
                    eu.username as editor_name

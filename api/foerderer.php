@@ -71,7 +71,10 @@ try {
 
     /* ---------- Oeffentlich: Sichtkontakte ---------- */
     if ($method === 'POST' && $action === 'seen') {
-        if (!fdIsBot() && isset($body['v']) && is_array($body['v'])) {
+        // Pro IP hoechstens 300 Zaehlaufrufe in 15 Min, damit die Statistik nicht aufgeblaeht wird
+        $seenId = 'seen:' . Security::getClientIp();
+        if (!fdIsBot() && isset($body['v']) && is_array($body['v']) && Security::checkRateLimit($seenId, 300)['allowed']) {
+            Security::recordFailedAttempt($seenId);
             $repo->countViews(array_slice($body['v'], 0, 20, true));
         }
         http_response_code(204);

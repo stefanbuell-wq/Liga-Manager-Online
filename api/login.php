@@ -18,6 +18,15 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
+// Login-CSRF: Anmeldungen nur von der eigenen Seite annehmen
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$ownHost = strtolower(preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+if ($origin !== '' && strtolower((string)parse_url($origin, PHP_URL_HOST)) !== $ownHost) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Ungültige Herkunft']);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 $user = trim($data['username'] ?? '');
 $pass = $data['password'] ?? '';
@@ -30,7 +39,11 @@ if ($user === '' || $pass === '') {
 }
 
 $identifier = Security::getClientIp() . ':' . mb_strtolower($user);
+// Zusaetzlich pro Konto (unabhaengig von der IP), grosszuegiger, damit Fremde
+// ein Konto nicht leicht aussperren koennen
+$acctIdentifier = 'acct:' . mb_strtolower($user);
 $rateCheck = Security::checkRateLimit($identifier);
+if ($rateCheck['allowed']) $rateCheck = Security::checkRateLimit($acctIdentifier, 20);
 if (!$rateCheck['allowed']) {
     echo json_encode([
         'success' => false,
@@ -53,8 +66,12 @@ try {
     $stmt->execute([$user, $user, $user]);
     $dbUser = $stmt->fetch();
 
-    if (!$dbUser || !password_verify($pass, $dbUser['password_hash'])) {
+    // Auch bei unbekanntem Benutzer einen Hash pruefen (gleiche Laufzeit, kein Timing-Orakel)
+    $hashToCheck = $dbUser['password_hash'] ?? '$2y$10$vQYICkT9iyjYWIOyEZUWc.rWrBoi/Ej72TsHDU1RG3Ug19g2UrCAO';
+    $passOk = password_verify($pass, $hashToCheck) && $dbUser;
+    if (!$passOk) {
         Security::recordFailedAttempt($identifier);
+        Security::recordFailedAttempt($acctIdentifier);
         echo json_encode(['success' => false, 'error' => 'Ungültige Zugangsdaten', 'csrf_token' => $csrfToken]);
         exit;
     }
@@ -76,6 +93,7 @@ try {
     }
 
     Security::clearRateLimit($identifier);
+    Security::clearRateLimit($acctIdentifier);
     Security::regenerateSession();
 
     $isStaff = in_array($dbUser['role'], ['editor', 'admin'], true);

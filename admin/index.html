@@ -1172,10 +1172,10 @@
             document.getElementById('news-items-container').innerHTML = data.news.map(n => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #eee; background:white;">
                     <div>
-                        <div style="font-weight:bold;">${n.title}</div>
-                        <div style="font-size:0.85em; color:#888;">${new Date(n.timestamp * 1000).toLocaleDateString()} | ${n.author}</div>
+                        <div style="font-weight:bold;">${leagueEsc(n.title)}</div>
+                        <div style="font-size:0.85em; color:#888;">${new Date(n.timestamp * 1000).toLocaleDateString()} | ${leagueEsc(n.author)}</div>
                     </div>
-                    <button onclick="openNewsEditor(${n.id})" class="btn-secondary" style="font-size:0.8em;">Bearbeiten</button>
+                    <button onclick="openNewsEditor(${Number(n.id)})" class="btn-secondary" style="font-size:0.8em;">Bearbeiten</button>
                 </div>
             `).join('');
         }

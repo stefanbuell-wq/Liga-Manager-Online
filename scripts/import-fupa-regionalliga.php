@@ -1,4 +1,6 @@
 <?php
+// Nur per Kommandozeile ausfuehrbar (Wartung/Migration) - nie ueber den Webserver
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 /**
  * FuPa Import: Kader für Regionalliga Nord 25/26
  * Aufruf: php scripts/import-fupa-regionalliga.php

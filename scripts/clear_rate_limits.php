@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
+// Nur per Kommandozeile ausfuehrbar (Wartung/Migration) - nie ueber den Webserver
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 // One-time maintenance: clear all login rate limits/lockouts.
 // Usage: php scripts/clear_rate_limits.php
-declare(strict_types=1);
 try {
     $path = __DIR__ . '/../data/security.db';
     $pdo = new PDO('sqlite:' . $path);

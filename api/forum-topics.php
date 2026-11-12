@@ -30,8 +30,8 @@ try {
         // Topics abrufen
         $categoryId = isset($_GET['category']) ? intval($_GET['category']) : 0;
         $topicId = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $limit = isset($_GET['limit']) ? min(50, intval($_GET['limit'])) : 20;
-        $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
+        $limit = isset($_GET['limit']) ? max(1, min(50, intval($_GET['limit']))) : 20;
+        $offset = isset($_GET['offset']) ? max(0, intval($_GET['offset'])) : 0;
         $forHomepage = isset($_GET['homepage']);
 
         if ($topicId > 0) {

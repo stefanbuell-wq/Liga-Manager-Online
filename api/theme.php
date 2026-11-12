@@ -7,9 +7,10 @@
  */
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+// Lesen darf jeder (auch fremde Seiten), Schreiben nur same-origin mit Admin-Session + CSRF
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Access-Control-Allow-Origin: *');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -163,12 +164,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Require authentication for POST
     require_once __DIR__ . '/../lib/Security.php';
 
-    session_start();
-    if (!Security::isLoggedIn()) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Nicht autorisiert']);
+    Security::initSession();
+    if (!Security::isLoggedIn() || Security::getUserRole() !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Nur Administratoren dürfen das Design ändern']);
         exit;
     }
+    Security::requireCsrf();
 
     $input = json_decode(file_get_contents('php://input'), true);
 

@@ -5,7 +5,12 @@
  * Provides CSRF protection, rate limiting, and session hardening
  */
 
+require_once __DIR__ . '/LmoDatabase.php';
+
 class Security {
+
+    /** Pro Request nur einmal mit der Benutzertabelle abgleichen */
+    private static $authSynced = false;
 
     // Rate Limiting Settings
     const MAX_LOGIN_ATTEMPTS = 5;
@@ -95,7 +100,8 @@ class Security {
             ini_set('session.use_strict_mode', 1);
 
             // HTTPS only in production
-            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+            if ((isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off' && $_SERVER['HTTPS'] !== '')
+                || ($_SERVER['SERVER_PORT'] ?? '') == 443) {
                 ini_set('session.cookie_secure', 1);
             }
 
@@ -110,7 +116,65 @@ class Security {
         }
         $_SESSION['last_activity'] = time();
 
+        // Rolle/Status bei jeder Anfrage aus der DB uebernehmen: herabgestufte,
+        // gesperrte oder geloeschte Konten verlieren ihre Rechte sofort.
+        if (!empty($_SESSION['lmo26_user_id']) && !self::$authSynced) {
+            self::$authSynced = true;
+            if (!self::syncAuthFromDb()) {
+                self::destroySession();
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    /**
+     * Session-Rechte mit users abgleichen. false = Session ungueltig
+     * (Konto fehlt, inaktiv, nicht freigegeben oder Passwort seit Login geaendert).
+     */
+    private static function syncAuthFromDb() {
+        try {
+            $pdo = LmoDatabase::getInstance();
+            try {
+                $st = $pdo->prepare("SELECT role, active, status, auth_changed_at FROM users WHERE id = ?");
+                $st->execute([(int)$_SESSION['lmo26_user_id']]);
+            } catch (Exception $e) {
+                // Spalte auth_changed_at noch nicht vorhanden
+                $st = $pdo->prepare("SELECT role, active, status, NULL AS auth_changed_at FROM users WHERE id = ?");
+                $st->execute([(int)$_SESSION['lmo26_user_id']]);
+            }
+            $u = $st->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return true; // DB nicht erreichbar: nichts entziehen, Endpunkt scheitert ohnehin
+        }
+        if (!$u || !(int)$u['active'] || (($u['status'] ?? 'active') !== 'active')) {
+            return false;
+        }
+        if (!empty($u['auth_changed_at'])) {
+            $changed = strtotime($u['auth_changed_at'] . ' UTC');
+            $loginAt = (int)($_SESSION['lmo26_login_time'] ?? 0);
+            if ($changed && $changed > $loginAt) return false;
+        }
+        $_SESSION['lmo26_user_role'] = $u['role'];
+        $_SESSION['lmo26_admin'] = in_array($u['role'], ['editor', 'admin'], true);
+        $_SESSION['lmo26_auth'] = true;
+        return true;
+    }
+
+    /**
+     * Passwort/Zugang eines Kontos geaendert: alle anderen Sessions dieses Kontos
+     * werden beim naechsten Request ungueltig. Die eigene laufende Session bleibt.
+     */
+    public static function markAuthChanged(PDO $pdo, int $userId) {
+        $cols = array_column($pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('auth_changed_at', $cols, true)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN auth_changed_at DATETIME");
+        }
+        $pdo->prepare("UPDATE users SET auth_changed_at = datetime('now') WHERE id = ?")->execute([$userId]);
+        if (session_status() === PHP_SESSION_ACTIVE && (int)($_SESSION['lmo26_user_id'] ?? 0) === $userId) {
+            $_SESSION['lmo26_login_time'] = time();
+        }
     }
 
     /**
@@ -166,7 +230,8 @@ class Security {
      * Check rate limiting for login attempts
      * Returns: true if allowed, false if blocked
      */
-    public static function checkRateLimit($identifier) {
+    public static function checkRateLimit($identifier, $maxAttempts = null) {
+        $maxAttempts = $maxAttempts ?? self::MAX_LOGIN_ATTEMPTS;
         $pdo = self::getRateLimitDb();
 
         // Clean old entries
@@ -193,7 +258,7 @@ class Security {
             }
 
             // Check attempts
-            if ($record['attempts'] >= self::MAX_LOGIN_ATTEMPTS) {
+            if ($record['attempts'] >= $maxAttempts) {
                 // Lock the account
                 $lockUntil = date('Y-m-d H:i:s', time() + self::LOCKOUT_TIME);
                 $stmt = $pdo->prepare("UPDATE rate_limits SET locked_until = ? WHERE identifier = ?");
@@ -310,15 +375,9 @@ class Security {
      * Get client IP address
      */
     public static function getClientIp() {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-
-        // Check for proxy headers (be careful with these in production)
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            $ip = trim($ips[0]);
-        }
-
-        return $ip;
+        // Nur REMOTE_ADDR: X-Forwarded-For kann jeder Client selbst setzen
+        // und wuerde damit die Login-/Reset-Drosselung aushebeln.
+        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     }
 
     /**
@@ -338,7 +397,8 @@ class Security {
      * Require CSRF token for POST requests
      */
     public static function requireCsrf() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true)) {
             $input = json_decode(file_get_contents('php://input'), true);
             $token = $input['csrf_token'] ?? $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 

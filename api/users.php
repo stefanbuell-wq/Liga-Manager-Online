@@ -56,10 +56,19 @@ function requireAdmin($pdo) {
     if (!$userId) {
         return false; // keine Legacy-Sessions ohne Benutzer-ID mehr
     }
-    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ? AND active = 1 AND COALESCE(status,'active') = 'active'");
     $stmt->execute([$userId]);
     $role = $stmt->fetchColumn();
     return $role === 'admin';
+}
+
+// Nur Admins: Benutzerdaten (E-Mail, Status) sind fuer Redakteure tabu
+function requireAdminOr403($pdo) {
+    if (!requireAdmin($pdo)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Nur für Administratoren']);
+        exit;
+    }
 }
 
 try {
@@ -70,10 +79,8 @@ try {
     // GET: Benutzerliste
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['list'])) {
         requireAuth();
-
-        if (requireAdmin($pdo)) {
-            $accounts->deactivateInactiveDaily();
-        }
+        requireAdminOr403($pdo);
+        $accounts->deactivateInactiveDaily();
         $withLegacy = !empty($_GET['legacy']);
         $stmt = $pdo->query("
             SELECT id, username, display_name, role, active, created_at, last_login, email, status, legacy_claim
@@ -97,6 +104,7 @@ try {
     // GET: Einzelner Benutzer
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
         requireAuth();
+        requireAdminOr403($pdo);
 
         $stmt = $pdo->prepare("
             SELECT id, username, display_name, role, active, created_at, last_login
@@ -187,6 +195,16 @@ try {
                 if (!in_array($role, ['user', 'editor', 'admin'], true)) {
                     throw new Exception('Ungültige Rolle');
                 }
+                // Letzten aktiven Admin nicht herabstufen/deaktivieren
+                if ($role !== 'admin' || !$active) {
+                    $st = $pdo->prepare("SELECT role, active FROM users WHERE id = ?");
+                    $st->execute([$userId]);
+                    $cur = $st->fetch();
+                    if ($cur && $cur['role'] === 'admin' && (int)$cur['active'] === 1) {
+                        $others = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND active = 1 AND COALESCE(status,'active') = 'active' AND id <> " . (int)$userId)->fetchColumn();
+                        if ($others === 0) throw new Exception('Der letzte aktive Administrator kann nicht herabgestuft oder deaktiviert werden');
+                    }
+                }
                 // Reaktivieren setzt auch den Status zurueck (z. B. nach Inaktivitaet)
                 $stmt = $pdo->prepare("
                     UPDATE users SET display_name = ?, role = ?, active = ?,
@@ -203,6 +221,7 @@ try {
                     }
                     $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
                     $stmt->execute([password_hash($newPassword, PASSWORD_DEFAULT), $userId]);
+                    Security::markAuthChanged($pdo, (int)$userId);
                 }
 
                 echo json_encode([
@@ -278,6 +297,7 @@ try {
                 // Neues Passwort setzen
                 $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
                 $stmt->execute([password_hash($newPassword, PASSWORD_DEFAULT), $userId]);
+                Security::markAuthChanged($pdo, (int)$userId);
 
                 echo json_encode([
                     'success' => true,

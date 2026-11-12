@@ -1,4 +1,6 @@
 <?php
+// Nur per Kommandozeile ausfuehrbar (Wartung/Migration) - nie ueber den Webserver
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 // api/migrate-to-sqlite.php
 header('Content-Type: text/plain; charset=utf-8');
 ini_set('display_errors', 1);

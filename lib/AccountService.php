@@ -169,6 +169,7 @@ class AccountService
                 $this->pdo->prepare("UPDATE users SET password_hash = ?, email = ?, email_verified_at = ?, status = 'active', active = 1,
                                      status_changed_at = datetime('now') WHERE id = ?")
                     ->execute([$u['password_hash'], $u['email'], $u['email_verified_at'], $legacy['id']]);
+                Security::markAuthChanged($this->pdo, (int)$legacy['id']);
                 $this->pdo->prepare("DELETE FROM auth_tokens WHERE user_id = ?")->execute([$userId]);
                 $loginName = $legacy['username'];
             } else {
@@ -219,6 +220,7 @@ class AccountService
         $row = $this->consumeToken($token, 'reset');
         $this->pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?")
             ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $row['user_id']]);
+        Security::markAuthChanged($this->pdo, (int)$row['user_id']); // offene Sitzungen beenden
     }
 
     /** Admin loest Reset-Mail fuer ein Konto aus */

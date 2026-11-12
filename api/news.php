@@ -6,8 +6,16 @@ header('Content-Type: application/json; charset=utf-8');
 // Log errors to a file if needed, but for now ensure valid JSON output
 try {
     require_once __DIR__ . '/../lib/LmoDatabase.php';
+    require_once __DIR__ . '/../lib/Security.php';
 
-    $id = $_GET['id'] ?? null;
+    // Rohdaten (unbereinigter Inhalt) nur fuer die Redaktion; oeffentlich gilt get-news.php
+    if (!Security::isLoggedIn()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Nicht autorisiert']);
+        exit;
+    }
+
+    $id = (int)($_GET['id'] ?? 0);
 
     if (!$id) {
         echo json_encode(['error' => 'No ID provided']);
@@ -15,7 +23,7 @@ try {
     }
 
     $pdo = LmoDatabase::getInstance();
-    $stmt = $pdo->prepare("SELECT * FROM news WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT id, title, short_content, content, author, timestamp, match_date FROM news WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $news = $stmt->fetch(PDO::FETCH_ASSOC);
 

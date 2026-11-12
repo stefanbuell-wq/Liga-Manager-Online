@@ -979,6 +979,9 @@
             const data = getFormData();
 
             try {
+                // CSRF-Token der aktuellen Sitzung holen
+                const auth = await (await fetch(`${API_BASE}/check-auth.php`, { credentials: 'include' })).json();
+                data.csrf_token = auth.csrf_token || '';
                 const res = await fetch(`${API_BASE}/theme.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

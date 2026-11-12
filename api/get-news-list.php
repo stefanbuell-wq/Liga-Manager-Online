@@ -2,6 +2,14 @@
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../lib/LmoDatabase.php';
+require_once __DIR__ . '/../lib/Security.php';
+
+// Nur fuer die Redaktion (Admin-Liste); oeffentlich gilt get-news.php?list=1
+if (!Security::isLoggedIn()) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Nicht autorisiert']);
+    exit;
+}
 
 try {
     $pdo = LmoDatabase::getInstance();

@@ -17,23 +17,16 @@
     Options -Indexes
 </IfModule>
 
-# Protect sensitive directories
+# Punktdateien (.git, .env, .htaccess ...) und Projekt-/Backup-Dateien nie ausliefern
 <FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(md|bat|ps1|psd1|sh|zip|tar|gz|sqlite|sqlite3|db|bak|log|ini|example\.php)$">
+    Require all denied
 </FilesMatch>
 
-# Protect data directory
-<DirectoryMatch "^.*/(data|config)/.*">
-    Order allow,deny
-    Deny from all
-</DirectoryMatch>
-
-# Protect lib directory
-<DirectoryMatch "^.*/(lib)/.*">
-    Order allow,deny
-    Deny from all
-</DirectoryMatch>
+# data/, config/, lib/, scripts/, cron/ sind per eigener .htaccess gesperrt
+# (DirectoryMatch ist in .htaccess nicht zulaessig und wurde entfernt)
 
 # Enable gzip compression
 <IfModule mod_deflate.c>

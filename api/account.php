@@ -84,6 +84,7 @@ try {
                 if ($err) throw new InvalidArgumentException(implode('. ', $err));
                 $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?")
                     ->execute([password_hash($in['new_password'], PASSWORD_DEFAULT), $u['id']]);
+                Security::markAuthChanged($pdo, (int)$u['id']); // andere Sitzungen abmelden
                 out(['success' => true, 'message' => 'Passwort geändert.']);
             }
             $email = strtolower(trim((string)($in['email'] ?? '')));

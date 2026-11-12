@@ -9,7 +9,14 @@ require_once __DIR__ . '/../lib/LmoDatabase.php';
 require_once __DIR__ . '/../lib/Security.php';
 
 try {
-    Security::checkAuth();
+    // Nur Redaktion (editor/admin) mit gueltigem CSRF-Token
+    Security::initSession();
+    if (!Security::isLoggedIn()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Nicht autorisiert']);
+        exit;
+    }
+    Security::requireCsrf();
     
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);

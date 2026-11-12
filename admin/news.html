@@ -1305,7 +1305,7 @@
                     </div>
                     <div class="news-actions">
                         <button class="btn btn-secondary btn-sm" onclick="editNews(${n.id})">Bearbeiten</button>
-                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${n.id}, '${escapeJs(n.title)}')">Loeschen</button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${Number(n.id)}, '${escapeJs(n.title)}')">Loeschen</button>
                     </div>
                 </div>
             `).join('');
@@ -1691,8 +1691,8 @@
             container.innerHTML = matches.map(m => {
                 const isLinked = linkedMatchIds.includes(m.id);
                 return `
-                    <div class="match-result ${isLinked ? 'is-linked' : ''}" onclick="toggleMatchLink(${m.id}, '${m.match_date || ''}', '${escapeJs(m.home)}', '${escapeJs(m.guest)}')">
-                        <span>${m.match_date || '?'}: ${q ? highlight(escapeHtml(m.home), q) : escapeHtml(m.home)} - ${q ? highlight(escapeHtml(m.guest), q) : escapeHtml(m.guest)}</span>
+                    <div class="match-result ${isLinked ? 'is-linked' : ''}" onclick="toggleMatchLink(${Number(m.id)}, '${escapeJs(m.match_date || '')}', '${escapeJs(m.home)}', '${escapeJs(m.guest)}')">
+                        <span>${escapeHtml(m.match_date || '?')}: ${q ? highlight(escapeHtml(m.home), q) : escapeHtml(m.home)} - ${q ? highlight(escapeHtml(m.guest), q) : escapeHtml(m.guest)}</span>
                         <span class="badge ${isLinked ? 'badge-linked' : ''}">${isLinked ? 'Verknuepft' : 'Hinzufuegen'}</span>
                     </div>
                 `;
@@ -1812,9 +1812,12 @@
             return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
+        // Fuer JS-Strings in HTML-Attributen (onclick="f('...')"): erst JS-, dann HTML-Kodierung,
+        // sonst koennte ein " im Titel das Attribut beenden
         function escapeJs(text) {
             if (!text) return '';
-            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ')
+                .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         function highlight(htmlEscapedText, query) {

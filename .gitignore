@@ -42,7 +42,8 @@ data/cache/
 # Hochgeladene Sponsorenbilder (nur auf dem Server, nicht im Repo)
 img/foerderer/*
 !img/foerderer/.htaccess
-config/
+config/*
+!config/.htaccess
 data/login.override
 data/ratelimit.off
 
@@ -71,3 +72,6 @@ deploy/deploy.config.psd1
 # Altbilder der frueheren hafo.de-Seite (scripts/build-legacy-images.php, separat hochladen)
 legacy/*
 !legacy/.htaccess
+
+# Zugriffssperren fuer Verzeichnisse mit Daten/Code (nicht ausliefern)
+!data/.htaccess
