@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261114">
+    <link rel="stylesheet" href="css/portal.css?v=20261115">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -64,7 +64,7 @@
                 <nav class="nav">
                     <a href="#news-section" class="nav-link active">News</a>
                     <a href="javascript:void(0)" onclick="goToTab('overview')" class="nav-link">Ligen</a>
-                    <a href="#live-section" class="nav-link">Spiele</a>
+                    <a href="javascript:void(0)" onclick="goToTab('schedule')" class="nav-link">Spiele</a>
                     <a href="javascript:void(0)" onclick="goToTab('table')" class="nav-link">Tabelle</a>
                     <a href="forum.html" class="nav-link">Forum</a>
                     <a href="suche.html" class="nav-link">🔍 Suche</a>
@@ -98,7 +98,7 @@
             <nav class="mobile-nav">
                 <a href="#news-section" class="mobile-nav-link active" onclick="toggleMobileMenu()">News</a>
                 <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('overview')">Ligen</a>
-                <a href="#live-section" class="mobile-nav-link" onclick="toggleMobileMenu()">Spiele</a>
+                <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('schedule')">Spiele</a>
                 <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('table')">Tabelle</a>
                 <a href="forum.html" class="mobile-nav-link" onclick="toggleMobileMenu()">Forum</a>
                 <a href="suche.html" class="mobile-nav-link">🔍 Suche</a>
@@ -163,24 +163,7 @@
         </section>
 
         <!-- Live Ticker -->
-        <section class="live-ticker" id="live-section">
-            <div class="container">
-                <div class="live-ticker-header">
-                    <div class="live-ticker-title">
-                        <span class="live-indicator">
-                            <span class="live-dot"></span>
-                            Live
-                        </span>
-                        <span id="live-ticker-title">Aktuelle Spiele</span>
-                    </div>
-                    <a href="javascript:void(0)" onclick="goToTab('schedule')" class="btn btn-ghost">Alle Spiele →</a>
-                </div>
-
-                <div class="live-ticker-scroll" id="live-ticker">
-                    <!-- Match Cards will be populated by JS -->
-                </div>
-            </div>
-        </section>
+        <!-- Spieltag-Leiste entfernt (12.11.2026): derselbe Spieltag steht im Bereich "Aktuell" -->
 
         <!-- Sponsoren (Seitenbanner auf schmalen Bildschirmen) -->
         <div data-fd-slot="inline" class="container"></div>
@@ -488,7 +471,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initLeagueSelector();
             initTabs();
-            loadLiveMatches();
             initNewsFilter();
             loadNews();
             loadForumPreview();
@@ -982,6 +964,13 @@
             }
         }
 
+        // 📰 = Spielbericht, 🔭 = nur Vorschau zum Spieltag (noch kein Bericht)
+        function newsButton(m, cls, style = '') {
+            if (!(m.has_news && m.news_id)) return `<span class="${cls}" style="${style}"></span>`;
+            const label = m.news_is_preview ? 'Vorschau lesen' : 'Spielbericht lesen';
+            return `<button class="${cls}" style="${style}" onclick="showNews(${Number(m.news_id)})" title="${label}" aria-label="${label}">${m.news_is_preview ? '🔭' : '📰'}</button>`;
+        }
+
         // === KOMPAKTE SPIELZEILE (Startseite "Aktuell" und Spieltag-Leiste) ===
         // Heim [Wappen]  5 : 2  [Wappen] Gast · Datum · 📰  – alles in einer Zeile
         function matchRow(m, opts = {}) {
@@ -989,13 +978,13 @@
             const hw = played && Number(m.home_goals) > Number(m.guest_goals);
             const gw = played && Number(m.guest_goals) > Number(m.home_goals);
             const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
-            const when = [m.date, m.time ? m.time + ' Uhr' : ''].filter(Boolean).join(' · ');
+            // kurz: "16.10. 17:00" (Jahr weglassen), damit die Vereinsnamen Platz haben
+            const shortDate = String(m.date || '').replace(/^(\d{1,2}\.\d{1,2}\.)\d{2,4}$/, '$1');
+            const when = [shortDate, m.time || ''].filter(Boolean).join(' ');
             const score = played
                 ? `<span class="${hw ? 'win' : ''}">${sqEsc(m.home_goals)}</span>:<span class="${gw ? 'win' : ''}">${sqEsc(m.guest_goals)}</span>`
                 : '–:–';
-            const report = m.has_news && m.news_id
-                ? `<button class="mrow-report" onclick="showNews(${Number(m.news_id)})" title="Spielbericht lesen" aria-label="Spielbericht lesen">📰</button>`
-                : '<span class="mrow-report"></span>';
+            const report = newsButton(m, 'mrow-report');
             return `
                 <div class="mrow">
                     <span class="mrow-team home ${hw ? 'win' : ''}"><span class="mrow-name">${sqEsc(m.home)}</span>${logo(m.home)}</span>
@@ -1200,9 +1189,8 @@
             const row = m => {
                 const played = m.played;
                 const when = [m.date, m.time ? m.time + ' Uhr' : ''].filter(Boolean).join(' · ');
-                const report = m.has_news && m.news_id
-                    ? `<button onclick="showNews(${Number(m.news_id)})" title="Spielbericht lesen" aria-label="Spielbericht lesen"
-                         style="border:none; background:none; cursor:pointer; font-size:1.1rem; padding:0 var(--spacing-xs);">📰</button>`
+                const report = (m.has_news && m.news_id)
+                    ? newsButton(m, '', 'border:none; background:none; cursor:pointer; font-size:1.1rem; padding:0 var(--spacing-xs);')
                     : '<span style="display:inline-block; width:28px;"></span>';
                 return `
                     <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">

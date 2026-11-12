@@ -14,11 +14,16 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
   - Der ganze Spieltag ist auf einen Blick zu sehen, wie im Spielplan.
 - Sieger und Siegtore sind hervorgehoben. Noch nicht gespielte Partien zeigen „–:–“.
 - Auf dem Handy stehen Datum und Notiz klein unter der Zeile.
+- **📰 und 🔭:** 📰 steht nur noch bei einem echten Spielbericht. Gibt es zu einem Spiel nur die Spieltags-Vorschau, steht dort 🔭. Das gilt auch im Spielplan.
+- **Keine doppelte Anzeige mehr:** Die Spieltag-Leiste oben auf der Startseite ist entfallen, derselbe Spieltag steht im Bereich „Aktuell“. Der Menüpunkt „Spiele“ führt zum Spielplan.
+- Lange Vereinsnamen werden umbrochen statt abgeschnitten. Das Datum steht kurz da, z. B. „16.10. 17:00“.
 
 ### Technik
 
 - Neue Funktion `matchRow()` in `index.html` für `renderMatches()` (Tab „Aktuell“) und die Spieltag-Leiste.
-- CSS-Klassen `.mlist`/`.mrow` in `css/portal.css` (Version 20261114). Die Leiste ist auf breiten Bildschirmen zweispaltig.
+- CSS-Klassen `.mlist`/`.mrow` in `css/portal.css` (jetzt Version 20261115).
+- `LmoRepository::getMatchIdsWithNews` liefert `is_preview`. Die Spieldaten haben das neue Feld `news_is_preview`, das Frontend nutzt dafür `newsButton()`.
+- Spieltag-Leiste (`#live-section`) entfernt, `loadLiveMatches()` wird nicht mehr aufgerufen.
 
 ---
 

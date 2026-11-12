@@ -107,7 +107,8 @@ class LmoRepository
         $matchNewsLinks = $this->getMatchIdsWithNews($league['id']);
         $newsLookup = [];
         foreach ($matchNewsLinks as $link) {
-            $newsLookup[$link['match_id']] = $link['news_id'];
+            // Letzter Eintrag gewinnt: Spielbericht vor Vorschau (siehe ORDER BY)
+            $newsLookup[$link['match_id']] = ['id' => $link['news_id'], 'preview' => (int)$link['is_preview'] === 1];
         }
 
         // Match-IDs den Ausgabe-Matches zuordnen
@@ -132,7 +133,9 @@ class LmoRepository
 
             if (isset($matchesOut[$r][$idx]) && isset($newsLookup[$dbMatch['id']])) {
                 $matchesOut[$r][$idx]['has_news'] = true;
-                $matchesOut[$r][$idx]['news_id'] = $newsLookup[$dbMatch['id']];
+                $matchesOut[$r][$idx]['news_id'] = $newsLookup[$dbMatch['id']]['id'];
+                // nur Vorschau, (noch) kein Spielbericht -> Frontend zeigt 🔭 statt 📰
+                $matchesOut[$r][$idx]['news_is_preview'] = $newsLookup[$dbMatch['id']]['preview'];
             }
         }
 
@@ -278,7 +281,7 @@ class LmoRepository
     public function getMatchIdsWithNews($leagueId)
     {
         $stmt = $this->pdo->prepare("
-            SELECT DISTINCT mn.match_id, mn.news_id
+            SELECT DISTINCT mn.match_id, mn.news_id, (n.title LIKE 'Vorschau%') AS is_preview
             FROM match_news mn
             JOIN matches m ON mn.match_id = m.id
             JOIN news n ON n.id = mn.news_id
