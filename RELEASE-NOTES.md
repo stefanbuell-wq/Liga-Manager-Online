@@ -9,10 +9,10 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ### Für Redaktion und Leser
 
-- **Schärfere Wappen:** Für 213 von 228 Vereinen gibt es jetzt ein neues, scharfes Wappen (offizielle Logos von fussball.de) statt der kleinen, pixeligen Bildchen.
+- **Schärfere Wappen:** Für 214 von 228 Vereinen gibt es jetzt ein neues, scharfes Wappen (offizielle Logos von fussball.de) statt der kleinen, pixeligen Bildchen.
   - Das gilt überall: Tabelle, Spielplan, Spieltag, Saison eines Vereins, Kader und auch in allen alten Spielberichten.
   - Einige Vereine, die bisher gar kein Wappen hatten, haben jetzt eines (z. B. Kickers Emden, Hannover 96, Arminia Hannover).
-  - Bei 15 meist aufgelösten oder sehr kleinen Vereinen (z. B. St. Georg/Horn, Inter 2000, TBS Pinneberg) bleibt das alte Wappen bzw. keines.
+  - Bei 14 meist aufgelösten oder sehr kleinen Vereinen (z. B. St. Georg/Horn, Inter 2000, GSK Bergedorf) bleibt das alte Wappen bzw. keines.
 - In Spielberichten werden Wappen höchstens 72 Pixel groß angezeigt.
 
 ### Technik
