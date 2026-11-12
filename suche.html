@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suche - HAFO.de</title>
+    <meta name="description" content="HAFO.de durchsuchen: Vereine, Ergebnisse, Ligen, Spieler, Berichte und Forum.">
+
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/portal.css?v=20261113">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <script>
+        (function() {
+            const apply = t => t && t.cssVariables && Object.entries(t.cssVariables).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+            try { apply(JSON.parse(localStorage.getItem('hafo_theme') || 'null')); } catch (e) {}
+            fetch('api/theme.php').then(r => r.json()).then(t => { try { localStorage.setItem('hafo_theme', JSON.stringify(t)); } catch (e) {} apply(t); }).catch(() => {});
+        })();
+    </script>
+    <style>
+        .search-wrap { max-width: 1000px; margin: var(--spacing-xl) auto var(--spacing-2xl); padding: 0 var(--spacing-md); }
+        .search-wrap h1 { font-family: var(--font-display); font-size: 2rem; margin: 0 0 var(--spacing-md); }
+        .search-hint { color: var(--color-text-muted); margin: var(--spacing-sm) 0 0; font-size: .95rem; }
+        .search-hint a { color: var(--color-primary); }
+        .search-status { margin: var(--spacing-lg) 0 var(--spacing-md); color: var(--color-text-secondary); font-size: 1rem; }
+        .sr-section { margin-top: var(--spacing-xl); }
+        .sr-section h2 { font-size: 1.25rem; margin: 0 0 var(--spacing-sm); display: flex; align-items: baseline; gap: 10px; }
+        .sr-section h2 .count { font-size: .9rem; font-weight: 600; color: var(--color-text-muted); }
+        .sr-list { display: flex; flex-direction: column; gap: 8px; }
+        .sr-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--color-bg-card); border: 1px solid var(--border-color);
+                   border-radius: var(--radius-md); color: var(--color-text-primary); text-decoration: none; font-size: 1rem; }
+        a.sr-item:hover { border-color: var(--color-primary); }
+        .sr-item img { width: 32px; height: 32px; object-fit: contain; flex: none; }
+        .sr-icon { width: 32px; text-align: center; font-size: 1.4rem; flex: none; }
+        .sr-main { flex: 1; min-width: 0; }
+        .sr-title { font-weight: 700; }
+        .sr-meta { color: var(--color-text-muted); font-size: .88rem; margin-top: 2px; }
+        .sr-more { margin-top: 10px; }
+        .sr-meta a { color: inherit; text-decoration: underline; text-decoration-color: var(--border-color-hover); }
+        .sr-meta a:hover { color: var(--color-primary); }
+        .sr-match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+        .sr-team { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .sr-team span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sr-team.home { justify-content: flex-end; text-align: right; }
+        .sr-team img { width: 26px; height: 26px; }
+        .sr-score { font-weight: 800; font-size: 1.1rem; min-width: 52px; text-align: center; }
+        .sr-score.open { color: var(--color-text-muted); font-weight: 600; }
+        .sr-report { flex: none; font-size: .9rem; font-weight: 600; color: var(--color-primary); text-decoration: none; padding: 6px 10px;
+                     border: 1px solid var(--border-color); border-radius: 999px; white-space: nowrap; }
+        .sr-report:hover { border-color: var(--color-primary); }
+        .sr-club details { margin-top: 6px; font-size: .9rem; }
+        .sr-club summary { cursor: pointer; color: var(--color-primary); }
+        .sr-club .seasons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .sr-club .seasons a { font-size: .85rem; padding: 4px 10px; border: 1px solid var(--border-color); border-radius: 999px; color: var(--color-text-primary); text-decoration: none; }
+        .sr-club .seasons a:hover { border-color: var(--color-primary); }
+        .sr-kind { display: inline-block; font-size: .72rem; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--color-bg-elevated); margin-right: 6px; }
+        @media (max-width: 640px) {
+            .sr-match { grid-template-columns: 1fr; gap: 2px; }
+            .sr-team.home { justify-content: flex-start; text-align: left; }
+            .sr-score { text-align: left; }
+            .sr-item { align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                </a>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                    <a href="suche.html" class="nav-link active">🔍 Suche</a>
+                </nav>
+                <div class="header-actions"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="search-wrap">
+        <h1>🔍 Suche</h1>
+        <form class="news-search" id="search-form" role="search">
+            <input type="search" id="q" placeholder="Verein, Spieler, Liga, Stichwort …" aria-label="Suchbegriff" autocomplete="off" autofocus>
+            <button type="submit" class="btn btn-primary">Suchen</button>
+        </form>
+        <p class="search-hint">Beispiele:
+            <a href="?q=Paloma+Dassendorf">Paloma Dassendorf</a> (alle Duelle) ·
+            <a href="?q=Curslack+2024">Curslack 2024</a> ·
+            <a href="?q=Oberliga+15%2F16">Oberliga 15/16</a> ·
+            <a href="?q=Knebel">Knebel</a>
+        </p>
+
+        <p class="search-status" id="status" hidden></p>
+        <div id="results"></div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="kontakt.html">Kontakt</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    (function () {
+        const SECTIONS = [
+            { key: 'vereine',  title: 'Vereine',            more: 'Alle Vereine' },
+            { key: 'spiele',   title: 'Spiele & Ergebnisse', more: 'Weitere Spiele' },
+            { key: 'ligen',    title: 'Ligen & Spielzeiten', more: 'Weitere Ligen' },
+            { key: 'spieler',  title: 'Spieler',             more: 'Weitere Spieler' },
+            { key: 'berichte', title: 'Berichte',            more: 'Weitere Berichte' },
+            { key: 'forum',    title: 'Forum',               more: 'Weitere Themen' },
+        ];
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const ligaUrl = f => 'index.html?liga=' + encodeURIComponent(f || '');
+        const img = src => src ? `<img src="${esc(src)}" alt="" loading="lazy">` : '';
+        const num = n => Number(n).toLocaleString('de-DE');
+
+        const render = {
+            vereine: c => `
+                <div class="sr-item sr-club">
+                    ${c.logo ? img(c.logo) : '<span class="sr-icon">🛡️</span>'}
+                    <div class="sr-main">
+                        <div class="sr-title">${esc(c.name)}</div>
+                        ${c.leagues.length ? `<div class="sr-meta">Zuletzt: <a href="${ligaUrl(c.leagues[0].file)}">${esc(c.leagues[0].name)}</a></div>` : ''}
+                        ${c.leagues.length > 1 ? `<details><summary>Alle ${c.leagues.length} Spielzeiten</summary>
+                            <div class="seasons">${c.leagues.map(l => `<a href="${ligaUrl(l.file)}">${esc(l.name)}</a>`).join('')}</div></details>` : ''}
+                    </div>
+                </div>`,
+            spiele: m => `
+                <div class="sr-item">
+                    <div class="sr-main">
+                        <div class="sr-meta" style="margin:0 0 4px;">${esc(m.date || 'ohne Datum')} · <a href="${ligaUrl(m.league_file)}">${esc(m.league)}</a>${m.round ? ' · ' + m.round + '. Spieltag' : ''}</div>
+                        <div class="sr-match">
+                            <div class="sr-team home"><span>${esc(m.home)}</span>${img(m.home_logo)}</div>
+                            <div class="sr-score ${m.score ? '' : 'open'}">${m.score ? esc(m.score) : '–:–'}</div>
+                            <div class="sr-team">${img(m.guest_logo)}<span>${esc(m.guest)}</span></div>
+                        </div>
+                    </div>
+                    ${m.news_id ? `<a class="sr-report" href="index.html?news=${Number(m.news_id)}">📰 Bericht</a>` : ''}
+                </div>`,
+            ligen: l => `
+                <a class="sr-item" href="${ligaUrl(l.file)}">
+                    <span class="sr-icon">🏆</span>
+                    <div class="sr-main"><div class="sr-title">${esc(l.name)}</div><div class="sr-meta">Tabelle, Spielplan und Ergebnisse</div></div>
+                </a>`,
+            spieler: p => `
+                <a class="sr-item" href="${ligaUrl(p.league_file)}">
+                    ${p.team_logo ? img(p.team_logo) : '<span class="sr-icon">👤</span>'}
+                    <div class="sr-main">
+                        <div class="sr-title">${esc(p.name)}${p.number ? ' <span class="sr-meta">#' + esc(p.number) + '</span>' : ''}</div>
+                        <div class="sr-meta">${[p.position, p.team, p.league].filter(Boolean).map(esc).join(' · ')}</div>
+                    </div>
+                </a>`,
+            berichte: n => `
+                <a class="sr-item" href="index.html?news=${Number(n.id)}">
+                    <span class="sr-icon">${n.kind === 'Vorschau' ? '🔭' : n.kind === 'Spielbericht' ? '⚽' : '📰'}</span>
+                    <div class="sr-main">
+                        <div class="sr-title">${esc(n.title)}</div>
+                        <div class="sr-meta"><span class="sr-kind">${esc(n.kind)}</span>${[n.date, n.author].filter(Boolean).map(esc).join(' · ')}</div>
+                    </div>
+                </a>`,
+            forum: t => `
+                <a class="sr-item" href="forum.html?topic=${Number(t.id)}">
+                    <span class="sr-icon">💬</span>
+                    <div class="sr-main">
+                        <div class="sr-title">${esc(t.title)}</div>
+                        <div class="sr-meta">${num(t.posts)} Beiträge${t.hits ? ' · ' + num(t.hits) + ' Treffer' : ''}${t.last ? ' · zuletzt ' + esc(t.last) : ''}</div>
+                    </div>
+                </a>`,
+        };
+
+        const input = document.getElementById('q');
+        const status = document.getElementById('status');
+        const results = document.getElementById('results');
+        let current = '';
+
+        async function api(q, type, offset) {
+            const p = new URLSearchParams({ q });
+            if (type) { p.set('type', type); p.set('offset', offset); p.set('limit', 20); }
+            const res = await fetch('api/search.php?' + p);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Suche fehlgeschlagen');
+            return data.results;
+        }
+
+        async function search(q) {
+            current = q;
+            if (q.length < 2) { status.hidden = false; status.textContent = 'Bitte mindestens 2 Zeichen eingeben.'; results.innerHTML = ''; return; }
+            status.hidden = false; status.textContent = 'Suche läuft …';
+            try {
+                const r = await api(q);
+                if (q !== current) return;
+                const found = SECTIONS.filter(s => r[s.key] && r[s.key].total > 0);
+                if (!found.length) { status.textContent = `Nichts gefunden für „${q}“. Tipp: nur einen Teil des Namens eingeben, z. B. „Curslack“.`; results.innerHTML = ''; return; }
+                status.textContent = `Ergebnisse für „${q}“: ` + found.map(s => `${s.title} (${num(r[s.key].total)})`).join(' · ');
+                results.innerHTML = found.map(s => {
+                    const d = r[s.key];
+                    return `<section class="sr-section" id="sr-${s.key}">
+                        <h2>${s.title} <span class="count">${num(d.total)}</span></h2>
+                        <div class="sr-list">${d.items.map(render[s.key]).join('')}</div>
+                        ${d.total > d.items.length ? `<button type="button" class="btn btn-secondary sr-more" data-type="${s.key}" data-offset="${d.items.length}" data-total="${d.total}">${s.more} anzeigen</button>` : ''}
+                    </section>`;
+                }).join('');
+            } catch (e) {
+                status.textContent = e.message || 'Suche fehlgeschlagen. Bitte später erneut versuchen.';
+            }
+        }
+
+        results.addEventListener('click', async e => {
+            const btn = e.target.closest('.sr-more');
+            if (!btn) return;
+            const type = btn.dataset.type, offset = Number(btn.dataset.offset), total = Number(btn.dataset.total);
+            btn.disabled = true; btn.textContent = 'Lädt …';
+            try {
+                const r = await api(current, type, offset);
+                const items = r[type].items;
+                btn.previousElementSibling.insertAdjacentHTML('beforeend', items.map(render[type]).join(''));
+                const next = offset + items.length;
+                if (next >= total || !items.length) btn.remove();
+                else { btn.dataset.offset = next; btn.disabled = false; btn.textContent = SECTIONS.find(s => s.key === type).more + ' anzeigen'; }
+            } catch (err) { btn.disabled = false; btn.textContent = 'Erneut versuchen'; }
+        });
+
+        document.getElementById('search-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const q = input.value.trim();
+            history.pushState(null, '', '?q=' + encodeURIComponent(q));
+            search(q);
+        });
+        window.addEventListener('popstate', () => { input.value = new URLSearchParams(location.search).get('q') || ''; if (input.value) search(input.value.trim()); });
+
+        const start = new URLSearchParams(location.search).get('q');
+        if (start) { input.value = start; search(start.trim()); }
+    })();
+    </script>
+    <script src="js/foerderer.js" defer></script>
+</body>
+</html>
