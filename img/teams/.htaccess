@@ -1,0 +1,8 @@
+# Hochaufloesende Wappen: Anfrage nach X.gif liefert hd/X.png, wenn vorhanden
+# (gilt fuer alle Seiten und fuer gespeicherte Berichte; Quelle: scripts/fetch-crests.php)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} ^(.+)/([A-Za-z0-9]+)\.gif$
+    RewriteCond %1/hd/%2.png -f
+    RewriteRule ^([A-Za-z0-9]+)\.gif$ hd/$1.png [L]
+</IfModule>

@@ -5,6 +5,24 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 12.11.2026 (4. Nachtrag) – Vereinswappen in hoher Auflösung
+
+### Für Redaktion und Leser
+
+- **Schärfere Wappen:** Für 213 von 228 Vereinen gibt es jetzt ein neues, scharfes Wappen (offizielle Logos von fussball.de) statt der kleinen, pixeligen Bildchen.
+  - Das gilt überall: Tabelle, Spielplan, Spieltag, Saison eines Vereins, Kader und auch in allen alten Spielberichten.
+  - Einige Vereine, die bisher gar kein Wappen hatten, haben jetzt eines (z. B. Kickers Emden, Hannover 96, Arminia Hannover).
+  - Bei 15 meist aufgelösten oder sehr kleinen Vereinen (z. B. St. Georg/Horn, Inter 2000, TBS Pinneberg) bleibt das alte Wappen bzw. keines.
+- In Spielberichten werden Wappen höchstens 72 Pixel groß angezeigt.
+
+### Technik
+
+- `img/teams/hd/<Schluessel>.png` (160 px, aus 350 px verkleinert); `img/teams/.htaccess` liefert bei Anfrage `X.gif` das `hd/X.png`, falls vorhanden (kein Code-Umbau, gilt auch fuer gespeichertes Berichts-HTML)
+- Import: `scripts/fetch-crests.php` (fussball.de-Suche, Zuordnung `data/crests/map.json`, Suchbegriffe/Handzuordnung `data/crests/aliases.json`), `scripts/resize-crests.php`, Pruefseite `scripts/crest-review.php`
+- `portal.css`: `.news-body img[src*="img/teams/"]` max. 72 px; `portal.css?v=20261119`
+
+---
+
 ## 12.11.2026 (3. Nachtrag) – Saison eines Vereins mit Jahreszahl
 
 ### Für Redaktion und Leser

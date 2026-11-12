@@ -75,3 +75,7 @@ legacy/*
 
 # Zugriffssperren fuer Verzeichnisse mit Daten/Code (nicht ausliefern)
 !data/.htaccess
+
+# Wappen-Import (lokal)
+crest-review.html
+data/crests/orig/

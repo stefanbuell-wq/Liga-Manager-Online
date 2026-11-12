@@ -1170,6 +1170,7 @@ h4 { font-size: 1.25rem; }
 
 /* Artikeltext: Bilder (Banner, Wappen) nie breiter als der Rahmen */
 .news-body img { max-width: 100%; height: auto; vertical-align: middle; }
+.news-body img[src*="img/teams/"] { max-width: 72px; max-height: 72px; object-fit: contain; } /* HD-Wappen (350 px) klein halten */
 .news-body center img { margin: 4px; }
 /* Vorschau: Paarungen deutlich trennen */
 .news-body hr.match-sep { border: 0; border-top: 3px solid var(--color-primary); opacity: .55; margin: 1.6em 0 1.4em; }
