@@ -281,7 +281,11 @@ class LmoRepository
             SELECT DISTINCT mn.match_id, mn.news_id
             FROM match_news mn
             JOIN matches m ON mn.match_id = m.id
+            JOIN news n ON n.id = mn.news_id
             WHERE m.league_id = :lid
+            -- Aufrufer ueberschreibt je Spiel: zuletzt kommt der beste Treffer
+            -- (Spielbericht vor Vorschau, dann hoechste Confidence, dann neuester)
+            ORDER BY (n.title LIKE 'Vorschau%') DESC, mn.confidence ASC, n.timestamp ASC
         ");
         $stmt->execute([':lid' => $leagueId]);
         return $stmt->fetchAll();
