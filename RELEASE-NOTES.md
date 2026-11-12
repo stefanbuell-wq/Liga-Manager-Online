@@ -20,6 +20,7 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 - **Ganze Tabelle:** Neben den Spielen steht jetzt die komplette Tabelle mit allen Plätzen statt nur 1–8.
   - Die Tabelle ist kompakter dargestellt.
   - Lange Namen sind gekürzt; wer mit der Maus darüberfährt, sieht den vollen Namen.
+  - Der Link „Vollständig“ entfällt, weil die Tabelle jetzt ohnehin komplett ist.
 
 ### Technik
 
