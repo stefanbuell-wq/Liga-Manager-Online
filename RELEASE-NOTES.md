@@ -17,6 +17,9 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 - **📰 und 🔭:** 📰 steht nur noch bei einem echten Spielbericht. Gibt es zu einem Spiel nur die Spieltags-Vorschau, steht dort 🔭. Das gilt auch im Spielplan.
 - **Keine doppelte Anzeige mehr:** Die Spieltag-Leiste oben auf der Startseite ist entfallen, derselbe Spieltag steht im Bereich „Aktuell“. Der Menüpunkt „Spiele“ führt zum Spielplan.
 - Lange Vereinsnamen werden umbrochen statt abgeschnitten. Das Datum steht kurz da, z. B. „16.10. 17:00“.
+- **Ganze Tabelle:** Neben den Spielen steht jetzt die komplette Tabelle mit allen Plätzen statt nur 1–8.
+  - Die Tabelle ist kompakter dargestellt.
+  - Lange Namen sind gekürzt; wer mit der Maus darüberfährt, sieht den vollen Namen.
 
 ### Technik
 
@@ -24,6 +27,7 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 - CSS-Klassen `.mlist`/`.mrow` in `css/portal.css` (jetzt Version 20261115).
 - `LmoRepository::getMatchIdsWithNews` liefert `is_preview`. Die Spieldaten haben das neue Feld `news_is_preview`, das Frontend nutzt dafür `newsButton()`.
 - Spieltag-Leiste (`#live-section`) entfernt, `loadLiveMatches()` wird nicht mehr aufgerufen.
+- `renderTable()` zeigt alle Plätze. Neue CSS-Klasse `.league-table.compact` in `portal.css` (jetzt Version 20261116).
 
 ---
 

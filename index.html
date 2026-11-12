@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261115">
+    <link rel="stylesheet" href="css/portal.css?v=20261116">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -235,7 +235,7 @@
                                         <a href="javascript:void(0)" onclick="switchTab('table')" class="btn btn-ghost" style="font-size: 0.85rem;">Vollständig &rarr;</a>
                                     </div>
                                 </div>
-                                <table class="league-table" id="league-table">
+                                <table class="league-table compact" id="league-table">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -718,7 +718,8 @@
         // === RENDER TABLE ===
         function renderTable(table) {
             const tbody = document.querySelector('#league-table tbody');
-            tbody.innerHTML = table.slice(0, 8).map((team, idx) => {
+            // ganze Tabelle (kompakt), nicht nur Plaetze 1-8
+            tbody.innerHTML = table.map((team, idx) => {
                 const rank = idx + 1;
                 let rankClass = '';
                 if (rank <= 2) rankClass = 'promotion';
@@ -730,7 +731,7 @@
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
-                            ${sqEsc(team.name.length > 18 ? team.name.substring(0, 16) + '...' : team.name)}
+                            <span class="table-team-name" title="${sqEsc(team.name)}">${sqEsc(team.name)}</span>
                         </td>
                         <td class="table-stats">${team.played}</td>
                         <td class="table-stats">${team.diff > 0 ? '+' : ''}${team.diff}</td>

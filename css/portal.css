@@ -1231,3 +1231,13 @@ h4 { font-size: 1.25rem; }
     .mrow-report { grid-column: 4; grid-row: 1; width: 26px; }
     .mrow-logo { width: 18px; height: 18px; }
 }
+
+/* ===== Kompakte Tabelle neben "Aktuell": alle Plaetze auf einen Blick ===== */
+.league-table.compact th { padding: 6px 6px; }
+.league-table.compact th:first-child, .league-table.compact td:first-child { padding-left: 12px; }
+.league-table.compact td { padding: 5px 6px; font-size: 0.84rem; line-height: 1.25; }
+.league-table.compact .table-rank { width: 34px; font-size: 0.8rem; }
+.league-table.compact .table-team { gap: 6px; min-width: 0; }
+.league-table.compact .table-team img { width: 18px; height: 18px; flex: none; }
+.league-table.compact .table-team-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.league-table.compact .table-stats, .league-table.compact .table-points { text-align: center; }
