@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuigkeiten - HAFO LMO</title>
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-primary-light: rgba(226, 0, 26, 0.08);
+            --color-bg: #F5F5F5;
+            --color-card: #FFFFFF;
+            --color-border: rgba(0, 0, 0, 0.10);
+            --color-text: #111111;
+            --color-text-secondary: #444444;
+            --color-muted: #767676;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--color-bg); color: var(--color-text); margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 17px; line-height: 1.65;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+        .back-link { display: inline-block; color: var(--color-primary); text-decoration: none; font-weight: 600; margin-bottom: 20px; }
+        .back-link:hover { text-decoration: underline; }
+        .page-head h1 { margin: 0 0 4px; font-size: 2rem; }
+        .page-head p { margin: 0 0 28px; color: var(--color-muted); }
+        .release { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; }
+        .release h2 { margin: 0 0 12px; font-size: 1.4rem; }
+        .release h2 .date { display: inline-block; background: var(--color-primary); color: #fff; font-size: .85rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-right: 10px; vertical-align: middle; }
+        .release.latest { border: 2px solid var(--color-primary); }
+        .release h3 { font-size: 1.1rem; margin: 22px 0 8px; }
+        .release p { margin: 8px 0; color: var(--color-text-secondary); }
+        .release ul { margin: 6px 0 10px; padding-left: 1.3em; color: var(--color-text-secondary); }
+        .release li { margin: 3px 0; }
+        .release strong { color: var(--color-text); }
+        .release code { background: #f1f1f1; padding: 1px 5px; border-radius: 4px; font-size: .88em; }
+        .notice { background: #FFF8E1; border-left: 4px solid #F5A623; padding: 10px 14px; border-radius: 8px; margin: 10px 0 16px; color: #5a4300; }
+        details.tech { margin-top: 18px; border-top: 1px dashed var(--color-border); padding-top: 12px; }
+        details.tech summary { cursor: pointer; color: var(--color-muted); font-weight: 600; }
+        details.tech[open] summary { margin-bottom: 6px; }
+        details.tech, details.tech p, details.tech li { font-size: .93rem; }
+        .footer-note { color: var(--color-muted); font-size: .9rem; }
+        .error { background: #fdecea; color: #8a1c1c; padding: 14px 16px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Zurück zum Admin-Dashboard</a>
+        <div class="page-head">
+            <h1>🆕 Neuigkeiten</h1>
+            <p id="sub">Was sich auf HAFO.de geändert hat – die neueste Version steht oben.</p>
+        </div>
+        <div id="notes"><p>Wird geladen …</p></div>
+    </div>
+
+    <script>
+    (function () {
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // Inline-Markdown: erst kodieren, dann **fett**, `code`, [Text](https://…)
+        const inline = s => esc(s)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+            .replace(/(^|\s)(https:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+
+        // Kleiner Markdown-Renderer fuer RELEASE-NOTES.md (Ueberschriften, Listen, Kaesten, Absaetze)
+        function renderBlock(lines) {
+            let html = '', depth = 0, para = [];
+            const flushPara = () => { if (para.length) { html += `<p>${inline(para.join(' '))}</p>`; para = []; } };
+            const closeLists = () => { while (depth > 0) { html += '</li></ul>'; depth--; } };
+            for (const raw of lines) {
+                const line = raw.replace(/\s+$/, '');
+                // Listenpunkte: "- " (Ebene 1) und "  - " (Ebene 2)
+                const m = line.match(/^(\s*)- (.*)$/);
+                if (m) {
+                    flushPara();
+                    const d = Math.min(m[1].length >= 2 ? 2 : 1, depth + 1);
+                    if (d > depth) { html += '<ul>'; depth = d; }
+                    else {
+                        while (depth > d) { html += '</li></ul>'; depth--; }
+                        html += '</li>';
+                    }
+                    html += `<li>${inline(m[2])}`;
+                    continue;
+                }
+                if (line === '' && depth) continue; // Leerzeile innerhalb einer Liste
+                closeLists();
+                if (line === '' || line === '---') { flushPara(); continue; }
+                if (line.startsWith('> ')) { flushPara(); html += `<div class="notice">${inline(line.slice(2))}</div>`; continue; }
+                if (line.startsWith('### ')) { flushPara(); html += `<h3>${inline(line.slice(4))}</h3>`; continue; }
+                para.push(line);
+            }
+            flushPara(); closeLists();
+            return html;
+        }
+
+        function render(md) {
+            // Abschnitte je "## "-Eintrag; Kopf und Pflegehinweis werden nicht angezeigt
+            const parts = md.split(/\n(?=## )/).filter(p => p.startsWith('## '));
+            return parts.map((part, i) => {
+                const lines = part.split('\n');
+                const title = lines.shift().slice(3);
+                const m = title.match(/^(\d{1,2}\.\d{1,2}\.\d{4}|[A-Za-zäöüÄÖÜ]+ \d{4})\s*[–-]\s*(.*)$/);
+                const head = m ? `<span class="date">${esc(m[1])}</span>${inline(m[2])}` : inline(title);
+                // "### Technik" bis zum Ende des Eintrags einklappen
+                const techIdx = lines.findIndex(l => /^### Technik/.test(l));
+                const main = techIdx >= 0 ? lines.slice(0, techIdx) : lines;
+                const tech = techIdx >= 0 ? lines.slice(techIdx + 1) : [];
+                return `<section class="release ${i === 0 ? 'latest' : ''}">
+                    <h2>${head}</h2>
+                    ${renderBlock(main)}
+                    ${tech.length ? `<details class="tech"><summary>Technische Details (für die Entwicklung)</summary>${renderBlock(tech)}</details>` : ''}
+                </section>`;
+            }).join('');
+        }
+
+        fetch('../api/release-notes.php', { credentials: 'same-origin' })
+            .then(r => r.json().then(d => ({ ok: r.ok, d })))
+            .then(({ ok, d }) => {
+                const box = document.getElementById('notes');
+                if (!ok || !d.success) {
+                    box.innerHTML = `<div class="error">${esc(d.error || 'Neuigkeiten konnten nicht geladen werden.')} <a href="index.html">Zum Login</a></div>`;
+                    return;
+                }
+                box.innerHTML = render(d.markdown);
+                document.getElementById('sub').textContent = `Was sich auf HAFO.de geändert hat – die neueste Version steht oben. Stand: ${d.updated}`;
+            })
+            .catch(() => { document.getElementById('notes').innerHTML = '<div class="error">Neuigkeiten konnten nicht geladen werden.</div>'; });
+    })();
+    </script>
+</body>
+</html>
