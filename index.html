@@ -449,9 +449,9 @@
 
     <!-- News Modal -->
     <div id="news-modal" class="mobile-menu" style="display: none;" onclick="if(event.target === this) closeNewsModal()">
-        <div class="mobile-menu-content" style="width: 90%; max-width: 800px; left: 50%; right: auto; transform: translateX(-50%); border-radius: var(--radius-xl); max-height: 90vh; overflow-y: auto; position: relative;">
-            <!-- Close Button -->
-            <button onclick="closeNewsModal()" style="position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; background: var(--color-bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--color-text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;" onmouseover="this.style.background='var(--color-primary)'" onmouseout="this.style.background='var(--color-bg-elevated)'">
+        <div id="news-modal-content" class="mobile-menu-content" style="width: 90%; max-width: 800px; left: 50%; right: auto; transform: translateX(-50%); border-radius: var(--radius-xl); max-height: 90vh; overflow-y: auto; position: relative;">
+            <!-- Close Button (bleibt beim Scrollen sichtbar) -->
+            <button onclick="closeNewsModal()" aria-label="Schließen" title="Schließen" style="position: sticky; top: 0; float: right; margin: -8px -8px 0 8px; width: 40px; height: 40px; background: var(--color-bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--color-text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;" onmouseover="this.style.background='var(--color-primary)'" onmouseout="this.style.background='var(--color-bg-elevated)'">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1017,6 +1017,9 @@
                     <div class="news-body" style="line-height: 1.8; color: var(--color-text-secondary);">
                         ${n.content || n.short_content || ''}
                     </div>
+                    <div style="text-align:center; margin-top: var(--spacing-xl);">
+                        <button type="button" class="btn btn-secondary" onclick="closeNewsModal()" style="font-size:1rem; padding:12px 28px;">✕ Schließen</button>
+                    </div>
                 `;
                 // Teilbarer Link auf den Artikel
                 if (new URLSearchParams(location.search).get('news') !== String(newsId)) {
@@ -1024,6 +1027,7 @@
                 }
 
                 modal.style.display = 'block';
+                resetModalScroll();
                 setTimeout(() => modal.classList.add('active'), 10);
             } catch (e) {
                 console.error('Error loading news:', e);
@@ -1038,10 +1042,16 @@
             m = String(v).match(/^(\d{4})-(\d{2})$/); if (m) return `${m[2]}/${m[1]}`;
             return v;
         }
+        // Neuer Inhalt im Fenster beginnt immer oben
+        function resetModalScroll() {
+            const c = document.getElementById('news-modal-content');
+            if (c) c.scrollTop = 0;
+        }
         function openInfoModal(html) {
             const modal = document.getElementById('news-modal');
             document.getElementById('news-modal-body').innerHTML = html;
             modal.style.display = 'block';
+            resetModalScroll();
             setTimeout(() => modal.classList.add('active'), 10);
         }
 
