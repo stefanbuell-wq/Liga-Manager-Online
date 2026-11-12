@@ -276,6 +276,16 @@ class Security {
     }
 
     /**
+     * Anzahl Fehlversuche (innerhalb der Ablaufzeit) ohne Sperrwirkung
+     */
+    public static function getFailedAttempts($identifier) {
+        $pdo = self::getRateLimitDb();
+        $stmt = $pdo->prepare("SELECT attempts FROM rate_limits WHERE identifier = ? AND expires_at >= datetime('now')");
+        $stmt->execute([$identifier]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
      * Record failed login attempt
      */
     public static function recordFailedAttempt($identifier) {

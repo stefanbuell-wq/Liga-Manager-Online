@@ -39,11 +39,15 @@ if ($user === '' || $pass === '') {
 }
 
 $identifier = Security::getClientIp() . ':' . mb_strtolower($user);
-// Zusaetzlich pro Konto (unabhaengig von der IP), grosszuegiger, damit Fremde
-// ein Konto nicht leicht aussperren koennen
+// Pro Konto (unabhaengig von der IP) KEINE harte Sperre - sonst koennte jeder ein
+// bekanntes Konto (z. B. Admin) aussperren. Stattdessen wachsende Verzoegerung ab
+// 10 Fehlversuchen/Stunde: bremst verteiltes Passwort-Raten, der richtige Nutzer kommt rein.
 $acctIdentifier = 'acct:' . mb_strtolower($user);
+$acctFails = Security::getFailedAttempts($acctIdentifier);
+if ($acctFails >= 10) {
+    sleep(min(5, $acctFails - 9));
+}
 $rateCheck = Security::checkRateLimit($identifier);
-if ($rateCheck['allowed']) $rateCheck = Security::checkRateLimit($acctIdentifier, 20);
 if (!$rateCheck['allowed']) {
     echo json_encode([
         'success' => false,
