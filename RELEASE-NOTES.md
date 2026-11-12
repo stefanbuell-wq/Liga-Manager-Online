@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 12.11.2026 (5. Nachtrag) – Saison eines Vereins: Jahr ausgeschrieben
+
+### Für Redaktion und Leser
+
+- Im Fenster „Saison eines Vereins“ steht das Jahr jetzt vollständig, z. B. „24.07.2026 17:15“ statt „24.07.26 17:15“.
+
+### Technik
+
+- `index.html` `showTeamSeason`: Datum TT.MM.JJJJ; Spalte `.srow` 108 → 130 px, `portal.css?v=20261120`
+
+---
+
 ## 12.11.2026 (4. Nachtrag) – Vereinswappen in hoher Auflösung
 
 ### Für Redaktion und Leser

@@ -1250,7 +1250,7 @@ h4 { font-size: 1.25rem; }
 .season-head img { width: 48px; height: 48px; object-fit: contain; }
 .season-list { padding: 2px 12px; }
 .srow {
-    display: grid; grid-template-columns: 30px 108px minmax(0, 1fr) 56px minmax(0, 1fr) 26px 30px;
+    display: grid; grid-template-columns: 30px 130px minmax(0, 1fr) 56px minmax(0, 1fr) 26px 30px;
     align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border-color); font-size: 0.93rem;
 }
 .srow:last-child { border-bottom: none; }
