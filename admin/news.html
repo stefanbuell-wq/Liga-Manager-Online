@@ -2495,7 +2495,7 @@
 
                 if (!home && !guest) return;
 
-                if (idx > 0) parts.push('<br> <br>');
+                if (idx > 0) parts.push('<hr class="match-sep">');
 
                 // Game header with logos
                 if (home && guest) {
@@ -2505,7 +2505,7 @@
                     parts.push('<br>');
                 }
 
-                parts.push(`<b>${escapeHtml(home || '?')} \u2013 ${escapeHtml(guest || '?')}</b>`);
+                parts.push(`<b class="match-head">${escapeHtml(home || '?')} \u2013 ${escapeHtml(guest || '?')}</b>`);
 
                 const meta = [datetime, venue].filter(Boolean);
                 if (meta.length) {

@@ -1171,6 +1171,9 @@ h4 { font-size: 1.25rem; }
 /* Artikeltext: Bilder (Banner, Wappen) nie breiter als der Rahmen */
 .news-body img { max-width: 100%; height: auto; vertical-align: middle; }
 .news-body center img { margin: 4px; }
+/* Vorschau: Paarungen deutlich trennen */
+.news-body hr.match-sep { border: 0; border-top: 3px solid var(--color-primary); opacity: .55; margin: 1.6em 0 1.4em; }
+.news-body .match-head { font-size: 1.12em; color: var(--color-text-primary); }
 
 /* ===== Ligawahl: aktuelle Saison als Knoepfe, Archiv als Auswahl ===== */
 .league-picker { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md); }

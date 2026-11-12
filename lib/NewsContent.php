@@ -41,7 +41,23 @@ class NewsContent
         if (!$html) return '';
         $html = self::rewriteImages($html);
         $html = self::addMissingLogos($html, $teams);
+        $html = self::separateMatches($html);
         return self::sanitize($html);
+    }
+
+    /**
+     * Vorschauen: Paarungs-Zeilen "<b>Heim (6.) vs. Gast (16.)</b>" hervorheben und
+     * ab der zweiten Paarung eine Trennlinie davor setzen (nur bei mind. 2 Paarungen).
+     */
+    public static function separateMatches(string $html): string
+    {
+        $re = '#<b>(\s*[^<>]{3,80}?\s+vs\.?\s+[^<>]{3,80}?)</b>#iu';
+        if (preg_match_all($re, $html) < 2) return $html;
+        $n = 0;
+        return preg_replace_callback($re, function ($m) use (&$n) {
+            $head = '<b class="match-head">' . $m[1] . '</b>';
+            return ($n++ > 0 ? '<hr class="match-sep">' : '') . $head;
+        }, $html);
     }
 
     /** Erlaubte Tags fuer Artikel (alles andere wird entfernt, Inhalt bleibt) */
