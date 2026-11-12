@@ -968,7 +968,7 @@
                         </div>
                         <div class="form-group">
                             <label>Spieldatum</label>
-                            <input type="text" id="newsMatchDate" placeholder="TT.MM.JJJJ">
+                            <input type="date" id="newsMatchDate" title="Klick: heutiges Datum + Kalender">
                         </div>
                     </div>
 
@@ -1000,7 +1000,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Liga / Wettbewerb *</label>
-                                <select id="tplMatchLeague" onchange="loadTeamsForTemplate('match')">
+                                <select id="tplMatchLeague" onchange="onLeagueSelect(this, 'match')">
                                     <option value="">-- Liga waehlen --</option>
                                 </select>
                             </div>
@@ -1125,7 +1125,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Liga / Wettbewerb</label>
-                                <select id="tplPreviewLeague" onchange="loadTeamsForTemplate('preview')">
+                                <select id="tplPreviewLeague" onchange="onLeagueSelect(this, 'preview')">
                                     <option value="">-- Liga waehlen --</option>
                                 </select>
                             </div>
@@ -1353,7 +1353,7 @@
             document.getElementById('newsId').value = '';
             document.getElementById('newsTitle').value = '';
             document.getElementById('newsAuthor').value = currentUserName || 'Redaktion';
-            document.getElementById('newsMatchDate').value = '';
+            setNewsDate('');
             document.getElementById('newsShortContent').value = '';
             document.getElementById('newsContent').value = '';
             document.getElementById('deleteBtn').style.display = 'none';
@@ -1389,7 +1389,7 @@
                 document.getElementById('newsId').value = news.id;
                 document.getElementById('newsTitle').value = news.title || '';
                 document.getElementById('newsAuthor').value = news.author || 'Redaktion';
-                document.getElementById('newsMatchDate').value = news.match_date || '';
+                setNewsDate(news.match_date || '');
                 document.getElementById('newsShortContent').value = news.short_content || '';
                 document.getElementById('newsContent').value = news.content || '';
                 document.getElementById('deleteBtn').style.display = 'block';
@@ -1424,7 +1424,7 @@
                     } else {
                         // No linked match - find league by searching team names
                         for (const league of (leaguesCache || [])) {
-                            document.getElementById('tplMatchLeague').value = league.file;
+                            setLeagueValue('tplMatchLeague', league.file);
                             await loadTeamsForTemplate('match');
                             const teams = teamsCache[league.file] || [];
                             const teamNames = teams.map(t => t.name);
@@ -1437,7 +1437,7 @@
 
                     // Set league dropdown
                     if (leagueFile) {
-                        document.getElementById('tplMatchLeague').value = leagueFile;
+                        setLeagueValue('tplMatchLeague', leagueFile);
                         await loadTeamsForTemplate('match');
                     }
 
@@ -1867,20 +1867,100 @@
                 const resp = await fetch('../api/list-leagues.php');
                 const data = await resp.json();
                 leaguesCache = data.leagues || [];
-
-                const matchSel = document.getElementById('tplMatchLeague');
-                const previewSel = document.getElementById('tplPreviewLeague');
-
-                leaguesCache.forEach(l => {
-                    const opt1 = new Option(l.name, l.file);
-                    const opt2 = new Option(l.name, l.file);
-                    matchSel.appendChild(opt1);
-                    previewSel.appendChild(opt2);
-                });
+                fillLeagueSelect(document.getElementById('tplMatchLeague'), false);
+                fillLeagueSelect(document.getElementById('tplPreviewLeague'), false);
             } catch (e) {
                 console.error('Leagues load error:', e);
             }
         }
+
+        // ===== Ligaauswahl: aktuelle Saison oben, aeltere Saisons im Archiv =====
+        // Saison aus Name ("... 26/27") oder Datei ("...2627.l98"); aktuell = neueste Saison
+        const ARCHIVE_OPTION = '__archiv__';
+        function leagueSeason(l) {
+            const m = String(l.name || '').match(/(\d{2})\/(\d{2})\s*$/) || String(l.file).match(/(\d{2})(\d{2})\.l98$/);
+            return m ? `${m[1]}/${m[2]}` : '';
+        }
+        function seasonSortKey(season) {
+            const y = parseInt(season.slice(0, 2), 10);
+            return isNaN(y) ? -1 : (y > 50 ? 1900 + y : 2000 + y);
+        }
+        function leaguesBySeason() {
+            const groups = {};
+            (leaguesCache || []).forEach(l => { const s = leagueSeason(l); (groups[s] = groups[s] || []).push(l); });
+            const seasons = Object.keys(groups).sort((a, b) => seasonSortKey(b) - seasonSortKey(a));
+            const order = n => /oberliga/i.test(n) ? 0 : /regionalliga/i.test(n) ? 1 : /landesliga/i.test(n) ? 2 : 3;
+            seasons.forEach(s => groups[s].sort((a, b) => order(a.name) - order(b.name) || a.name.localeCompare(b.name)));
+            return { groups, seasons };
+        }
+        function fillLeagueSelect(sel, withArchive) {
+            const { groups, seasons } = leaguesBySeason();
+            const keep = sel.value;
+            sel.innerHTML = '<option value="">-- Liga waehlen --</option>';
+            seasons.forEach((s, i) => {
+                if (i > 0 && !withArchive) return;
+                const g = document.createElement('optgroup');
+                g.label = i === 0 ? `Aktuelle Saison ${s}` : (s ? `Archiv – Saison ${s}` : 'Archiv – ältere');
+                groups[s].forEach(l => g.appendChild(new Option(l.name, l.file)));
+                sel.appendChild(g);
+            });
+            if (!withArchive && seasons.length > 1) {
+                const g = document.createElement('optgroup');
+                g.label = 'Archiv';
+                g.appendChild(new Option('📁 Ältere Saisons anzeigen …', ARCHIVE_OPTION));
+                sel.appendChild(g);
+            }
+            if (keep && keep !== ARCHIVE_OPTION && [...sel.options].some(o => o.value === keep)) sel.value = keep;
+            else sel.value = '';
+        }
+        // Wert setzen; liegt die Liga im Archiv, wird das Archiv aufgeklappt
+        function setLeagueValue(id, file) {
+            const sel = document.getElementById(id);
+            if (file && ![...sel.options].some(o => o.value === file)) fillLeagueSelect(sel, true);
+            sel.value = file || '';
+        }
+        function onLeagueSelect(sel, prefix) {
+            if (sel.value === ARCHIVE_OPTION) {
+                fillLeagueSelect(sel, true);
+                sel.value = '';
+                try { sel.focus(); if (sel.showPicker) sel.showPicker(); } catch (e) { /* nicht ueberall erlaubt */ }
+                return;
+            }
+            loadTeamsForTemplate(prefix);
+        }
+
+        // ===== Spieldatum: Kalenderfeld, Klick setzt heute =====
+        let newsDateAuto = false;   // true, solange "heute" nur automatisch vorbelegt ist
+        function toIsoDate(v) {
+            v = String(v || '').trim();
+            let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+            m = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/);
+            if (m) {
+                const y = m[3].length === 2 ? '20' + m[3] : m[3];
+                return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+            }
+            return '';
+        }
+        function setNewsDate(v) {
+            document.getElementById('newsMatchDate').value = toIsoDate(v);
+            newsDateAuto = false;
+        }
+        (function initNewsDate() {
+            const el = document.getElementById('newsMatchDate');
+            const prefill = () => {
+                if (el.value) return;
+                const d = new Date();
+                el.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                newsDateAuto = true;
+            };
+            el.addEventListener('click', () => {
+                prefill();
+                try { if (el.showPicker) el.showPicker(); } catch (e) { /* sonst Kalender ueber das Symbol */ }
+            });
+            el.addEventListener('focus', prefill);
+            el.addEventListener('input', () => { newsDateAuto = false; });
+        })();
 
         async function loadTeamsForTemplate(prefix) {
             const selId = prefix === 'match' ? 'tplMatchLeague' : 'tplPreviewLeague';
@@ -2651,7 +2731,8 @@
                 setIfEmpty('tplMatchGuestGoals', m.guest_goals);
             }
             setIfEmpty('tplMatchRound', m.round ? m.round + '. Spieltag' : '');
-            setIfEmpty('newsMatchDate', m.date);
+            // Datum aus dem Spielplan; ein nur automatisch gesetztes "heute" darf ersetzt werden
+            if (m.date && (!document.getElementById('newsMatchDate').value || newsDateAuto)) setNewsDate(m.date);
         }
 
         // ===== Sponsoren-Banner =====
@@ -2767,7 +2848,7 @@
         function resetTemplateFields() {
             lastAutoTitle = "";
             // Match fields - reset selection but keep league options
-            document.getElementById('tplMatchLeague').selectedIndex = 0;
+            fillLeagueSelect(document.getElementById('tplMatchLeague'), false);
             document.getElementById('tplMatchRound').value = '';
             document.getElementById('tplMatchHome').innerHTML = '<option value="">-- Team waehlen --</option>';
             document.getElementById('tplMatchGuest').innerHTML = '<option value="">-- Team waehlen --</option>';
@@ -2795,7 +2876,7 @@
             quoteCount = 0;
 
             // Preview fields - reset selection but keep league options
-            document.getElementById('tplPreviewLeague').selectedIndex = 0;
+            fillLeagueSelect(document.getElementById('tplPreviewLeague'), false);
             document.getElementById('tplPreviewRound').value = '';
             document.getElementById('tplPreviewIntro').value = '';
             document.getElementById('tplPreviewGames').innerHTML = '';

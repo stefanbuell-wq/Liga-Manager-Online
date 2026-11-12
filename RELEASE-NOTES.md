@@ -5,6 +5,24 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 12.11.2026 (2. Nachtrag) – Bericht schreiben: aktuelle Saison zuerst, Datum per Klick
+
+### Für Redaktion und Leser
+
+- **Nur die aktuelle Saison in der Liga-Auswahl:** Beim Spielbericht und bei der Vorschau stehen in der Liste „Liga / Wettbewerb“ nur noch die Ligen der laufenden Saison (z. B. 26/27). Langes Suchen entfällt.
+  - Ältere Saisons gibt es weiter: letzter Eintrag „📁 Ältere Saisons anzeigen …“.
+  - Welche Saison aktuell ist, ergibt sich von selbst: Sobald eine neue Saison angelegt ist, steht sie oben.
+  - Beim Bearbeiten eines alten Berichts wird dessen Liga automatisch gefunden.
+- **Spieldatum per Klick:** Ein Klick ins Feld „Spieldatum“ trägt das heutige Datum ein und zeigt den Kalender des Monats. Ein anderer Tag lässt sich dort direkt anklicken.
+  - Werden danach Heim- und Gast-Team gewählt, übernimmt das Feld das echte Spieldatum aus dem Spielplan.
+
+### Technik
+
+- `admin/news.html`: `fillLeagueSelect` gruppiert nach Saison (Logik wie `leagueSeason` in index.html), Archiv als Option `__archiv__`; `setLeagueValue` klappt das Archiv beim Laden alter Berichte auf
+- `newsMatchDate` ist jetzt `<input type="date">` (ISO wie in der DB), `toIsoDate` wandelt TT.MM.JJJJ aus dem Spielplan um; `newsDateAuto` erlaubt das Ersetzen des automatisch gesetzten Tages
+
+---
+
 ## 12.11.2026 (Nachtrag) – Spiele auf einen Blick
 
 ### Für Redaktion und Leser
