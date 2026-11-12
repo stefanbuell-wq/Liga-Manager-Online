@@ -39,14 +39,6 @@ if ($user === '' || $pass === '') {
 }
 
 $identifier = Security::getClientIp() . ':' . mb_strtolower($user);
-// Pro Konto (unabhaengig von der IP) KEINE harte Sperre - sonst koennte jeder ein
-// bekanntes Konto (z. B. Admin) aussperren. Stattdessen wachsende Verzoegerung ab
-// 10 Fehlversuchen/Stunde: bremst verteiltes Passwort-Raten, der richtige Nutzer kommt rein.
-$acctIdentifier = 'acct:' . mb_strtolower($user);
-$acctFails = Security::getFailedAttempts($acctIdentifier);
-if ($acctFails >= 10) {
-    sleep(min(5, $acctFails - 9));
-}
 $rateCheck = Security::checkRateLimit($identifier);
 if (!$rateCheck['allowed']) {
     echo json_encode([
@@ -57,6 +49,28 @@ if (!$rateCheck['allowed']) {
         'csrf_token' => $csrfToken
     ]);
     exit;
+}
+
+// Pro Konto (unabhaengig von der IP): keine harte Sperre (sonst koennte jeder ein
+// bekanntes Konto aussperren), sondern ab 10 Fehlversuchen/Stunde eine Mindestpause
+// zwischen zwei Versuchen (2, 4, 8 ... max. 30 s). Zu fruehe Versuche werden sofort
+// mit 429 abgewiesen - ohne Passwortpruefung und ohne den Server warten zu lassen.
+$acctIdentifier = 'acct:' . mb_strtolower($user);
+[$acctFails, $acctLast] = Security::getFailInfo($acctIdentifier);
+if ($acctFails >= 10) {
+    $wait = min(30, 2 ** min(5, $acctFails - 9));
+    $left = ($acctLast + $wait) - time();
+    if ($left > 0) {
+        http_response_code(429);
+        header('Retry-After: ' . $left);
+        echo json_encode([
+            'success' => false,
+            'error' => "Zu viele Fehlversuche für dieses Konto. Bitte $left Sekunden warten.",
+            'remaining_seconds' => $left,
+            'csrf_token' => $csrfToken
+        ]);
+        exit;
+    }
 }
 
 try {

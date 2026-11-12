@@ -279,10 +279,21 @@ class Security {
      * Anzahl Fehlversuche (innerhalb der Ablaufzeit) ohne Sperrwirkung
      */
     public static function getFailedAttempts($identifier) {
+        return self::getFailInfo($identifier)[0];
+    }
+
+    /**
+     * [Anzahl Fehlversuche, Zeitpunkt des letzten Fehlversuchs] (expires_at = letzter + 1 h)
+     */
+    public static function getFailInfo($identifier) {
         $pdo = self::getRateLimitDb();
-        $stmt = $pdo->prepare("SELECT attempts FROM rate_limits WHERE identifier = ? AND expires_at >= datetime('now')");
+        $stmt = $pdo->prepare("SELECT attempts, expires_at FROM rate_limits WHERE identifier = ?");
         $stmt->execute([$identifier]);
-        return (int)$stmt->fetchColumn();
+        $r = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$r) return [0, 0];
+        $exp = strtotime($r['expires_at']);
+        if (!$exp || $exp < time()) return [0, 0];
+        return [(int)$r['attempts'], $exp - 3600];
     }
 
     /**
