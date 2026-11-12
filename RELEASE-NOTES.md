@@ -5,6 +5,23 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 12.11.2026 (Nachtrag) – Spiele auf einen Blick
+
+### Für Redaktion und Leser
+
+- **Spieltag kompakt:** Auf der Startseite steht jedes Spiel jetzt in einer Zeile: „Heim 5:2 Gast“, mit Wappen, Datum und 📰 für den Spielbericht.
+  - Das gilt oben bei „Spieltag …“ und im Bereich „Aktuell“.
+  - Der ganze Spieltag ist auf einen Blick zu sehen, wie im Spielplan.
+- Sieger und Siegtore sind hervorgehoben. Noch nicht gespielte Partien zeigen „–:–“.
+- Auf dem Handy stehen Datum und Notiz klein unter der Zeile.
+
+### Technik
+
+- Neue Funktion `matchRow()` in `index.html` für `renderMatches()` (Tab „Aktuell“) und die Spieltag-Leiste.
+- CSS-Klassen `.mlist`/`.mrow` in `css/portal.css` (Version 20261114). Die Leiste ist auf breiten Bildschirmen zweispaltig.
+
+---
+
 ## 12.11.2026 – Suche, verknüpfte Berichte, Sicherheits-Update
 
 > **Wichtig:** Nach diesem Update müssen sich alle einmal neu anmelden (Redaktion, Admins, Forennutzer).

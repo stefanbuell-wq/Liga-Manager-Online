@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261113">
+    <link rel="stylesheet" href="css/portal.css?v=20261114">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -784,38 +784,7 @@
             if (matches.length === 0) {
                 html += '<p class="text-muted text-center">Keine Spiele gefunden.</p>';
             } else {
-                html += '<div style="display: flex; flex-direction: column; gap: var(--spacing-md);">';
-                matches.forEach(m => {
-                    const played = m.played;
-                    const homeWin = played && m.home_goals > m.guest_goals;
-                    const guestWin = played && m.guest_goals > m.home_goals;
-
-                    html += `
-                        <div class="match-card" style="width: 100%;">
-                            <div class="match-card-header">
-                                <span>${sqEsc(m.date || 'TBD')} ${m.time ? '• ' + sqEsc(m.time) : ''}</span>
-                                <span class="match-status ${played ? 'finished' : 'upcoming'}">${played ? 'Beendet' : 'Geplant'}</span>
-                            </div>
-                            <div class="match-teams">
-                                <div class="match-team">
-                                    <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                         onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                                    <span class="team-name">${sqEsc(m.home)}</span>
-                                    <span class="team-score ${homeWin ? 'winner' : ''}">${played ? sqEsc(m.home_goals) : '-'}</span>
-                                </div>
-                                <div class="match-team">
-                                    <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                         onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                                    <span class="team-name">${sqEsc(m.guest)}</span>
-                                    <span class="team-score ${guestWin ? 'winner' : ''}">${played ? sqEsc(m.guest_goals) : '-'}</span>
-                                </div>
-                            </div>
-                            ${m.match_note ? `<div style="margin-top: var(--spacing-sm); padding: var(--spacing-xs) var(--spacing-sm); background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-size: 0.8rem; border-radius: var(--radius-sm);">📝 ${sqEsc(m.match_note)}</div>` : ''}
-                            ${m.has_news ? `<button onclick="showNews(${m.news_id})" class="btn btn-ghost" style="margin-top: var(--spacing-sm); width: 100%; font-size: 0.85rem;">📰 Spielbericht lesen</button>` : ''}
-                        </div>
-                    `;
-                });
-                html += '</div>';
+                html += `<div class="mlist">${matches.map(m => matchRow(m)).join('')}</div>`;
             }
 
             container.innerHTML = html;
@@ -849,31 +818,8 @@
                 const title = document.getElementById('live-ticker-title');
                 if (title) title.textContent = `${data.options.Name || 'Oberliga'} · Spieltag ${round}`;
 
-                container.innerHTML = matches.map(m => {
-                    const played = m.played;
-                    const status = played ? 'finished' : 'upcoming';
-                    return `
-                    <div class="match-card">
-                        <div class="match-card-header">
-                            <span>${esc(m.date || '')}${m.time ? ' • ' + esc(m.time) : ''}</span>
-                            <span class="match-status ${status}">${played ? 'Endstand' : 'Geplant'}</span>
-                        </div>
-                        <div class="match-teams">
-                            <div class="match-team">
-                                <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                     onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                                <span class="team-name">${esc(m.home)}</span>
-                                <span class="team-score ${played && m.home_goals > m.guest_goals ? 'winner' : ''}">${played ? sqEsc(m.home_goals) : '-'}</span>
-                            </div>
-                            <div class="match-team">
-                                <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                     onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                                <span class="team-name">${esc(m.guest)}</span>
-                                <span class="team-score ${played && m.guest_goals > m.home_goals ? 'winner' : ''}">${played ? sqEsc(m.guest_goals) : '-'}</span>
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('');
+                container.classList.add('as-list');
+                container.innerHTML = `<div class="mlist mlist-2col">${matches.map(m => matchRow(m)).join('')}</div>`;
             } catch (e) {
                 console.warn('Letzter Spieltag konnte nicht geladen werden', e);
                 container.innerHTML = '<p class="text-muted">Keine aktuellen Spiele verfügbar.</p>';
@@ -1034,6 +980,30 @@
             } catch (e) {
                 console.error('Error loading news:', e);
             }
+        }
+
+        // === KOMPAKTE SPIELZEILE (Startseite "Aktuell" und Spieltag-Leiste) ===
+        // Heim [Wappen]  5 : 2  [Wappen] Gast · Datum · 📰  – alles in einer Zeile
+        function matchRow(m, opts = {}) {
+            const played = m.played;
+            const hw = played && Number(m.home_goals) > Number(m.guest_goals);
+            const gw = played && Number(m.guest_goals) > Number(m.home_goals);
+            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
+            const when = [m.date, m.time ? m.time + ' Uhr' : ''].filter(Boolean).join(' · ');
+            const score = played
+                ? `<span class="${hw ? 'win' : ''}">${sqEsc(m.home_goals)}</span>:<span class="${gw ? 'win' : ''}">${sqEsc(m.guest_goals)}</span>`
+                : '–:–';
+            const report = m.has_news && m.news_id
+                ? `<button class="mrow-report" onclick="showNews(${Number(m.news_id)})" title="Spielbericht lesen" aria-label="Spielbericht lesen">📰</button>`
+                : '<span class="mrow-report"></span>';
+            return `
+                <div class="mrow">
+                    <span class="mrow-team home ${hw ? 'win' : ''}"><span class="mrow-name">${sqEsc(m.home)}</span>${logo(m.home)}</span>
+                    <span class="mrow-score ${played ? '' : 'open'}">${score}</span>
+                    <span class="mrow-team guest ${gw ? 'win' : ''}">${logo(m.guest)}<span class="mrow-name">${sqEsc(m.guest)}</span></span>
+                    <span class="mrow-meta">${sqEsc(when)}${m.match_note ? ` <span title="${sqEsc(m.match_note)}">📝 ${sqEsc(m.match_note)}</span>` : ''}</span>
+                    ${report}
+                </div>`;
         }
 
         // === KADER & SPIELERPROFIL ===

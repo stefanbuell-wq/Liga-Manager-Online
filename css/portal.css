@@ -1200,3 +1200,34 @@ h4 { font-size: 1.25rem; }
 .news-filter #news-year { font-size: 1rem; }
 .news-filter-info { margin: 0; font-size: .95rem; }
 .news-filter-info[hidden] { display: none; }
+
+/* ===== Kompakte Spielzeilen (Startseite: Spieltag-Leiste und Tab "Aktuell") ===== */
+.live-ticker-scroll.as-list { display: block; overflow: visible; }
+.mlist { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4px 16px; }
+.mlist-2col { display: grid; grid-template-columns: 1fr; column-gap: 32px; }
+@media (min-width: 1100px) { .mlist-2col { grid-template-columns: 1fr 1fr; } }
+.mrow {
+    display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr) auto 32px;
+    align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border-color); font-size: 0.98rem;
+}
+.mlist > .mrow:last-child, .mlist-2col > .mrow:nth-last-child(-n+1) { border-bottom: none; }
+.mrow-team { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--color-text-primary); }
+.mrow-team.home { justify-content: flex-end; text-align: right; }
+.mrow-team.win { font-weight: 700; }
+.mrow-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mrow-logo { width: 22px; height: 22px; object-fit: contain; flex: none; }
+.mrow-score {
+    text-align: center; font-weight: 800; font-size: 1.05rem; letter-spacing: 1px;
+    background: var(--color-bg-elevated); border-radius: var(--radius-sm); padding: 3px 0; font-variant-numeric: tabular-nums;
+}
+.mrow-score .win { color: var(--color-primary); }
+.mrow-score.open { color: var(--color-text-muted); font-weight: 600; }
+.mrow-meta { color: var(--color-text-muted); font-size: 0.8rem; white-space: nowrap; }
+.mrow-report { border: none; background: none; cursor: pointer; font-size: 1.1rem; padding: 0; width: 32px; text-align: center; }
+@media (max-width: 640px) {
+    .mlist { padding: 2px 10px; }
+    .mrow { grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr) 26px; gap: 6px; font-size: 0.92rem; }
+    .mrow-meta { grid-column: 1 / -1; grid-row: 2; text-align: center; white-space: normal; margin-top: -4px; }
+    .mrow-report { grid-column: 4; grid-row: 1; width: 26px; }
+    .mrow-logo { width: 18px; height: 18px; }
+}
