@@ -206,6 +206,8 @@
     </div>
 
     <script>
+        // HTML-/Attribut-Kodierung fuer redaktionelle Felder (Teamnamen etc.)
+        function eHtml(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         const API_BASE = '../api';
         const params = new URLSearchParams(window.location.search);
         const ligaFile = params.get('liga');
@@ -314,21 +316,21 @@
                 html += `
                 <div class="match-row" data-idx="${index}" data-match-id="${m.id || ''}" style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--color-border);">
                     <div class="teams-display">
-                        <span style="text-align: right; flex: 1;">${m.home}</span>
+                        <span style="text-align: right; flex: 1;">${eHtml(m.home)}</span>
                         <span>-</span>
-                        <span style="text-align: left; flex: 1;">${m.guest}</span>
+                        <span style="text-align: left; flex: 1;">${eHtml(m.guest)}</span>
                     </div>
                     <div class="inputs-display">
-                        <input type="number" class="score-input input-home" value="${hGoals}" placeholder="-">
+                        <input type="number" class="score-input input-home" value="${eHtml(hGoals)}" placeholder="-">
                         <span>:</span>
-                        <input type="number" class="score-input input-guest" value="${gGoals}" placeholder="-">
+                        <input type="number" class="score-input input-guest" value="${eHtml(gGoals)}" placeholder="-">
                     </div>
                     
                     <!-- Match Events Section -->
                     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0, 0, 0, 0.04); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
                         <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
                             <h4 style="margin: 0; flex: 1;">Ereignisse</h4>
-                            <button class="btn-event" onclick="openEventModal(${index}, '${m.home}', '${m.guest}', ${m.home_id}, ${m.guest_id})" style="padding: 6px 12px; font-size: 0.85rem; background: var(--color-primary); cursor: pointer; border: none; border-radius: 4px; color: white;">⚽ Tor/Karte</button>
+                            <button class="btn-event" onclick="openEventModal(${index}, ${eHtml(JSON.stringify(String(m.home ?? '')))}, ${eHtml(JSON.stringify(String(m.guest ?? '')))}, ${Number(m.home_id) || 0}, ${Number(m.guest_id) || 0})" style="padding: 6px 12px; font-size: 0.85rem; background: var(--color-primary); cursor: pointer; border: none; border-radius: 4px; color: white;">⚽ Tor/Karte</button>
                         </div>
                         <div class="events-list" data-match-idx="${index}" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; font-size: 0.9rem;">
                             <!-- Events will be loaded here -->
@@ -417,7 +419,7 @@
                         <h4>Team</h4>
                         <select id="modal-event-team" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: var(--color-text-primary); border-radius: 6px;">
                             <option value="">Team wählen...</option>
-                            ${teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                            ${teams.map(t => `<option value="${Number(t.id)}">${eHtml(t.name)}</option>`).join('')}
                         </select>
                     </div>
                     

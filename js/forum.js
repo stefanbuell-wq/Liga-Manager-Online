@@ -855,6 +855,16 @@ function formatPostContent(content) {
         'PRE': new Set(['class'])
     };
 
+    const isSafeUrl = (val, name) => {
+        try {
+            const u = new URL(val, location.href);
+            const ok = name === 'href' ? ['http:', 'https:', 'mailto:'] : ['http:', 'https:'];
+            return ok.includes(u.protocol);
+        } catch (e) {
+            return false;
+        }
+    };
+
     const doc = new DOMParser().parseFromString(content, 'text/html');
     const cleanNode = (node) => {
         const children = Array.from(node.childNodes);
@@ -871,9 +881,14 @@ function formatPostContent(content) {
                     const val = attr.value.trim();
                     if (!allowedForTag.has(name)) {
                         child.removeAttribute(attr.name);
-                    } else if ((name === 'href' || name === 'src') && /^javascript:/i.test(val)) {
+                    } else if ((name === 'href' || name === 'src') && !isSafeUrl(val, name)) {
+                        // Allowlist auf das vom Browser normalisierte Schema
+                        // (java&#x09;script: o. ae. umgeht sonst einen einfachen Regex)
                         child.removeAttribute(attr.name);
                     }
+                }
+                if (tag === 'A' && child.hasAttribute('href')) {
+                    child.setAttribute('rel', 'noopener noreferrer');
                 }
                 cleanNode(child);
             }

@@ -521,19 +521,19 @@
                 }
 
                 container.innerHTML = data.topics.map(topic => `
-                    <a href="forum.html?topic=${topic.id}" class="table-card" style="padding: var(--spacing-md); display: block; text-decoration: none; transition: all 0.2s ease;">
+                    <a href="forum.html?topic=${Number(topic.id)}" class="table-card" style="padding: var(--spacing-md); display: block; text-decoration: none; transition: all 0.2s ease;">
                         <div style="display: flex; align-items: flex-start; gap: var(--spacing-md);">
                             <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: ${topic.is_sticky ? 'var(--color-warning)' : 'var(--color-bg-elevated)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                 ${topic.is_sticky ? '📌' : topic.is_locked ? '🔒' : '💬'}
                             </div>
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--spacing-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${topic.title}
+                                    ${sqEsc(topic.title)}
                                 </div>
                                 <div style="font-size: 0.85rem; color: var(--color-text-muted); display: flex; gap: var(--spacing-md);">
-                                    <span>${topic.author_name || 'Gast'}</span>
+                                    <span>${sqEsc(topic.author_name || 'Gast')}</span>
                                     <span>•</span>
-                                    <span>${topic.post_count || 0} Antworten</span>
+                                    <span>${Number(topic.post_count) || 0} Antworten</span>
                                 </div>
                             </div>
                         </div>
@@ -748,7 +748,7 @@
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
-                            ${team.name.length > 18 ? team.name.substring(0, 16) + '...' : team.name}
+                            ${sqEsc(team.name.length > 18 ? team.name.substring(0, 16) + '...' : team.name)}
                         </td>
                         <td class="table-stats">${team.played}</td>
                         <td class="table-stats">${team.diff > 0 ? '+' : ''}${team.diff}</td>
@@ -793,24 +793,24 @@
                     html += `
                         <div class="match-card" style="width: 100%;">
                             <div class="match-card-header">
-                                <span>${m.date || 'TBD'} ${m.time ? '• ' + m.time : ''}</span>
+                                <span>${sqEsc(m.date || 'TBD')} ${m.time ? '• ' + sqEsc(m.time) : ''}</span>
                                 <span class="match-status ${played ? 'finished' : 'upcoming'}">${played ? 'Beendet' : 'Geplant'}</span>
                             </div>
                             <div class="match-teams">
                                 <div class="match-team">
                                     <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                          onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                                    <span class="team-name">${m.home}</span>
-                                    <span class="team-score ${homeWin ? 'winner' : ''}">${played ? m.home_goals : '-'}</span>
+                                    <span class="team-name">${sqEsc(m.home)}</span>
+                                    <span class="team-score ${homeWin ? 'winner' : ''}">${played ? sqEsc(m.home_goals) : '-'}</span>
                                 </div>
                                 <div class="match-team">
                                     <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                          onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
-                                    <span class="team-name">${m.guest}</span>
-                                    <span class="team-score ${guestWin ? 'winner' : ''}">${played ? m.guest_goals : '-'}</span>
+                                    <span class="team-name">${sqEsc(m.guest)}</span>
+                                    <span class="team-score ${guestWin ? 'winner' : ''}">${played ? sqEsc(m.guest_goals) : '-'}</span>
                                 </div>
                             </div>
-                            ${m.match_note ? `<div style="margin-top: var(--spacing-sm); padding: var(--spacing-xs) var(--spacing-sm); background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-size: 0.8rem; border-radius: var(--radius-sm);">📝 ${m.match_note}</div>` : ''}
+                            ${m.match_note ? `<div style="margin-top: var(--spacing-sm); padding: var(--spacing-xs) var(--spacing-sm); background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-size: 0.8rem; border-radius: var(--radius-sm);">📝 ${sqEsc(m.match_note)}</div>` : ''}
                             ${m.has_news ? `<button onclick="showNews(${m.news_id})" class="btn btn-ghost" style="margin-top: var(--spacing-sm); width: 100%; font-size: 0.85rem;">📰 Spielbericht lesen</button>` : ''}
                         </div>
                     `;
@@ -863,13 +863,13 @@
                                 <img src="img/teams/${m.home.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                      onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
                                 <span class="team-name">${esc(m.home)}</span>
-                                <span class="team-score ${played && m.home_goals > m.guest_goals ? 'winner' : ''}">${played ? m.home_goals : '-'}</span>
+                                <span class="team-score ${played && m.home_goals > m.guest_goals ? 'winner' : ''}">${played ? sqEsc(m.home_goals) : '-'}</span>
                             </div>
                             <div class="match-team">
                                 <img src="img/teams/${m.guest.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                      onerror="this.src='img/teams/blank.png'" class="team-logo" alt="">
                                 <span class="team-name">${esc(m.guest)}</span>
-                                <span class="team-score ${played && m.guest_goals > m.home_goals ? 'winner' : ''}">${played ? m.guest_goals : '-'}</span>
+                                <span class="team-score ${played && m.guest_goals > m.home_goals ? 'winner' : ''}">${played ? sqEsc(m.guest_goals) : '-'}</span>
                             </div>
                         </div>
                     </div>`;
@@ -894,7 +894,7 @@
             const badge = document.querySelector('#hero-main .hero-badge');
             if (badge) badge.textContent = top.kind === 'Vorschau' ? 'Neueste Vorschau' : top.kind === 'News' ? 'Neueste Meldung' : 'Neuester Spielbericht';
             document.getElementById('hero-meta').textContent =
-                `${top.date_formatted || ''}${top.author ? ' • von ' + top.author : ''}`;
+                `${sqEsc(top.date_formatted || '')}${top.author ? ' • von ' + top.author : ''}`;
             main.onclick = () => showNews(top.id);
 
             const imgs = ['img/news/match-2.svg', 'img/news/match-3.svg', 'img/news/match-4.svg'];
@@ -1171,7 +1171,7 @@
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
                                  onerror="this.src='img/teams/blank.png'" alt="">
                             <a href="javascript:void(0)" onclick="showTeamSquad(${JSON.stringify(team.name).replace(/"/g, '&quot;')})"
-                               title="Kader anzeigen" style="color:inherit; text-decoration:none; border-bottom:1px dotted var(--color-text-muted);">${team.name}</a>
+                               title="Kader anzeigen" style="color:inherit; text-decoration:none; border-bottom:1px dotted var(--color-text-muted);">${sqEsc(team.name)}</a>
                         </td>
                         <td class="table-stats">${team.played}</td>
                         <td class="table-stats">${team.won}</td>
@@ -1195,7 +1195,7 @@
         function scheduleDateKey(m) {
             const d = String(m.date || '').match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
             if (!d) return '9999-99-99 99:99';
-            return `${d[3]}-${d[2].padStart(2, '0')}-${d[1].padStart(2, '0')} ${m.time || '00:00'}`;
+            return `${d[3]}-${d[2].padStart(2, '0')}-${d[1].padStart(2, '0')} ${sqEsc(m.time || '00:00')}`;
         }
 
         function renderSchedule() {
@@ -1238,7 +1238,7 @@
                     <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                         <span style="flex: 1; text-align: right;">${scheduleEsc(m.home)}</span>
                         <span style="min-width: 60px; text-align: center; font-weight: 700; background: var(--color-bg-elevated); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-sm);">
-                            ${played ? m.home_goals + ' : ' + m.guest_goals : '- : -'}
+                            ${played ? sqEsc(m.home_goals + ' : ' + m.guest_goals) : '- : -'}
                         </span>
                         <span style="flex: 1;">${scheduleEsc(m.guest)}</span>
                         <span style="min-width: 150px; text-align: right; color: var(--color-text-muted); font-size: 0.85rem;">${scheduleEsc(when)}</span>
@@ -1351,7 +1351,7 @@
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
                                         <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
-                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</div>
+                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
                                                 <div style="height: 100%; width: ${(t.goals_for / maxGoals) * 100}%; background: linear-gradient(90deg, var(--color-live), #00cc6a); border-radius: 4px; transition: width 0.5s ease;"></div>
                                             </div>
@@ -1373,7 +1373,7 @@
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
                                         <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
-                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</div>
+                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
                                                 <div style="height: 100%; width: ${(t.goals_against / maxAgainst) * 100}%; background: linear-gradient(90deg, #0066cc, #004499); border-radius: 4px; transition: width 0.5s ease;"></div>
                                             </div>
@@ -1397,7 +1397,7 @@
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 2 ? 'var(--color-live)' : i >= leagueData.table.length - 3 ? 'var(--color-primary)' : 'var(--color-text-muted)'};">${i + 1}</div>
                                         <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
-                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</div>
+                                            <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
                                                 <div style="height: 100%; width: ${(t.points / maxPoints) * 100}%; background: linear-gradient(90deg, var(--color-primary), #ff4d6a); border-radius: 4px; transition: width 0.5s ease;"></div>
                                             </div>
@@ -1480,7 +1480,7 @@
                                         <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
                                         <td class="table-team">
                                             <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
-                                            ${t.name}
+                                            ${sqEsc(t.name)}
                                         </td>
                                         <td class="table-stats">${t.played}</td>
                                         <td class="table-points">${t.goals_for}</td>
@@ -1511,7 +1511,7 @@
                                         <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
                                         <td class="table-team">
                                             <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
-                                            ${t.name}
+                                            ${sqEsc(t.name)}
                                         </td>
                                         <td class="table-stats">${t.played}</td>
                                         <td class="table-points">${t.goals_against}</td>
@@ -1542,7 +1542,7 @@
                                     <td class="table-rank ${i < 3 ? 'promotion' : i >= leagueData.table.length - 3 ? 'relegation' : ''}">${i + 1}</td>
                                     <td class="table-team">
                                         <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
-                                        ${t.name}
+                                        ${sqEsc(t.name)}
                                     </td>
                                     <td class="table-stats">${t.goals_for}</td>
                                     <td class="table-stats">${t.goals_against}</td>

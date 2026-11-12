@@ -1068,28 +1068,28 @@
                 <div class="match-row" data-idx="${idx}" style="flex-direction:column; align-items:stretch; padding:15px 0;">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
                         <div class="teams-display">
-                            <span style="flex:1; text-align:right; font-weight:600;">${m.home}</span>
+                            <span style="flex:1; text-align:right; font-weight:600;">${leagueEsc(m.home)}</span>
                             <span style="padding:0 10px;">vs</span>
-                            <span style="flex:1; text-align:left; font-weight:600;">${m.guest}</span>
+                            <span style="flex:1; text-align:left; font-weight:600;">${leagueEsc(m.guest)}</span>
                         </div>
                         <div style="display:flex; gap:5px; align-items:center;">
-                            <input type="text" class="score-input home-score" value="${m.home_goals !== null ? m.home_goals : ''}" placeholder="-">
+                            <input type="text" class="score-input home-score" value="${leagueEsc(m.home_goals !== null ? m.home_goals : '')}" placeholder="-">
                             :
-                            <input type="text" class="score-input guest-score" value="${m.guest_goals !== null ? m.guest_goals : ''}" placeholder="-">
+                            <input type="text" class="score-input guest-score" value="${leagueEsc(m.guest_goals !== null ? m.guest_goals : '')}" placeholder="-">
                         </div>
                     </div>
                     <div style="display:flex; gap:15px; flex-wrap:wrap; font-size:0.9rem;">
                         <div>
                             <label style="font-size:0.8rem; color:#666;">Datum</label>
-                            <input type="date" class="match-date" value="${toIsoDate(m.date)}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                            <input type="date" class="match-date" value="${leagueEsc(toIsoDate(m.date))}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div>
                             <label style="font-size:0.8rem; color:#666;">Uhrzeit</label>
-                            <input type="time" class="match-time" value="${m.time || ''}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                            <input type="time" class="match-time" value="${leagueEsc(m.time || '')}" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div style="flex:1;">
                             <label style="font-size:0.8rem; color:#666;">Notiz</label>
-                            <input type="text" class="match-note" value="${m.match_note || ''}" placeholder="z.B. verlegt, abgesagt..." style="width:100%; padding:5px; border:1px solid #ddd; border-radius:4px;">
+                            <input type="text" class="match-note" value="${leagueEsc(m.match_note || '')}" placeholder="z.B. verlegt, abgesagt..." style="width:100%; padding:5px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                     </div>
                 </div>
@@ -1306,13 +1306,13 @@
                         ${data.teams.map(t => `
                             <tr style="border-bottom:1px solid #eee;">
                                 <td style="padding:12px;">
-                                    <img src="../img/teams/${t.logo_file || (t.name.replace(/[^a-zA-Z0-9]/g, '') + '.gif')}"
+                                    <img src="../img/teams/${leagueEsc(t.logo_file || (t.name.replace(/[^a-zA-Z0-9]/g, '') + '.gif'))}"
                                          onerror="this.src='../img/teams/blank.png'"
                                          style="height:30px; width:auto;">
                                 </td>
-                                <td style="padding:12px; font-weight:600;">${t.name}</td>
-                                <td style="padding:12px; color:#666;">${t.short_name || '-'}</td>
-                                <td style="padding:12px;">${t.match_count}</td>
+                                <td style="padding:12px; font-weight:600;">${leagueEsc(t.name)}</td>
+                                <td style="padding:12px; color:#666;">${leagueEsc(t.short_name || '-')}</td>
+                                <td style="padding:12px;">${Number(t.match_count) || 0}</td>
                                 <td style="padding:12px; text-align:right;">
                                     <button onclick="openTeamEditor(${t.id})" class="btn-secondary" style="font-size:0.85rem; padding:6px 12px;">Bearbeiten</button>
                                 </td>
@@ -1450,7 +1450,7 @@
 
             // Team-Dropdown befüllen
             const teamSelect = document.getElementById('corr-team-select');
-            teamSelect.innerHTML = data.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            teamSelect.innerHTML = data.teams.map(t => `<option value="${Number(t.id)}">${leagueEsc(t.name)}</option>`).join('');
 
             // Korrekturen anzeigen
             if (data.corrections.length === 0) {

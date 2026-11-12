@@ -97,7 +97,10 @@ try {
             }
 
             // Nur eigene Posts, Editor oder Admin darf bearbeiten
-            $canEdit = ($post['user_id'] == $userId) ||
+            // (Gastbeitraege ohne user_id gehoeren niemandem - nicht null == null!)
+            $isOwnPost = $userId !== null && $post['user_id'] !== null
+                      && (int)$post['user_id'] === (int)$userId;
+            $canEdit = $isOwnPost ||
                        ($userRole === 'editor') ||
                        ($userRole === 'admin');
 
@@ -126,7 +129,8 @@ try {
             }
 
             // Nur eigene Posts (innerhalb 1h), Editor oder Admin darf löschen
-            $isOwnPost = $post['user_id'] == $userId;
+            $isOwnPost = $userId !== null && $post['user_id'] !== null
+                      && (int)$post['user_id'] === (int)$userId;
             $isRecent = strtotime($post['created_at']) > (time() - 3600); // 1 Stunde
 
             $canDelete = ($isOwnPost && $isRecent) ||
