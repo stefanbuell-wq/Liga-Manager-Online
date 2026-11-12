@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261117">
+    <link rel="stylesheet" href="css/portal.css?v=20261118">
     <link rel="stylesheet" href="css/newsprint.css">
 
     <!-- Favicon -->
@@ -1041,7 +1041,8 @@
                 const opp = Number(isHome ? m.guest_goals : m.home_goals);
                 const res = !m.played ? 'open' : own > opp ? 'w' : own < opp ? 'l' : 'd';
                 const resLabel = { w: 'S', d: 'U', l: 'N', open: '' }[res];
-                const shortDate = String(m.date || '').replace(/^(\d{1,2}\.\d{1,2}\.)\d{2,4}$/, '$1');
+                // Saison geht ueber zwei Jahre: Datum mit Jahr (16.10.26)
+                const shortDate = String(m.date || '').replace(/^(\d{1,2}\.\d{1,2}\.)(?:\d{2})?(\d{2})$/, '$1$2');
                 const name = (n) => n === teamName ? `<strong>${sqEsc(n)}</strong>` : sqEsc(n);
                 return `
                     <div class="srow">

@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 12.11.2026 (3. Nachtrag) – Saison eines Vereins mit Jahreszahl
+
+### Für Redaktion und Leser
+
+- Im Fenster „Saison eines Vereins“ (Klick auf einen Vereinsnamen) steht beim Datum jetzt auch das Jahr, z. B. „16.10.26 17:00“. Eine Saison geht ja über zwei Jahre.
+
+### Technik
+
+- `index.html` `showTeamSeason`: Datum TT.MM.JJ; Spalte `.srow` 92 → 108 px, `portal.css?v=20261118`
+
+---
+
 ## 12.11.2026 (2. Nachtrag) – Bericht schreiben: aktuelle Saison zuerst, Datum per Klick
 
 ### Für Redaktion und Leser
