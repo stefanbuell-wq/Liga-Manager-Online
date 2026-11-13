@@ -101,7 +101,9 @@ try {
         'rejected' => 'Dieses Konto wurde nicht freigegeben.',
         'inactive' => 'Dein Konto wurde wegen längerer Inaktivität deaktiviert. Bitte wende dich an die Redaktion.',
     ];
-    if (isset($blocked[$status]) || !(int)$dbUser['active']) {
+    // Gleiche Regel wie Security::syncAuthFromDb(): nur status 'active' (sonst Anmeldung,
+    // die beim naechsten Aufruf sofort wieder entzogen wird – Umleitung zur Anmeldung)
+    if ($status !== 'active' || !(int)$dbUser['active']) {
         echo json_encode([
             'success' => false,
             'error' => $blocked[$status] ?? 'Benutzer ist deaktiviert',
