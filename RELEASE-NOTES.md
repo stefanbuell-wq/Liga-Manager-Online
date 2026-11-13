@@ -5,6 +5,20 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 5) – Login-Sperre korrigiert
+
+### Für Redaktion und Leser
+
+- Nach 5 falschen Passwörtern gilt weiterhin eine Wartezeit von 15 Minuten. Danach hat man jetzt wirklich wieder 5 Versuche. Bisher sperrte der erste Versuch nach der Wartezeit sofort erneut, im schlimmsten Fall bis zu 2 Stunden lang.
+
+### Technik
+
+- `Security::checkRateLimit($id, $max, $resetAfterLock)`: Mit `true` (nur `api/login.php`) löscht eine abgelaufene Sperre den Zähler. Kontaktformular, Konto-Mails und Banner-Zähler behalten ihr Stundenbudget.
+- Aufräumen der `rate_limits` mit PHP-Ortszeit statt SQLite-`datetime('now')`. SQLite rechnet in UTC, deshalb wurden Einträge 1 h zu spät gelöscht.
+- Live seit 13.11.2026, Commits e860ce3 und 305cc1d. Sicherung `/hafo.de/backups/hafo-pre-305cc1d.tar.gz` und `security-pre-305cc1d.db`.
+
+---
+
 ## 13.11.2026 (Nachtrag 4) – 24 Stunden angemeldet bleiben
 
 ### Für Redaktion und Leser
