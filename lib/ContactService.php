@@ -3,14 +3,16 @@
  * Kontaktanfragen (Sponsoring, allgemein, Fehlermeldungen)
  *
  * Jede Anfrage wird in der DB gespeichert und ist im Admin unter "Anfragen" sichtbar.
- * Zusaetzlich Mail-Benachrichtigung, wenn in config/mail.php 'contact_notify'
- * (oder ersatzweise 'admin_notify') gesetzt ist.
+ * Zusaetzlich Mail-Benachrichtigung an bis zu zwei Kontaktpersonen, gepflegt im Admin
+ * unter "Einstellungen" (app_settings contact_notify_1/_2). Sind dort keine eingetragen,
+ * gilt ersatzweise 'contact_notify' bzw. 'admin_notify' aus config/mail.php.
  *
  * Aufbewahrung: erledigte Anfragen werden nach 12 Monaten geloescht, alle anderen nach 24.
  */
 
 require_once __DIR__ . '/LmoDatabase.php';
 require_once __DIR__ . '/Mailer.php';
+require_once __DIR__ . '/SettingsRepository.php';
 
 class ContactService
 {
@@ -97,16 +99,59 @@ class ContactService
         return $id;
     }
 
+    public const NOTIFY_KEYS = ['contact_notify_1', 'contact_notify_2'];
+
+    private static function mailConfig(): array
+    {
+        $file = __DIR__ . '/../config/mail.php';
+        return file_exists($file) ? (require $file) : [];
+    }
+
+    /** Empfaenger der Benachrichtigung (max. zwei, ohne Doppelte). */
+    public static function notifyRecipients(): array
+    {
+        $settings = new SettingsRepository();
+        $to = [];
+        foreach (self::NOTIFY_KEYS as $k) {
+            $to[] = $settings->get($k);
+        }
+        $to = array_values(array_unique(array_filter($to, fn($a) => filter_var($a, FILTER_VALIDATE_EMAIL))));
+        if (!$to) {
+            $cfg = self::mailConfig();
+            $fallback = $cfg['contact_notify'] ?? ($cfg['admin_notify'] ?? '');
+            if (filter_var($fallback, FILTER_VALIDATE_EMAIL)) {
+                $to = [$fallback];
+            }
+        }
+        return $to;
+    }
+
+    /** Test-Mail an alle Empfaenger; gibt je Adresse true oder die Fehlermeldung zurueck. */
+    public static function sendTestNotification(): array
+    {
+        $base = rtrim(self::mailConfig()['base_url'] ?? 'https://hafo.de', '/');
+        $result = [];
+        foreach (self::notifyRecipients() as $to) {
+            try {
+                (new Mailer())->send($to, '[HAFO] Test: Benachrichtigung Kontaktformular',
+                    "Diese Test-Mail wurde im Admin unter \"Einstellungen\" ausgelöst.\n\n"
+                    . "Sie kommt an, also erhalten Sie künftig eine Mail, sobald jemand das Kontaktformular auf $base nutzt.\n");
+                $result[$to] = true;
+            } catch (Throwable $e) {
+                $result[$to] = $e->getMessage();
+            }
+        }
+        return $result;
+    }
+
     private function notify(int $id, string $topic, string $name, string $company, string $email,
                             string $phone, array $interests, string $message): void
     {
-        $file = __DIR__ . '/../config/mail.php';
-        $cfg = file_exists($file) ? (require $file) : [];
-        $to = $cfg['contact_notify'] ?? ($cfg['admin_notify'] ?? '');
-        if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        $recipients = self::notifyRecipients();
+        if (!$recipients) {
             return;
         }
-        $base = rtrim($cfg['base_url'] ?? 'https://hafo.de', '/');
+        $base = rtrim(self::mailConfig()['base_url'] ?? 'https://hafo.de', '/');
         $lines = [
             'Neue Kontaktanfrage #' . $id . ' über ' . $base,
             '',
@@ -124,10 +169,12 @@ class ContactService
         $lines[] = '';
         $lines[] = 'Bearbeiten: ' . $base . '/admin/anfragen.html';
         $lines[] = 'Bitte nicht auf diese Mail antworten, sondern direkt an die oben genannte Adresse schreiben.';
-        try {
-            (new Mailer())->send($to, '[HAFO] ' . self::TOPICS[$topic] . ': ' . $name, implode("\n", $lines));
-        } catch (Throwable $e) {
-            error_log('Kontakt-Benachrichtigung fehlgeschlagen: ' . $e->getMessage());
+        foreach ($recipients as $to) {
+            try {
+                (new Mailer())->send($to, '[HAFO] ' . self::TOPICS[$topic] . ': ' . $name, implode("\n", $lines));
+            } catch (Throwable $e) {
+                error_log('Kontakt-Benachrichtigung an ' . $to . ' fehlgeschlagen: ' . $e->getMessage());
+            }
         }
     }
 

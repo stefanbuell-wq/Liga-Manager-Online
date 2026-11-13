@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einstellungen - HAFO Admin</title>
+    <link rel="stylesheet" href="../css/fonts.css">
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-primary-hover: #ff1a35;
+            --color-bg-dark: #F5F5F5;
+            --color-bg-card: #FFFFFF;
+            --color-bg-elevated: #FAFAFA;
+            --color-border: rgba(0, 0, 0, 0.10);
+            --color-text-primary: #111111;
+            --color-text-secondary: #555555;
+            --color-text-muted: #767676;
+            --color-danger: #dc3545;
+            --color-success: #166534;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--color-bg-dark);
+            color: var(--color-text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .admin-container { max-width: 760px; margin: 0 auto; padding: 30px 20px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .header h1 { margin: 0; font-family: 'Urbanist', sans-serif; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .card { background: var(--color-bg-card); padding: 22px 24px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); margin-bottom: 16px; }
+        .card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+        .card > p { margin: 0 0 18px; color: var(--color-text-secondary); font-size: .93rem; line-height: 1.5; }
+
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
+        .field input { width: 100%; padding: 11px 12px; border: 1px solid rgba(0,0,0,.2); border-radius: 8px; font: inherit; font-size: 1rem; background: #fff; }
+        .field input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+
+        .btn {
+            padding: 10px 18px; background: var(--color-primary); color: #fff; border: none;
+            border-radius: var(--radius-md); cursor: pointer; font-weight: 600; font-size: .92rem;
+            display: inline-flex; align-items: center; gap: 6px; font-family: inherit; text-decoration: none;
+        }
+        .btn:hover { background: var(--color-primary-hover); }
+        .btn:disabled { opacity: .6; cursor: default; }
+        .btn-secondary { background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: var(--color-text-primary); }
+        .btn-secondary:hover { background: #eee; }
+
+        .hint { font-size: .82rem; color: var(--color-text-muted); line-height: 1.5; }
+        .result { margin-top: 14px; font-size: .9rem; line-height: 1.6; }
+        .result .ok { color: var(--color-success); }
+        .result .err { color: var(--color-danger); }
+        .hidden { display: none !important; }
+
+        #toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #111; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: .9rem;
+            opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 1000;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { background: var(--color-danger); }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <div class="header">
+            <h1>Einstellungen</h1>
+            <div class="header-actions">
+                <a href="anfragen.html" class="btn btn-secondary">Anfragen</a>
+                <a href="index.html" class="btn btn-secondary">Zurück</a>
+            </div>
+        </div>
+
+        <div id="denied" class="card hidden">
+            <p>Die Einstellungen sind nur für Administratoren.</p>
+        </div>
+
+        <form id="contactCard" class="card hidden" onsubmit="save(event)">
+            <h2>✉️ Kontaktformular – Benachrichtigung</h2>
+            <p>Wer soll eine E-Mail bekommen, wenn jemand das Kontaktformular abschickt? Es können zwei Personen
+                eingetragen werden. Ein Feld leer lassen, wenn nur eine Person benachrichtigt werden soll.
+                Die Anfragen stehen außerdem immer im Admin unter „Anfragen“.</p>
+
+            <div class="field">
+                <label for="contact_notify_1">Kontaktperson 1 (E-Mail)</label>
+                <input type="email" id="contact_notify_1" autocomplete="off" placeholder="name@beispiel.de" maxlength="200">
+            </div>
+            <div class="field">
+                <label for="contact_notify_2">Kontaktperson 2 (E-Mail)</label>
+                <input type="email" id="contact_notify_2" autocomplete="off" placeholder="name@beispiel.de" maxlength="200">
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn" id="saveBtn">Speichern</button>
+                <button type="button" class="btn btn-secondary" id="testBtn" onclick="testMail()">Test-Mail senden</button>
+            </div>
+            <p class="hint" style="margin-top:12px;">Die Test-Mail geht an die <strong>gespeicherten</strong> Adressen – also erst speichern.
+                Sie kommt von noreply@hafo.de; bitte notfalls im Spam-Ordner nachsehen.</p>
+            <div class="result" id="testResult"></div>
+        </form>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        const API = '../api/settings.php';
+        const KEYS = ['contact_notify_1', 'contact_notify_2'];
+        let csrfToken = '';
+
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function toast(msg, isError) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'show' + (isError ? ' error' : '');
+            clearTimeout(t._h);
+            t._h = setTimeout(() => t.className = '', 3500);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const auth = await (await fetch('../api/check-auth.php', { credentials: 'include' })).json();
+                csrfToken = auth.csrf_token || '';
+                if (!auth.authenticated) { location.href = 'index.html'; return; }
+                if ((auth.user && auth.user.role) !== 'admin') {
+                    document.getElementById('denied').classList.remove('hidden');
+                    return;
+                }
+            } catch (e) {
+                toast('Anmeldestatus konnte nicht geprüft werden', true);
+                return;
+            }
+            load();
+        });
+
+        async function load() {
+            try {
+                const res = await (await fetch(`${API}?action=get`, { credentials: 'include' })).json();
+                if (!res.success) throw new Error(res.error || 'Fehler');
+                if (res.csrf_token) csrfToken = res.csrf_token;
+                KEYS.forEach(k => document.getElementById(k).value = res.data[k] || '');
+                document.getElementById('contactCard').classList.remove('hidden');
+            } catch (e) {
+                toast('Laden fehlgeschlagen: ' + e.message, true);
+            }
+        }
+
+        async function post(data) {
+            const res = await (await fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ ...data, csrf_token: csrfToken })
+            })).json();
+            if (!res.success) throw new Error(res.error || 'Fehler');
+            return res;
+        }
+
+        async function save(ev) {
+            ev.preventDefault();
+            const data = { action: 'save' };
+            KEYS.forEach(k => data[k] = document.getElementById(k).value.trim());
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            try {
+                await post(data);
+                toast('Gespeichert');
+            } catch (e) { toast(e.message, true); }
+            btn.disabled = false;
+        }
+
+        async function testMail() {
+            const btn = document.getElementById('testBtn');
+            const out = document.getElementById('testResult');
+            btn.disabled = true;
+            out.textContent = 'Wird gesendet …';
+            try {
+                const res = await post({ action: 'test_contact_mail' });
+                out.innerHTML = Object.entries(res.data).map(([to, r]) => r === true
+                    ? `<div class="ok">✔ Gesendet an ${esc(to)}</div>`
+                    : `<div class="err">✘ ${esc(to)}: ${esc(r)}</div>`).join('');
+            } catch (e) {
+                out.innerHTML = `<div class="err">✘ ${esc(e.message)}</div>`;
+            }
+            btn.disabled = false;
+        }
+    </script>
+</body>
+
+</html>

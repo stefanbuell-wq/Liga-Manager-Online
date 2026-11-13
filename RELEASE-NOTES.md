@@ -5,6 +5,20 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag) – Mail bei neuen Kontaktanfragen
+
+### Für Redaktion und Leser
+
+- Neu im Admin: **⚙️ Einstellungen**. Dort lassen sich bis zu zwei Kontaktpersonen eintragen, die bei jeder neuen Anfrage über das Kontaktformular eine E-Mail bekommen.
+- Mit „Test-Mail senden“ lässt sich prüfen, ob die Mails ankommen.
+
+### Technik
+
+- `lib/SettingsRepository.php` (Tabelle `app_settings`), `api/settings.php` (nur Admin, CSRF), `admin/einstellungen.html`
+- `ContactService`: Empfänger aus `contact_notify_1/_2`, Rückfall `config/mail.php`; Versand je Empfänger
+
+---
+
 ## 13.11.2026 – Umzug auf hafo.de
 
 ### Für Redaktion und Leser
