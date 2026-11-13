@@ -1,7 +1,24 @@
 # Release Notes – HAFO.de (LMO26)
 
-Live unter **https://hafo.buell-digital.de**. Neueste Version oben.
+Live unter **https://hafo.de**. Neueste Version oben.
 Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar ändert) und **Technik** (für die Entwicklung, mit Commits).
+
+---
+
+## 13.11.2026 – Umzug auf hafo.de
+
+### Für Redaktion und Leser
+
+- Die Seite läuft jetzt unter **https://hafo.de**. Alle Inhalte, Berichte, Forumsbeiträge und Zugänge sind mitgezogen.
+- Die alte Adresse hafo.buell-digital.de leitet automatisch auf hafo.de weiter. Alte Links und Lesezeichen funktionieren also weiter.
+- Bitte einmal neu anmelden. Die Anmeldung gilt jetzt für die neue Adresse.
+
+### Technik
+
+- Neues Hosting: netcup Webhosting (Plesk), Webspace `<webspace>`, Pfad `/hafo.de/httpdocs`, PHP 8.5; SSH per Schlüssel (ssh-manager `hafo`)
+- Standard-Adresse in Mails/Kontakt auf `https://hafo.de` (d035699)
+- DB per `sqlite3 .backup` übertragen, alte Domain per 301 in `.htaccess` umgeleitet; Sicherungen auf vereinspilot `~/backups/hafo-db-umzug-20261113.sqlite`, `~/backups/hafo-htaccess-vor-umzug`, Wartungsseite auf netcup `/hafo.de/backups/`
+- Nicht übertragen: `scripts/`, `config/auth copy.php`, Cache
 
 ---
 
