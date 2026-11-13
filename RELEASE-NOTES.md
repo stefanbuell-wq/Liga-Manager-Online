@@ -5,6 +5,23 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 8) – Editor zeigt Berichte formatiert
+
+### Für Redaktion und Leser
+
+- Im Reiter „HTML (für Profis)“ erscheint der Bericht jetzt so, wie ihn die Leser sehen, und lässt sich direkt bearbeiten. Den HTML-Code zeigt erst der Knopf **„Quelltext anzeigen“**.
+- Text aus Word wird dabei ohne Farben und Schriften eingefügt. Fett, kursiv und Absätze bleiben erhalten.
+
+### Technik
+
+- `admin/news.html`: `setHtmlView()`/`syncFormattedView()`; HTML-Reiter öffnet formatiert (`editNews`, `switchTab`); beim Verlassen des Reiters zurück auf Quelltext, damit Template-Inhalt nicht überschrieben wird
+- Paste in die formatierte Ansicht über `wordHtmlToMarkup()` + `textToHtml()`
+- Sicherheit: `sanitizeForEditor()` filtert gespeichertes HTML vor dem Einsetzen. Die Allowlist ist dieselbe wie bei `NewsContent::sanitize`, geparst wird per DOMParser in einem inaktiven Dokument. Skripte, iframes, svg, `on*`-Attribute und `javascript:`-/`data:`-URLs entfallen.
+- Offen (optional): zusätzlich serverseitig beim Speichern filtern
+- Live seit 13.11.2026, Commits 22b1806 und e22664d, Sicherung `/hafo.de/backups/hafo-pre-e22664d.tar.gz`
+
+---
+
 ## 13.11.2026 (Nachtrag 7) – Fetter Text im Editor wieder lesbar
 
 ### Für Redaktion und Leser
