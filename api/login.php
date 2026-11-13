@@ -39,7 +39,7 @@ if ($user === '' || $pass === '') {
 }
 
 $identifier = Security::getClientIp() . ':' . mb_strtolower($user);
-$rateCheck = Security::checkRateLimit($identifier);
+$rateCheck = Security::checkRateLimit($identifier, null, true);
 if (!$rateCheck['allowed']) {
     echo json_encode([
         'success' => false,

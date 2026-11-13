@@ -260,8 +260,10 @@ class Security {
     /**
      * Check rate limiting for login attempts
      * Returns: true if allowed, false if blocked
+     * $resetAfterLock: nach Ablauf der Sperre wieder volle Versuche (Login). Ohne (Kontaktformular,
+     * Konto-Mails, Zaehler) bleibt das Stundenbudget: bis expires_at wird erneut gesperrt.
      */
-    public static function checkRateLimit($identifier, $maxAttempts = null) {
+    public static function checkRateLimit($identifier, $maxAttempts = null, $resetAfterLock = false) {
         $maxAttempts = $maxAttempts ?? self::MAX_LOGIN_ATTEMPTS;
         $pdo = self::getRateLimitDb();
 
@@ -289,9 +291,9 @@ class Security {
                 ];
             }
 
-            // Sperre abgelaufen: Zaehler zuruecksetzen, damit es wieder volle Versuche gibt
+            // Login: Sperre abgelaufen -> Zaehler zuruecksetzen, damit es wieder volle Versuche gibt
             // (sonst sperrte der naechste Versuch sofort erneut fuer 15 Minuten)
-            if ($record['locked_until']) {
+            if ($resetAfterLock && $record['locked_until']) {
                 $pdo->prepare("DELETE FROM rate_limits WHERE identifier = ?")->execute([$identifier]);
                 return ['allowed' => true];
             }
