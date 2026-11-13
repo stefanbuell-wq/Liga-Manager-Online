@@ -1,6 +1,9 @@
 # Alte Portal-Adresse auf die Startseite umleiten
 <IfModule mod_alias.c>
     RedirectMatch 301 ^/portal\.html$ /
+    # Alte Lesezeichen Main.php / MAIN.PHP (Server unterscheidet Gross-/Kleinschreibung);
+    # main.php selbst ist eine Datei, die ebenfalls auf / umleitet
+    RedirectMatch 301 (?i)^/main\.php$ /
 </IfModule>
 
 # Security Headers
