@@ -5,6 +5,19 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 2) – Alte Lesezeichen auf main.php
+
+### Für Redaktion und Leser
+
+- Wer noch ein Lesezeichen auf die alte Adresse `hafo.de/main.php` hat, landet jetzt automatisch auf der Startseite statt auf einer Fehlerseite.
+
+### Technik
+
+- `main.php` (301 auf `/`), `.htaccess`: `RedirectMatch 301 (?i)^/main\.php$ /` für alle Schreibweisen (`Main.php`, `MAIN.PHP`); Commit f0de034
+- Sicherung der vorherigen `.htaccess`: `/hafo.de/backups/htaccess-pre-f0de034`
+
+---
+
 ## 13.11.2026 (Nachtrag) – Mail bei neuen Kontaktanfragen
 
 ### Für Redaktion und Leser
