@@ -33,6 +33,8 @@ try {
         $limit = isset($_GET['limit']) ? max(1, min(50, intval($_GET['limit']))) : 20;
         $offset = isset($_GET['offset']) ? max(0, intval($_GET['offset'])) : 0;
         $forHomepage = isset($_GET['homepage']);
+        $search = ForumRepository::searchWords($_GET['q'] ?? '') ? trim(mb_substr((string)$_GET['q'], 0, 100)) : '';
+        $sort = (string)($_GET['sort'] ?? '');
 
         if ($topicId > 0) {
             // Einzelnes Topic mit Posts
@@ -53,8 +55,12 @@ try {
             // View-Counter erhöhen
             $repo->incrementTopicViews($topicId);
 
-            $posts = $repo->getPostsByTopic($topicId, $limit, $offset);
-            $totalPosts = $repo->getPostCountByTopic($topicId);
+            // Sortierung: new = neueste zuerst (Standard, Eroeffnungsbeitrag oben angeheftet), old = chronologisch
+            $order = $sort === 'old' ? 'asc' : 'desc';
+            $pinFirst = $order === 'desc' && $search === '';
+            $posts = $repo->getPostsByTopic($topicId, $limit, $offset, $order, $search, $pinFirst);
+            $totalPosts = $repo->countPostsByTopic($topicId, $search, $pinFirst);
+            $firstPost = ($pinFirst && $offset === 0) ? $repo->getFirstPost($topicId) : null;
 
             // Berechtigungsinfo hinzufügen
             $canReply = !$topic['is_locked'] && $repo->canReplyInCategory($topic['category_id'], $userRole);
@@ -62,7 +68,11 @@ try {
             echo json_encode([
                 'success' => true,
                 'topic' => $topic,
+                'first_post' => $firstPost,
                 'posts' => $posts,
+                'sort' => $order === 'asc' ? 'old' : 'new',
+                'search' => $search,
+                'all_posts' => (int)$repo->getPostCountByTopic($topicId),
                 'pagination' => [
                     'total' => $totalPosts,
                     'limit' => $limit,
@@ -98,8 +108,9 @@ try {
                 exit;
             }
 
-            $topics = $repo->getTopicsByCategory($categoryId, $limit, $offset);
-            $totalTopics = $repo->getTopicCountByCategory($categoryId);
+            $list = $repo->listTopics([$categoryId], $sort, $search, $limit, $offset);
+            $topics = $list['topics'];
+            $totalTopics = $list['total'];
 
             // Berechtigungsinfo hinzufügen
             $canCreate = $repo->canCreateTopicInCategory($categoryId, $userRole);
@@ -109,6 +120,7 @@ try {
                 'success' => true,
                 'category' => $category,
                 'topics' => $topics,
+                'search' => $search,
                 'pagination' => [
                     'total' => $totalTopics,
                     'limit' => $limit,
@@ -118,6 +130,29 @@ try {
                 'permissions' => [
                     'can_create_topic' => $canCreate,
                     'can_reply' => $canReply
+                ],
+                'user' => [
+                    'id' => $userId,
+                    'role' => $userRole,
+                    'logged_in' => $userId !== null
+                ],
+                'csrf_token' => Security::getCsrfToken()
+            ]);
+
+        } elseif ($search !== '') {
+            // Suche ueber alle Kategorien, die der Benutzer sehen darf
+            $catIds = array_column($repo->getCategories($userRole), 'id');
+            $list = $repo->listTopics($catIds, $sort, $search, $limit, $offset);
+
+            echo json_encode([
+                'success' => true,
+                'topics' => $list['topics'],
+                'search' => $search,
+                'pagination' => [
+                    'total' => $list['total'],
+                    'limit' => $limit,
+                    'offset' => $offset,
+                    'pages' => ceil($list['total'] / $limit)
                 ],
                 'user' => [
                     'id' => $userId,

@@ -366,26 +366,192 @@ class ForumRepository
 
     // ==================== POSTS ====================
 
+    // ==================== SUCHE ====================
+
+    private $hasFtsCache = null;
+
+    /** Suchwoerter aus Freitext: Buchstaben/Ziffern, mind. 2 Zeichen, max. 6 */
+    public static function searchWords($q)
+    {
+        preg_match_all('/[\p{L}\p{N}]+/u', mb_substr(trim((string)$q), 0, 100), $m);
+        $words = [];
+        foreach ($m[0] as $w) {
+            if (mb_strlen($w) >= 2) $words[mb_strtolower($w)] = $w;
+        }
+        return array_slice(array_values($words), 0, 6);
+    }
+
+    private function hasFts()
+    {
+        if ($this->hasFtsCache === null) {
+            $this->hasFtsCache = (bool)$this->pdo->query("SELECT 1 FROM sqlite_master WHERE name = 'forum_fts'")->fetchColumn();
+        }
+        return $this->hasFtsCache;
+    }
+
+    /**
+     * Bedingung "Beitrag $alias enthaelt alle Woerter" (Wortanfang genuegt).
+     * Liefert [sql, params]; $n haelt die Parameternamen eindeutig.
+     */
+    private function postMatchSql($alias, array $words, &$params, &$n)
+    {
+        if ($this->hasFts()) {
+            $key = ':fts' . (++$n);
+            $params[$key] = implode(' ', array_map(fn($w) => '"' . str_replace('"', '', $w) . '"*', $words));
+            return "$alias.id IN (SELECT rowid FROM forum_fts WHERE forum_fts MATCH $key)";
+        }
+        $parts = [];
+        foreach ($words as $w) {
+            $key = ':w' . (++$n);
+            $params[$key] = '%' . $w . '%';
+            $parts[] = "$alias.content LIKE $key";
+        }
+        return '(' . implode(' AND ', $parts) . ')';
+    }
+
+    /** Bedingung "Thementitel enthaelt alle Woerter" */
+    private function titleMatchSql($alias, array $words, &$params, &$n)
+    {
+        $parts = [];
+        foreach ($words as $w) {
+            $key = ':t' . (++$n);
+            $params[$key] = '%' . $w . '%';
+            $parts[] = "$alias.title LIKE $key";
+        }
+        return '(' . implode(' AND ', $parts) . ')';
+    }
+
+    /**
+     * Themen mehrerer Kategorien, sortiert und optional gefiltert.
+     * $sort: activity (Standard, angeheftete zuerst) | newest | oldest | replies
+     * Suche: Treffer im Titel oder in einem Beitrag; 'hits' = Anzahl passender Beitraege
+     * @return array ['topics' => [...], 'total' => int]
+     */
+    public function listTopics(array $categoryIds, $sort = 'activity', $search = '', $limit = 20, $offset = 0)
+    {
+        $categoryIds = array_values(array_filter(array_map('intval', $categoryIds)));
+        if (!$categoryIds) return ['topics' => [], 'total' => 0];
+
+        $params = [];
+        $n = 0;
+        $catKeys = [];
+        foreach ($categoryIds as $id) {
+            $key = ':c' . (++$n);
+            $params[$key] = $id;
+            $catKeys[] = $key;
+        }
+        $where = 't.category_id IN (' . implode(',', $catKeys) . ')';
+
+        $words = self::searchWords($search);
+        // Passende Beitraege einmal je Thema zaehlen (CTE), dann mit den Themen verbinden
+        $with = 'WITH hit AS (SELECT 0 AS topic_id, 0 AS n WHERE 0)';
+        if ($words) {
+            $postCond = $this->postMatchSql('fp', $words, $params, $n);
+            $with = "WITH hit AS MATERIALIZED (SELECT fp.topic_id, COUNT(*) AS n FROM forum_posts fp WHERE $postCond GROUP BY fp.topic_id)";
+            $where .= ' AND (hit.topic_id IS NOT NULL OR ' . $this->titleMatchSql('t', $words, $params, $n) . ')';
+        }
+
+        switch ($sort) {
+            case 'newest':  $order = 't.created_at DESC, t.id DESC'; break;
+            case 'oldest':  $order = 't.created_at ASC, t.id ASC'; break;
+            case 'replies': $order = 't.post_count DESC, t.last_post_at DESC'; break;
+            default:
+                $order = ($words ? '' : 't.is_sticky DESC, ') . 't.last_post_at DESC, t.id DESC';
+        }
+
+        $count = $this->pdo->prepare("$with SELECT COUNT(*) FROM forum_topics t LEFT JOIN hit ON hit.topic_id = t.id WHERE $where");
+        $count->execute($params);
+        $total = (int)$count->fetchColumn();
+
+        $stmt = $this->pdo->prepare("
+            $with
+            SELECT t.*,
+                   c.name as category_name,
+                   u.username as author_name,
+                   u.display_name as author_display_name,
+                   lu.username as last_post_author,
+                   COALESCE(hit.n, 0) as hits
+            FROM forum_topics t
+            LEFT JOIN hit ON hit.topic_id = t.id
+            LEFT JOIN forum_categories c ON t.category_id = c.id
+            LEFT JOIN users u ON t.user_id = u.id
+            LEFT JOIN users lu ON t.last_post_user_id = lu.id
+            WHERE $where
+            ORDER BY $order
+            LIMIT " . (int)$limit . " OFFSET " . (int)$offset);
+        $stmt->execute($params);
+        return ['topics' => $stmt->fetchAll(), 'total' => $total];
+    }
+
     /**
      * Posts eines Topics abrufen
+     * $order: asc (aelteste zuerst) | desc (neueste zuerst)
+     * $search: nur Beitraege mit allen Suchwoertern
+     * $excludeFirst: Eroeffnungsbeitrag weglassen (wird bei "neueste zuerst" separat oben gezeigt)
+     * post_nr = laufende Nummer im Thema (chronologisch), unabhaengig von Sortierung/Filter
      */
-    public function getPostsByTopic($topicId, $limit = 20, $offset = 0)
+    public function getPostsByTopic($topicId, $limit = 20, $offset = 0, $order = 'asc', $search = '', $excludeFirst = false)
+    {
+        [$where, $params] = $this->postFilter($topicId, $search, $excludeFirst);
+        $dir = $order === 'desc' ? 'DESC' : 'ASC';
+        $stmt = $this->pdo->prepare("
+            WITH nr AS (
+                SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS post_nr
+                FROM forum_posts WHERE topic_id = :topic
+            )
+            SELECT p.id, p.topic_id, p.user_id, p.guest_name, p.content, p.is_first_post,
+                   p.edited_at, p.edited_by, p.created_at, nr.post_nr,
+                   u.username as author_name,
+                   u.display_name as author_display_name,
+                   eu.username as editor_name
+            FROM forum_posts p
+            JOIN nr ON nr.id = p.id
+            LEFT JOIN users u ON p.user_id = u.id
+            LEFT JOIN users eu ON p.edited_by = eu.id
+            WHERE $where
+            ORDER BY p.created_at $dir, p.id $dir
+            LIMIT " . (int)$limit . " OFFSET " . (int)$offset);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /** Anzahl Beitraege mit denselben Filtern wie getPostsByTopic */
+    public function countPostsByTopic($topicId, $search = '', $excludeFirst = false)
+    {
+        [$where, $params] = $this->postFilter($topicId, $search, $excludeFirst);
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM forum_posts p WHERE $where");
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /** Eroeffnungsbeitrag eines Themas (post_nr 1) */
+    public function getFirstPost($topicId)
     {
         $stmt = $this->pdo->prepare("
             SELECT p.id, p.topic_id, p.user_id, p.guest_name, p.content, p.is_first_post,
-                   p.edited_at, p.edited_by, p.created_at,
+                   p.edited_at, p.edited_by, p.created_at, 1 AS post_nr,
                    u.username as author_name,
                    u.display_name as author_display_name,
                    eu.username as editor_name
             FROM forum_posts p
             LEFT JOIN users u ON p.user_id = u.id
             LEFT JOIN users eu ON p.edited_by = eu.id
-            WHERE p.topic_id = ?
-            ORDER BY p.created_at ASC
-            LIMIT ? OFFSET ?
+            WHERE p.topic_id = ? AND p.is_first_post = 1
+            ORDER BY p.created_at, p.id LIMIT 1
         ");
-        $stmt->execute([$topicId, $limit, $offset]);
-        return $stmt->fetchAll();
+        $stmt->execute([$topicId]);
+        return $stmt->fetch() ?: null;
+    }
+
+    private function postFilter($topicId, $search, $excludeFirst)
+    {
+        $params = [':topic' => (int)$topicId];
+        $n = 0;
+        $where = 'p.topic_id = :topic';
+        if ($excludeFirst) $where .= ' AND p.is_first_post = 0';
+        $words = self::searchWords($search);
+        if ($words) $where .= ' AND ' . $this->postMatchSql('p', $words, $params, $n);
+        return [$where, $params];
     }
 
     /**

@@ -14,6 +14,32 @@ let currentTopicId = null;
 let currentPage = 1;
 let totalPages = 1;
 
+// Suche (URL-Parameter q) und Sortierung (pro Besucher gemerkt)
+let searchQuery = '';
+let postSort = prefGet('hafo_forum_post_sort', ['new', 'old'], 'new');          // Beitraege: neueste zuerst
+let topicSort = prefGet('hafo_forum_topic_sort', ['activity', 'newest', 'oldest', 'replies'], 'activity');
+let allPostsInTopic = 0;
+
+const TOPIC_SORTS = [
+    ['activity', 'Letzte Antwort'],
+    ['newest', 'Neueste Themen'],
+    ['oldest', 'Älteste Themen'],
+    ['replies', 'Meiste Beiträge']
+];
+
+function prefGet(key, allowed, fallback) {
+    try {
+        const v = localStorage.getItem(key);
+        return allowed.includes(v) ? v : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function prefSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+}
+
 // ============================================
 // INITIALIZATION
 // ============================================
@@ -36,13 +62,162 @@ function parseUrl() {
     const categoryId = params.get('category');
     const topicId = params.get('topic');
     currentPage = parseInt(params.get('page')) || 1;
+    searchQuery = (params.get('q') || '').trim();
 
     if (topicId) {
         loadTopic(parseInt(topicId));
     } else if (categoryId) {
         loadCategory(parseInt(categoryId));
+    } else if (searchQuery) {
+        loadSearch();
     } else {
         loadCategories();
+    }
+}
+
+// ============================================
+// SUCHE & SORTIERUNG
+// ============================================
+
+/**
+ * Leiste mit Suchfeld und Sortierung fuer die aktuelle Ansicht
+ * @param {string} view categories | topics | search | topic
+ * @param {string} info Hinweiszeile (z. B. Trefferzahl), bereits kodiert
+ */
+function renderToolbar(view, info = '') {
+    const el = document.getElementById('forum-toolbar');
+    if (!el) return;
+
+    const placeholder = {
+        categories: 'Ganzes Forum durchsuchen …',
+        search: 'Ganzes Forum durchsuchen …',
+        topics: 'In diesem Bereich suchen …',
+        topic: 'In diesem Thema suchen …'
+    }[view];
+
+    let sortHtml = '';
+    if (view === 'topic') {
+        sortHtml = `
+            <div class="forum-sort">
+                <span>Reihenfolge:</span>
+                <span class="seg" role="group" aria-label="Reihenfolge der Beiträge">
+                    <button type="button" class="${postSort === 'new' ? 'active' : ''}" aria-pressed="${postSort === 'new'}" onclick="setPostSort('new')">Neueste zuerst</button>
+                    <button type="button" class="${postSort === 'old' ? 'active' : ''}" aria-pressed="${postSort === 'old'}" onclick="setPostSort('old')">Älteste zuerst</button>
+                </span>
+            </div>`;
+    } else if (view === 'topics' || view === 'search') {
+        sortHtml = `
+            <label class="forum-sort">
+                <span>Sortieren:</span>
+                <select onchange="setTopicSort(this.value)">
+                    ${TOPIC_SORTS.map(([v, l]) => `<option value="${v}" ${topicSort === v ? 'selected' : ''}>${l}</option>`).join('')}
+                </select>
+            </label>`;
+    }
+
+    el.innerHTML = `
+        <div class="forum-toolbar">
+            <form class="forum-search" role="search" onsubmit="event.preventDefault(); setSearch(this.q.value);">
+                <input type="search" name="q" value="${escapeAttr(searchQuery)}" placeholder="${placeholder}" aria-label="${placeholder}">
+                <button type="submit" class="btn btn-secondary">Suchen</button>
+            </form>
+            ${sortHtml}
+            ${info ? `<div class="forum-search-info">${info}</div>` : ''}
+        </div>`;
+}
+
+/** Hinweis "N Treffer fuer ... · Suche aufheben" */
+function searchInfo(count, singular, plural) {
+    if (!searchQuery) return '';
+    return `${count} ${count === 1 ? singular : plural} für „${escapeHtml(searchQuery)}“ · <a onclick="setSearch('')">Suche aufheben</a>`;
+}
+
+/** URL-Parameter setzen (null = entfernen) und Ansicht neu laden */
+function updateUrl(changes) {
+    const params = new URLSearchParams(window.location.search);
+    for (const [k, v] of Object.entries(changes)) {
+        if (v === null || v === '' || (k === 'page' && v === 1)) params.delete(k);
+        else params.set(k, v);
+    }
+    history.pushState({}, '', 'forum.html' + (params.toString() ? '?' + params.toString() : ''));
+    parseUrl();
+}
+
+function setSearch(q) {
+    updateUrl({ q: (q || '').trim(), page: null });
+}
+
+function setPostSort(value) {
+    if (value === postSort) return;
+    postSort = value;
+    prefSet('hafo_forum_post_sort', value);
+    updateUrl({ page: null });
+}
+
+function setTopicSort(value) {
+    topicSort = value;
+    prefSet('hafo_forum_topic_sort', value);
+    updateUrl({ page: null });
+}
+
+/** Suchwoerter im Text der Beitraege markieren (nur Textknoten, kein HTML) */
+function highlightMatches(container, query) {
+    const words = (query.match(/[\p{L}\p{N}]{2,}/gu) || []).slice(0, 6);
+    if (!words.length || !container) return;
+    const re = new RegExp('(?<![\\p{L}\\p{N}])(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'giu');
+    container.querySelectorAll('.post-content').forEach(root => {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(node => {
+            const text = node.nodeValue;
+            re.lastIndex = 0;
+            if (!re.test(text)) return;
+            re.lastIndex = 0;
+            const frag = document.createDocumentFragment();
+            let last = 0, m;
+            while ((m = re.exec(text))) {
+                frag.append(text.slice(last, m.index));
+                const mark = document.createElement('mark');
+                mark.textContent = m[0];
+                frag.append(mark);
+                last = m.index + m[0].length;
+            }
+            frag.append(text.slice(last));
+            node.replaceWith(frag);
+        });
+    });
+}
+
+/**
+ * Suche ueber das ganze Forum (Themen mit Treffern im Titel oder in Beitraegen)
+ */
+async function loadSearch() {
+    currentView = 'search';
+    currentCategoryId = null;
+    currentTopicId = null;
+    document.getElementById('new-topic-btn').style.display = 'none';
+    updateBreadcrumb([{ label: 'Suche', url: '' }]);
+    document.getElementById('forum-title').innerHTML = 'Forum <span>durchsuchen</span>';
+
+    try {
+        const res = await fetch(`${API_BASE}/forum-topics.php?q=${encodeURIComponent(searchQuery)}&sort=${topicSort}&limit=20&offset=${(currentPage - 1) * 20}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Fehler beim Laden');
+        if (data.csrf_token) csrfToken = data.csrf_token;
+
+        totalPages = data.pagination?.pages || 1;
+        renderToolbar('search', searchInfo(data.pagination?.total || 0, 'Thema', 'Themen'));
+        renderTopics(data.topics || [], null, true);
+    } catch (e) {
+        console.error('Error searching forum:', e);
+        renderToolbar('search');
+        document.getElementById('forum-content').innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">❌</div>
+                <p>Fehler bei der Suche</p>
+            </div>`;
+        document.getElementById('pagination-container').innerHTML = '';
     }
 }
 
@@ -113,6 +288,7 @@ async function loadCategories() {
     updateBreadcrumb([]);
     document.getElementById('forum-title').innerHTML = 'Community <span>Forum</span>';
     document.getElementById('new-topic-btn').style.display = 'none';
+    renderToolbar('categories');
 
     try {
         const res = await fetch(`${API_BASE}/forum-categories.php`);
@@ -205,7 +381,8 @@ async function loadCategory(categoryId) {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/forum-topics.php?category=${categoryId}&limit=20&offset=${(currentPage - 1) * 20}`);
+        const q = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : '';
+        const res = await fetch(`${API_BASE}/forum-topics.php?category=${categoryId}&sort=${topicSort}${q}&limit=20&offset=${(currentPage - 1) * 20}`);
         const data = await res.json();
 
         if (!data.success) {
@@ -227,6 +404,7 @@ async function loadCategory(categoryId) {
         // Pagination
         totalPages = data.pagination?.pages || 1;
 
+        renderToolbar('topics', searchInfo(data.pagination?.total || 0, 'Thema', 'Themen'));
         renderTopics(data.topics || [], data.category);
 
     } catch (e) {
@@ -244,8 +422,20 @@ async function loadCategory(categoryId) {
 /**
  * Render topics list
  */
-function renderTopics(topics, category) {
+function renderTopics(topics, category, isGlobalSearch = false) {
     const container = document.getElementById('forum-content');
+
+    if (topics.length === 0 && searchQuery) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <p>Keine Themen gefunden. Tipp: weniger oder kürzere Suchwörter verwenden.</p>
+                <button class="btn btn-secondary" onclick="setSearch('')">Suche aufheben</button>
+            </div>
+        `;
+        document.getElementById('pagination-container').innerHTML = '';
+        return;
+    }
 
     if (topics.length === 0) {
         container.innerHTML = `
@@ -273,16 +463,26 @@ function renderTopics(topics, category) {
                     icon = '🔒';
                 }
 
+                // Bei Suche mit Treffern in Beitraegen: Thema gefiltert auf diese Beitraege oeffnen
+                const hits = parseInt(topic.hits) || 0;
+                const href = `?topic=${parseInt(topic.id)}` + (searchQuery && hits ? `&q=${encodeURIComponent(searchQuery)}` : '');
+                const where = isGlobalSearch && topic.category_name ? ` • in ${escapeHtml(topic.category_name)}` : '';
+                const hitText = searchQuery
+                    ? (hits ? ` • <span class="topic-hits">${hits} Treffer in Beiträgen</span>` : ' • <span class="topic-hits">Treffer im Titel</span>')
+                    : '';
+                const lastText = (topicSort === 'activity' || searchQuery) && topic.last_post_at
+                    ? ` • letzte Antwort ${formatDate(topic.last_post_at)}` : '';
+
                 return `
-                    <div class="topic-row" onclick="navigateTo('topic', ${topic.id})">
+                    <div class="topic-row" onclick="openTopicLink(this.querySelector('a.topic-title').getAttribute('href'))">
                         <div class="topic-icon ${iconClass}">${icon}</div>
                         <div class="topic-info">
-                            <a href="?topic=${topic.id}" class="topic-title" onclick="event.stopPropagation()">
+                            <a href="${escapeAttr(href)}" class="topic-title" onclick="event.stopPropagation(); event.preventDefault(); openTopicLink(this.getAttribute('href'))">
                                 ${escapeHtml(topic.title)}
                             </a>
                             <div class="topic-meta">
                                 von <strong>${escapeHtml(topic.author_display_name || topic.author_name || 'Unbekannt')}</strong>
-                                • ${formatDate(topic.created_at)}
+                                • ${formatDate(topic.created_at)}${lastText}${where}${hitText}
                             </div>
                         </div>
                         <div class="topic-stats">
@@ -317,7 +517,8 @@ async function loadTopic(topicId) {
     document.getElementById('new-topic-btn').style.display = 'none';
 
     try {
-        const res = await fetch(`${API_BASE}/forum-topics.php?id=${topicId}&limit=20&offset=${(currentPage - 1) * 20}`);
+        const q = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : '';
+        const res = await fetch(`${API_BASE}/forum-topics.php?id=${topicId}&sort=${postSort}${q}&limit=20&offset=${(currentPage - 1) * 20}`);
         const data = await res.json();
 
         if (!data.success) {
@@ -341,8 +542,10 @@ async function loadTopic(topicId) {
 
         // Pagination
         totalPages = data.pagination?.pages || 1;
+        allPostsInTopic = data.all_posts || 0;
 
-        renderPosts(data.posts || [], data.topic);
+        renderToolbar('topic', searchInfo(data.pagination?.total || 0, 'Beitrag', 'Beiträge'));
+        renderPosts(data.posts || [], data.topic, data.first_post);
 
     } catch (e) {
         console.error('Error loading topic:', e);
@@ -359,10 +562,10 @@ async function loadTopic(topicId) {
 /**
  * Render posts list
  */
-function renderPosts(posts, topic) {
+function renderPosts(posts, topic, firstPost = null) {
     const container = document.getElementById('forum-content');
 
-    let html = posts.map((post, index) => {
+    const renderPost = (post, pinned = false) => {
         const isFirst = post.is_first_post;
         const authorInitial = (post.author_display_name || post.author_name || 'U').charAt(0).toUpperCase();
         const canEdit = currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin');
@@ -377,7 +580,7 @@ function renderPosts(posts, topic) {
                             <div class="post-date">${formatDateTime(post.created_at)}</div>
                         </div>
                     </div>
-                    <span style="color: var(--color-text-muted); font-size: 0.85rem;">#${(currentPage - 1) * 20 + index + 1}</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.85rem;">${pinned ? '📌 Eröffnungsbeitrag · ' : ''}#${parseInt(post.post_nr) || ''}</span>
                 </div>
                 <div class="post-content">
                     ${formatPostContent(post.content)}
@@ -391,12 +594,25 @@ function renderPosts(posts, topic) {
                 ` : ''}
             </div>
         `;
-    }).join('');
+    };
 
+    if (posts.length === 0 && !firstPost) {
+        container.innerHTML = searchQuery ? `
+            <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <p>Kein Beitrag in diesem Thema enthält alle Suchwörter.</p>
+                <button class="btn btn-secondary" onclick="setSearch('')">Suche aufheben</button>
+            </div>` : `
+            <div class="empty-state"><p>Noch keine Beiträge.</p></div>`;
+        document.getElementById('pagination-container').innerHTML = '';
+        return;
+    }
+
+    let replyHtml = '';
     // Reply form (if topic not locked)
     if (!topic.is_locked) {
         if (currentUser) {
-            html += `
+            replyHtml = `
                 <div class="reply-form" id="reply-form">
                     <h3>Antwort schreiben</h3>
                     <textarea id="reply-content" placeholder="Deine Antwort..."></textarea>
@@ -404,7 +620,7 @@ function renderPosts(posts, topic) {
                 </div>
             `;
         } else {
-            html += `
+            replyHtml = `
                 <div class="login-prompt">
                     <p>Du musst eingeloggt sein, um zu antworten.</p>
                     <a href="konto.html?next=forum.html" class="btn btn-primary">Jetzt anmelden</a>
@@ -413,14 +629,24 @@ function renderPosts(posts, topic) {
             `;
         }
     } else {
-        html += `
+        replyHtml = `
             <div class="login-prompt">
                 <p>🔒 Dieses Thema ist geschlossen und kann nicht mehr beantwortet werden.</p>
             </div>
         `;
     }
 
+    // Neueste zuerst: Eroeffnungsbeitrag oben, Antwortfeld direkt darunter (nur Seite 1),
+    // sonst wie gewohnt am Ende der Seite
+    const replyOnTop = postSort === 'new' && !searchQuery;
+    let html = '';
+    if (firstPost) html += renderPost(firstPost, true);
+    if (replyOnTop && currentPage === 1) html += replyHtml;
+    html += posts.map(p => renderPost(p)).join('');
+    if (!replyOnTop) html += replyHtml;
+
     container.innerHTML = html;
+    if (searchQuery) highlightMatches(container, searchQuery);
     renderPagination();
 }
 
@@ -604,8 +830,9 @@ async function submitReply() {
             if (data.csrf_token) {
                 csrfToken = data.csrf_token;
             }
-            // Reload topic to show new post
-            loadTopic(currentTopicId);
+            // Neue Antwort zeigen: bei "neueste zuerst" Seite 1, sonst letzte Seite; Suche aufheben
+            const page = postSort === 'new' ? 1 : Math.max(1, Math.ceil((allPostsInTopic + 1) / 20));
+            updateUrl({ q: null, page });
         } else {
             alert(data.error || 'Fehler beim Posten der Antwort');
         }
@@ -693,6 +920,13 @@ async function deletePost(postId) {
 // ============================================
 // NAVIGATION & UI
 // ============================================
+
+/** Link der Form ?topic=ID[&q=...] ohne Seitenneuladen oeffnen */
+function openTopicLink(href) {
+    history.pushState({}, '', 'forum.html' + href);
+    window.scrollTo({ top: 0 });
+    parseUrl();
+}
 
 /**
  * Navigate to a view
@@ -800,6 +1034,8 @@ function goToPage(page) {
     // Reload current view
     if (currentView === 'topics') {
         loadCategory(currentCategoryId);
+    } else if (currentView === 'search') {
+        loadSearch();
     } else if (currentView === 'topic') {
         loadTopic(currentTopicId);
     }
@@ -827,6 +1063,11 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/** Fuer Attributwerte in "..." (escapeHtml kodiert keine Anfuehrungszeichen) */
+function escapeAttr(text) {
+    return String(text ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**

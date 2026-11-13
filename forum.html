@@ -353,6 +353,71 @@
             border-color: var(--color-primary);
         }
 
+        .forum-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm) var(--spacing-md);
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        .forum-search {
+            display: flex;
+            flex: 1 1 280px;
+            gap: var(--spacing-xs);
+        }
+        .forum-search input,
+        .forum-sort select {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .forum-search input { flex: 1; min-width: 0; }
+        .forum-search input:focus,
+        .forum-sort select:focus { outline: none; border-color: var(--color-primary); }
+        .forum-sort {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+        .forum-sort .seg {
+            display: inline-flex;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .forum-sort .seg button {
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            border: 0;
+            padding: var(--spacing-sm) var(--spacing-md);
+            font: inherit;
+            cursor: pointer;
+        }
+        .forum-sort .seg button + button { border-left: 1px solid var(--border-color); }
+        .forum-sort .seg button.active { background: var(--color-primary); color: #fff; }
+        .forum-search-info {
+            flex-basis: 100%;
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+        .forum-search-info a { color: var(--color-primary); cursor: pointer; }
+        .post-content mark {
+            background: #ffe066;
+            color: #000;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+        .topic-hits {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
         .forum-stats-bar {
             display: flex;
             align-items: center;
@@ -539,6 +604,9 @@
                     </div>
                 </div>
 
+                <!-- Suche und Sortierung (wird von forum.js je Ansicht gefuellt) -->
+                <div id="forum-toolbar"></div>
+
                 <!-- Main Content Area -->
                 <div id="forum-content">
                     <div class="empty-state">
@@ -598,7 +666,7 @@
         </div>
     </footer>
 
-    <script src="js/forum.js?v=20261112"></script>
+    <script src="js/forum.js?v=20261113"></script>
     <script src="js/foerderer.js" defer></script>
 </body>
 
