@@ -16,6 +16,9 @@ class Security {
     const MAX_LOGIN_ATTEMPTS = 5;
     const LOCKOUT_TIME = 900; // 15 Minuten in Sekunden
 
+    // Angemeldet bleiben: 24 Stunden ohne Aktivitaet, auch ueber Browser-Neustart
+    const SESSION_LIFETIME = 86400;
+
     // Password Policy
     const MIN_PASSWORD_LENGTH = 8;
 
@@ -105,16 +108,44 @@ class Security {
                 ini_set('session.cookie_secure', 1);
             }
 
+            // Eigener Ablageort (data/ ist per .htaccess gesperrt): die Aufraeumroutine des
+            // Servers loescht Sitzungen im Standardordner sonst schon nach 24 Minuten.
+            $dir = dirname(__DIR__) . '/data/sessions';
+            if (is_dir($dir) || @mkdir($dir, 0700, true)) {
+                if (is_writable($dir)) {
+                    session_save_path($dir);
+                    ini_set('session.gc_probability', 1);
+                    ini_set('session.gc_divisor', 100);
+                }
+            }
+            ini_set('session.gc_maxlifetime', self::SESSION_LIFETIME);
+            ini_set('session.cookie_lifetime', self::SESSION_LIFETIME);
+
             session_start();
         }
 
-        // Session timeout (2 Stunden)
-        $timeout = 7200;
+        // Session timeout (24 Stunden ohne Aktivitaet)
+        $timeout = self::SESSION_LIFETIME;
         if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
             self::destroySession();
             return false;
         }
         $_SESSION['last_activity'] = time();
+
+        // Cookie-Ablauf bei Aktivitaet nachziehen (hoechstens stuendlich), sonst endet er 24 h nach dem Login
+        if (!empty($_SESSION['lmo26_user_id']) && !headers_sent()
+            && time() - (int)($_SESSION['cookie_renewed'] ?? 0) > 3600) {
+            $p = session_get_cookie_params();
+            setcookie(session_name(), session_id(), [
+                'expires'  => time() + self::SESSION_LIFETIME,
+                'path'     => $p['path'],
+                'domain'   => $p['domain'],
+                'secure'   => $p['secure'],
+                'httponly' => $p['httponly'],
+                'samesite' => $p['samesite'] ?: 'Strict',
+            ]);
+            $_SESSION['cookie_renewed'] = time();
+        }
 
         // Rolle/Status bei jeder Anfrage aus der DB uebernehmen: herabgestufte,
         // gesperrte oder geloeschte Konten verlieren ihre Rechte sofort.

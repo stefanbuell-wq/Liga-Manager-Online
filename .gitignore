@@ -38,6 +38,7 @@ datenschutz.html
 
 # Cache & Data
 data/cache/
+data/sessions/
 
 # Hochgeladene Sponsorenbilder (nur auf dem Server, nicht im Repo)
 img/foerderer/*
