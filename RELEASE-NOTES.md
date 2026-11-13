@@ -5,6 +5,23 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 9) – Forum: neueste Beiträge zuerst, Sortieren und Suchen
+
+### Für Redaktion und Leser
+
+- In einem Thema stehen die **neuesten Beiträge jetzt oben** (Wunsch aus dem ersten Leser-Feedback). Der Eröffnungsbeitrag bleibt ganz oben, darunter das Antwortfeld. Mit **„Älteste zuerst“** geht es zurück zur alten Reihenfolge. Der Browser merkt sich die Wahl.
+- Themenlisten lassen sich sortieren: Letzte Antwort, Neueste Themen, Älteste Themen, Meiste Beiträge.
+- **Suchen** geht im ganzen Forum, in einem Bereich oder in einem Thema. Es müssen alle Suchwörter vorkommen, der Wortanfang reicht. Treffer werden gelb markiert.
+
+### Technik
+
+- `lib/ForumRepository.php`: `listTopics()` (Sortierung + Suche, Treffer je Thema per materialisierter CTE), `getPostsByTopic()` mit Sortierung/Suche/`post_nr` (`ROW_NUMBER`), `countPostsByTopic()`, `getFirstPost()`, Suche über `forum_fts` (Rückfall LIKE)
+- `api/forum-topics.php`: Parameter `sort` (Thema `new`/`old`, Liste `activity`/`newest`/`oldest`/`replies`) und `q`; ohne Kategorie mit `q` = Suche über alle sichtbaren Kategorien
+- `js/forum.js`/`forum.html`: Leiste `#forum-toolbar`, `highlightMatches()`, `escapeAttr()` für Attributwerte; `forum.js?v=20261113`
+- Live seit 13.11.2026, Commit 2b900a2, Sicherung `/hafo.de/backups/hafo-pre-2b900a2.tar.gz`
+
+---
+
 ## 13.11.2026 (Nachtrag 8) – Editor zeigt Berichte formatiert
 
 ### Für Redaktion und Leser
