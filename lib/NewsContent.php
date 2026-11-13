@@ -42,7 +42,69 @@ class NewsContent
         $html = self::rewriteImages($html);
         $html = self::addMissingLogos($html, $teams);
         $html = self::separateMatches($html);
-        return self::sanitize($html);
+        return self::applyReportBanners(self::sanitize($html));
+    }
+
+    /**
+     * Bericht-Banner aus der Sponsorenverwaltung einsetzen (nach sanitize, das erzeugte HTML ist vertrauenswuerdig):
+     * - <center class="hafo-banner hafo-banner-ID"> (vom Editor gesetzt) -> aktuelles Bild/Link, entfaellt wenn pausiert/abgelaufen
+     * - Altbanner im Kopf eines Berichts, dessen Bild als Bericht-Banner uebernommen wurde -> ebenso
+     */
+    public static function applyReportBanners(string $html): string
+    {
+        if ($html === '') return $html;
+        $hasRef = strpos($html, 'hafo-banner-') !== false;
+        try {
+            require_once __DIR__ . '/SponsorRepository.php';
+            static $repo = null;
+            $banners = ($repo ??= new SponsorRepository())->reportBanners();
+        } catch (Throwable $e) {
+            error_log('NewsContent::applyReportBanners: ' . $e->getMessage());
+            return $hasRef ? preg_replace('#<center class="hafo-banner hafo-banner-\d+">.*?</center>(\s*<br>)?#is', '', $html) : $html;
+        }
+        if (!$banners) {
+            return $hasRef ? preg_replace('#<center class="hafo-banner hafo-banner-\d+">.*?</center>(\s*<br>)?#is', '', $html) : $html;
+        }
+
+        if ($hasRef) {
+            $html = preg_replace_callback('#<center class="hafo-banner hafo-banner-(\d+)">.*?</center>(\s*<br>)?#is', function ($m) use ($banners) {
+                $b = $banners[(int)$m[1]] ?? null;
+                if (!$b || !$b['live']) return '';
+                return '<center class="hafo-banner">' . SponsorRepository::reportBannerHtml($b) . '</center>' . ($m[2] ?? '');
+            }, $html);
+            return $html;
+        }
+
+        // Altberichte: erstes Bild im Kopf gegen uebernommene Banner pruefen
+        $head = substr($html, 0, 2500);
+        foreach ($banners as $b) {
+            if (!$b['legacy_src']) continue;
+            $file = basename($b['legacy_src']);
+            $variants = array_unique([preg_quote($file, '#'), preg_quote(rawurldecode($file), '#'), preg_quote(rawurlencode(rawurldecode($file)), '#')]);
+            $re = '#(?:<a\b[^>]*>\s*)?<img\b[^>]*\bsrc="[^"]*/(?:' . implode('|', $variants) . ')"[^>]*>(?:\s*</a>)?#i';
+            if (!preg_match($re, $head, $m, PREG_OFFSET_CAPTURE)) continue;
+            [$pos, $len] = [$m[0][1], strlen($m[0][0])];
+            if ($b['live']) {
+                $html = substr($html, 0, $pos) . SponsorRepository::reportBannerHtml($b) . substr($html, $pos + $len);
+                break;
+            }
+            // Pausiert/abgelaufen: Bild entfernen; umgebenden <center>-Block mit, wenn dort nur Beiwerk
+            // wie "praesentiert:" steht
+            $open = strripos(substr($html, 0, $pos), '<center');
+            $close = stripos($html, '</center>', $pos + $len);
+            if ($open !== false && $close !== false && stripos(substr($html, $open, $pos - $open), '</center>') === false) {
+                $rest = substr($html, $open, $pos - $open) . substr($html, $pos + $len, $close - $pos - $len);
+                if (mb_strlen(trim(html_entity_decode(strip_tags($rest), ENT_QUOTES, 'UTF-8'))) <= 40) {
+                    $end = $close + strlen('</center>');
+                    if (preg_match('#\G(?:\s|<br\s*/?>)*#i', $html, $mm, 0, $end)) $end += strlen($mm[0]);
+                    $html = substr($html, 0, $open) . substr($html, $end);
+                    break;
+                }
+            }
+            $html = substr($html, 0, $pos) . substr($html, $pos + $len);
+            break;
+        }
+        return $html;
     }
 
     /**

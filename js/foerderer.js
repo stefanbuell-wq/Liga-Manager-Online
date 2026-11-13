@@ -6,6 +6,8 @@
  *   wandern sie in einen Inhalts-Slot (Kompakt-Bild 300x250, falls vorhanden).
  *   Der Slot ist ein Element mit data-fd-slot="inline", sonst vor dem Footer.
  * - Sichtkontakt = Banner war mind. 1 s zu mind. 50 % sichtbar bei aktivem Tab.
+ * - Bericht-Banner (vom Server in Spielberichte eingesetzt, Element .hafo-fd[data-fd-id])
+ *   werden ebenfalls gezaehlt: einmal je Anzeige eines Berichts.
  *
  * Einbinden: <script src="js/foerderer.js" defer></script>
  */
@@ -69,6 +71,47 @@
         if (document.visibilityState === 'hidden') flush();
     });
     window.addEventListener('pagehide', flush);
+
+    /* ---------- Bericht-Banner in Spielberichten ---------- */
+    function watchReportBanners() {
+        if (!('IntersectionObserver' in window) || !document.body) return;
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                var node = e.target;
+                if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+                    if (node._fdTimer) return;
+                    node._fdTimer = setTimeout(function () {
+                        node._fdTimer = null;
+                        if (document.visibilityState !== 'visible' || !node.isConnected) return;
+                        record(node.getAttribute('data-fd-id'));
+                        io.unobserve(node);
+                    }, SEEN_MS);
+                } else if (node._fdTimer) {
+                    clearTimeout(node._fdTimer);
+                    node._fdTimer = null;
+                }
+            });
+        }, { threshold: [0, 0.5, 1] });
+
+        function scan(root) {
+            if (root.nodeType !== 1 && root.nodeType !== 9) return;
+            if (root.matches && root.matches('.hafo-fd[data-fd-id]')) observe(root);
+            var list = root.querySelectorAll('.hafo-fd[data-fd-id]');
+            for (var i = 0; i < list.length; i++) observe(list[i]);
+        }
+        function observe(node) {
+            if (node._fdWatched) return;
+            node._fdWatched = true;
+            io.observe(node);
+        }
+
+        scan(document);
+        new MutationObserver(function (muts) {
+            for (var i = 0; i < muts.length; i++) {
+                for (var j = 0; j < muts[i].addedNodes.length; j++) scan(muts[i].addedNodes[j]);
+            }
+        }).observe(document.body, { childList: true, subtree: true });
+    }
 
     /* ---------- Rotator ---------- */
     function pickNext(items, current) {
@@ -245,6 +288,7 @@
     }
 
     function start() {
+        watchReportBanners();
         fetch(API, { credentials: 'omit' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (res) { if (res && res.success && res.data) mount(res.data); })

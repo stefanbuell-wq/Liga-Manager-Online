@@ -5,6 +5,26 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 3) – Banner in Spielberichten verwaltbar
+
+### Für Redaktion und Leser
+
+- Die Sponsoren-Banner oben in Spielberichten werden jetzt unter **🤝 Sponsoren** gepflegt (neue Position „Spielbericht“): Bild hochladen, Link, Vereine, Laufzeit, Pausieren.
+- Ändert ein Admin Bild oder Link oder pausiert einen Banner, gilt das sofort für **alle** Berichte mit diesem Banner, auch für ältere.
+- Die bisherigen Banner (St. Pauli Coffee, Stehn & Co., Förderkreis Curslack-Neuengamme, Elbhandwerk, helle idee u. a.) werden beim ersten Aufruf automatisch übernommen.
+- Sichtkontakte und Klicks der Bericht-Banner erscheinen in der Sponsoren-Statistik und im CSV-Export.
+- Im News-Editor bleibt die Auswahl „Sponsoren-Banner oben im Bericht“ wie gewohnt, inklusive Vorschlag passend zum Verein.
+
+### Technik
+
+- `SponsorRepository`: Position `bericht` (freies Format 200–1600 × 40–800), Spalten `teams`, `legacy_src`, `reportBanners()`, `reportBannerHtml()`, einmaliger Import `importReportBannersOnce()` (Merker `report_banners_imported` in `app_settings`, Bilder nach `img/foerderer/`)
+- `NewsContent::applyReportBanners()` nach `sanitize`: `<center class="hafo-banner hafo-banner-ID">` und übernommene Altbanner werden beim Ausliefern durch aktuelles Bild + Klick-Weiterleitung ersetzt bzw. entfernt
+- `news-admin.php?action=banners` liefert die verwalteten Banner; Editor speichert Verweis per ID
+- `js/foerderer.js`: zählt Sichtkontakte von `.hafo-fd[data-fd-id]` in Berichten
+- Admin `sponsoren.html`: Feld „Vereine“, Anzeige „in N Berichten“, Löschwarnung
+
+---
+
 ## 13.11.2026 (Nachtrag 2) – Alte Lesezeichen auf main.php
 
 ### Für Redaktion und Leser

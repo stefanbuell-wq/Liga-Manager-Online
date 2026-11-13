@@ -9,6 +9,7 @@
  *
  * Verwaltung (nur Rolle admin, POST mit CSRF):
  *   GET  ?action=list[&from&to]   – alle Banner inkl. Zaehler im Zeitraum
+ *                                   (uebernimmt beim ersten Aufruf einmalig die bisherigen Bericht-Banner)
  *   GET  ?action=csv&from&to[&id] – Tageswerte als CSV
  *   POST action=save (multipart)  – anlegen/aendern inkl. Bild-Upload
  *   POST action=toggle, id, active
@@ -88,7 +89,9 @@ try {
     }
 
     if ($method === 'GET' && $action === 'list') {
+        $imported = $repo->importReportBannersOnce();
         fdJson([
+            'imported' => $imported,
             'success' => true,
             'data' => [
                 'banners' => $repo->listAll($_GET['from'] ?? null, $_GET['to'] ?? null),

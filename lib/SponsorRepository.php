@@ -6,6 +6,9 @@
  *   top   – Leaderboard 728x90, optional Mobil-Variante 320x50
  *   left  – Skyscraper 160x600, optional Kompakt-Variante 300x250 (kleine Bildschirme)
  *   right – wie left
+ *   bericht – Banner oben in Spielberichten, freies Format (Breite 200–1600, Hoehe 40–800 px).
+ *             Jedem Bericht ist hoechstens ein Banner zugeordnet (Redaktion waehlt im Editor),
+ *             Bild, Link und Laufzeit gelten fuer alle Berichte mit diesem Banner.
  *
  * Oeffentliche Pfade heissen bewusst "foerderer" statt "banner"/"ad"/"sponsor",
  * damit Werbeblocker-Filterlisten die Banner nicht pauschal ausblenden.
@@ -19,7 +22,12 @@ class SponsorRepository
         'top'   => ['label' => 'Header',          'main' => [728, 90],  'alt' => [320, 50],  'altLabel' => 'Mobil'],
         'left'  => ['label' => 'Links',           'main' => [160, 600], 'alt' => [300, 250], 'altLabel' => 'Kompakt'],
         'right' => ['label' => 'Rechts',          'main' => [160, 600], 'alt' => [300, 250], 'altLabel' => 'Kompakt'],
+        'bericht' => ['label' => 'Spielbericht',  'main' => null,       'alt' => null,       'altLabel' => null,
+                      'free' => ['minW' => 200, 'maxW' => 1600, 'minH' => 40, 'maxH' => 800]],
     ];
+
+    /** Merker in app_settings: bisherige Bericht-Banner wurden einmalig uebernommen */
+    private const IMPORT_FLAG = 'report_banners_imported';
 
     public const MAX_FILE_BYTES = 1048576; // 1 MB
     private const MIME_EXT = [
@@ -67,6 +75,14 @@ class SponsorRepository
             PRIMARY KEY (banner_id, day),
             FOREIGN KEY(banner_id) REFERENCES sponsor_banners(id) ON DELETE CASCADE
         )");
+        // Bericht-Banner: Vereine (fuer den Vorschlag im Editor) und Herkunft aus Altberichten
+        $cols = array_column($this->pdo->query("PRAGMA table_info(sponsor_banners)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('teams', $cols, true)) {
+            $this->pdo->exec("ALTER TABLE sponsor_banners ADD COLUMN teams TEXT");
+        }
+        if (!in_array('legacy_src', $cols, true)) {
+            $this->pdo->exec("ALTER TABLE sponsor_banners ADD COLUMN legacy_src TEXT");
+        }
     }
 
     /* ---------- Oeffentlich ---------- */
@@ -172,12 +188,19 @@ class SponsorRepository
             FROM sponsor_banners b
             LEFT JOIN sponsor_stats s ON s.banner_id = b.id AND s.day BETWEEN :f AND :t
             GROUP BY b.id
-            ORDER BY CASE b.position WHEN 'top' THEN 0 WHEN 'left' THEN 1 ELSE 2 END, b.sponsor COLLATE NOCASE");
+            ORDER BY CASE b.position WHEN 'top' THEN 0 WHEN 'left' THEN 1 WHEN 'right' THEN 2 ELSE 3 END, b.sponsor COLLATE NOCASE");
         $stmt->execute([':f' => $from, ':t' => $to]);
         $rows = $stmt->fetchAll();
+        $usage = $this->pdo->prepare("SELECT COUNT(*) FROM news WHERE content LIKE :ref OR (:file <> '' AND content LIKE :file)");
         foreach ($rows as &$r) {
             $r['image_url'] = $this->imageUrlPrefix . $r['image'];
             $r['image_alt_url'] = $r['image_alt'] ? $this->imageUrlPrefix . $r['image_alt'] : null;
+            $r['teams'] = self::decodeTeams($r['teams'] ?? null);
+            if ($r['position'] === 'bericht') {
+                $file = $r['legacy_src'] ? rawurldecode(basename($r['legacy_src'])) : '';
+                $usage->execute([':ref' => '%hafo-banner-' . (int)$r['id'] . '"%', ':file' => $file !== '' ? '%/' . $file . '%' : '']);
+                $r['reports'] = (int)$usage->fetchColumn();
+            }
         }
         return $rows;
     }
@@ -226,6 +249,7 @@ class SponsorRepository
         $weight = min(10, max(1, (int)($in['weight'] ?? 1)));
         $active = !empty($in['active']) && $in['active'] !== '0' && $in['active'] !== 'false' ? 1 : 0;
         $removeAlt = !empty($in['remove_image_alt']) && $in['remove_image_alt'] !== '0';
+        $teams = self::parseTeams((string)($in['teams'] ?? ''));
 
         if ($sponsor === '' || mb_strlen($sponsor) > 120) {
             throw new InvalidArgumentException('Sponsorname fehlt oder ist zu lang');
@@ -248,7 +272,13 @@ class SponsorRepository
 
         $pos = self::POSITIONS[$position];
         $hasNewMain = self::hasUpload($files['image'] ?? null);
-        $hasNewAlt = self::hasUpload($files['image_alt'] ?? null);
+        $hasNewAlt = $pos['alt'] !== null && self::hasUpload($files['image_alt'] ?? null);
+        if ($pos['alt'] === null) {
+            $removeAlt = true;   // Bericht-Banner haben kein Zweitbild
+            $weight = 1;         // und rotieren nicht
+        } else {
+            $teams = [];
+        }
 
         if (!$existing && !$hasNewMain) {
             throw new InvalidArgumentException('Bitte ein Bannerbild hochladen');
@@ -256,7 +286,7 @@ class SponsorRepository
         // Positionswechsel mit altem Bild in falscher Groesse verhindern
         if ($existing && $existing['position'] !== $position) {
             $oldPos = self::POSITIONS[$existing['position']] ?? null;
-            if (!$hasNewMain && (!$oldPos || $oldPos['main'] !== $pos['main'])) {
+            if (!$hasNewMain && (!$oldPos || $oldPos['main'] !== $pos['main'] || $pos['main'] === null)) {
                 throw new InvalidArgumentException('Bei Wechsel der Position bitte ein Bild in passender Groesse hochladen');
             }
             if (!$hasNewAlt && $existing['image_alt'] && (!$oldPos || $oldPos['alt'] !== $pos['alt'])) {
@@ -267,6 +297,9 @@ class SponsorRepository
         // Bilder zuerst pruefen, dann speichern (keine halben Zustaende)
         $mainInfo = $hasNewMain ? $this->checkImage($files['image'], $pos['main'], 'Bannerbild') : null;
         $altInfo = $hasNewAlt ? $this->checkImage($files['image_alt'], $pos['alt'], $pos['altLabel'] . '-Bild') : null;
+        if ($mainInfo === null && $existing && $position === 'bericht' && $existing['position'] !== 'bericht') {
+            throw new InvalidArgumentException('Bei Wechsel der Position bitte ein Bild in passender Groesse hochladen');
+        }
 
         $image = $existing['image'] ?? null;
         $imageAlt = $existing['image_alt'] ?? null;
@@ -289,17 +322,18 @@ class SponsorRepository
             ':link' => $link ?: null, ':alt' => $altText ?: null,
             ':start' => $start ?: null, ':end' => $end ?: null,
             ':weight' => $weight, ':active' => $active,
+            ':teams' => $teams ? json_encode($teams, JSON_UNESCAPED_UNICODE) : null,
         ];
         if ($existing) {
             $params[':id'] = $id;
             $this->pdo->prepare("UPDATE sponsor_banners SET sponsor = :sponsor, position = :position,
                 image = :image, image_alt = :image_alt, link_url = :link, alt_text = :alt,
-                start_date = :start, end_date = :end, weight = :weight, active = :active,
+                start_date = :start, end_date = :end, weight = :weight, active = :active, teams = :teams,
                 updated_at = datetime('now') WHERE id = :id")->execute($params);
         } else {
             $this->pdo->prepare("INSERT INTO sponsor_banners
-                (sponsor, position, image, image_alt, link_url, alt_text, start_date, end_date, weight, active)
-                VALUES (:sponsor, :position, :image, :image_alt, :link, :alt, :start, :end, :weight, :active)")
+                (sponsor, position, image, image_alt, link_url, alt_text, start_date, end_date, weight, active, teams)
+                VALUES (:sponsor, :position, :image, :image_alt, :link, :alt, :start, :end, :weight, :active, :teams)")
                 ->execute($params);
             $id = (int)$this->pdo->lastInsertId();
         }
@@ -335,6 +369,120 @@ class SponsorRepository
         $this->clearCache();
     }
 
+    /* ---------- Bericht-Banner ---------- */
+
+    /**
+     * Alle Bericht-Banner fuer Editor und Ausgabe (einmal je Anfrage geladen).
+     * @return array<int,array> id => [id, sponsor, img, alt, link(bool), live(bool), teams, legacy_src]
+     */
+    public function reportBanners(): array
+    {
+        static $memo = null;
+        if ($memo !== null) return $memo;
+        $today = date('Y-m-d');
+        $rows = $this->pdo->query("SELECT * FROM sponsor_banners WHERE position = 'bericht' ORDER BY sponsor COLLATE NOCASE")->fetchAll();
+        $memo = [];
+        foreach ($rows as $r) {
+            $live = (int)$r['active'] === 1
+                && (empty($r['start_date']) || $r['start_date'] <= $today)
+                && (empty($r['end_date']) || $r['end_date'] >= $today);
+            $memo[(int)$r['id']] = [
+                'id'         => (int)$r['id'],
+                'sponsor'    => $r['sponsor'],
+                'img'        => $this->imageUrlPrefix . $r['image'],
+                'alt'        => $r['alt_text'] ?: $r['sponsor'],
+                'link'       => !empty($r['link_url']),
+                'live'       => $live,
+                'teams'      => self::decodeTeams($r['teams'] ?? null),
+                'legacy_src' => $r['legacy_src'] ?: null,
+            ];
+        }
+        return $memo;
+    }
+
+    /** HTML fuer ein Bericht-Banner (Link ueber die Klick-Weiterleitung, data-fd-id fuer Sichtkontakte) */
+    public static function reportBannerHtml(array $b): string
+    {
+        $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+        $img = '<img src="' . $h($b['img']) . '" alt="' . $h($b['alt']) . '" loading="lazy">';
+        if ($b['link']) {
+            return '<a href="api/foerderer.php?go=' . (int)$b['id'] . '" target="_blank" rel="sponsored noopener" class="hafo-fd" data-fd-id="'
+                . (int)$b['id'] . '" title="' . $h($b['alt']) . '">' . $img . '</a>';
+        }
+        return '<span class="hafo-fd" data-fd-id="' . (int)$b['id'] . '">' . $img . '</span>';
+    }
+
+    /**
+     * Einmalig: Banner, die bisher fest in Berichten standen (NewsContent::bannerCatalog),
+     * als Bericht-Banner anlegen. Danach nie wieder automatisch (geloeschte bleiben geloescht).
+     * @return int Anzahl uebernommener Banner
+     */
+    public function importReportBannersOnce(): int
+    {
+        require_once __DIR__ . '/SettingsRepository.php';
+        require_once __DIR__ . '/NewsContent.php';
+        $settings = new SettingsRepository();
+        if ($settings->get(self::IMPORT_FLAG) !== '') return 0;
+
+        $root = dirname(__DIR__);
+        $known = $this->pdo->query("SELECT legacy_src FROM sponsor_banners WHERE legacy_src IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN);
+        // Lesbare Namen fuer die bekannten Altbanner (sonst aus dem Dateinamen abgeleitet)
+        $names = [
+            'stpcoffee.jpg' => 'St. Pauli Coffee', 'Stehn-Banner.jpg' => 'Stehn & Co.',
+            'curslack-foerderkreis.jpg' => 'Förderkreis SV Curslack-Neuengamme', 'BannerElbhandwerk.png' => 'Elbhandwerk',
+            'hetax-banner.jpg' => 'HE-TAX Steuerberatung', 'hfo-banner.gif' => 'HAFO (Eigenwerbung)',
+            'Paloma_Banner_Helle.png' => 'helle idee (USC Paloma)', 'Germania_Banner.png' => 'handyalarm (Germania Schnelsen)',
+            'neue-eilbeker-apotheke.png' => 'Neue Eilbeker Apotheke',
+        ];
+        $n = 0;
+        foreach (NewsContent::bannerCatalog($this->pdo, 5) as $b) {
+            $b['label'] = $names[rawurldecode(basename($b['src']))] ?? $b['label'];
+            $src = $b['src'];
+            if (strpos($src, 'legacy/') !== 0 || in_array($src, $known, true)) continue;
+            $path = $root . '/' . rawurldecode($src);
+            if (strpos($src, '..') !== false || !is_file($path)) continue;
+            $info = @getimagesize($path);
+            if (!$info || !isset(self::MIME_EXT[$info['mime']]) || filesize($path) > 2 * self::MAX_FILE_BYTES) continue;
+            if (!is_dir($this->imageDir) && !@mkdir($this->imageDir, 0755, true)) break;
+            $name = bin2hex(random_bytes(12)) . '.' . self::MIME_EXT[$info['mime']];
+            if (!@copy($path, $this->imageDir . '/' . $name)) continue;
+            @chmod($this->imageDir . '/' . $name, 0644);
+            $link = trim((string)$b['link']);
+            $this->pdo->prepare("INSERT INTO sponsor_banners
+                (sponsor, position, image, link_url, weight, active, teams, legacy_src)
+                VALUES (?, 'bericht', ?, ?, 1, 1, ?, ?)")
+                ->execute([
+                    mb_substr($b['label'], 0, 120), $name,
+                    self::isValidUrl($link) ? $link : null,
+                    $b['teams'] ? json_encode(array_values($b['teams']), JSON_UNESCAPED_UNICODE) : null,
+                    $src,
+                ]);
+            $n++;
+        }
+        $settings->set(self::IMPORT_FLAG, date('c') . ' (' . $n . ')');
+        return $n;
+    }
+
+    /** Vereinsliste aus dem Formular: eine pro Zeile oder durch Komma getrennt, hoechstens 10 */
+    private static function parseTeams(string $raw): array
+    {
+        $out = [];
+        foreach (preg_split('/[\r\n,;]+/', $raw) as $t) {
+            $t = trim($t);
+            if ($t === '') continue;
+            if (mb_strlen($t) > 80) throw new InvalidArgumentException('Vereinsname ist zu lang');
+            $out[mb_strtolower($t)] = $t;
+        }
+        if (count($out) > 10) throw new InvalidArgumentException('Hoechstens 10 Vereine je Banner');
+        return array_values($out);
+    }
+
+    private static function decodeTeams(?string $json): array
+    {
+        $v = $json ? json_decode($json, true) : null;
+        return is_array($v) ? array_values(array_filter($v, 'is_string')) : [];
+    }
+
     /* ---------- Hilfsfunktionen ---------- */
 
     private static function hasUpload($file): bool
@@ -342,8 +490,11 @@ class SponsorRepository
         return is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
     }
 
-    /** @return array{ext:string} */
-    private function checkImage(array $file, array $size, string $label): array
+    /**
+     * @param array|null $size  [Breite, Hoehe] (exakt oder doppelt) oder null = freies Format (Bericht)
+     * @return array{ext:string}
+     */
+    private function checkImage(array $file, ?array $size, string $label): array
     {
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
             throw new InvalidArgumentException("$label: Upload fehlgeschlagen");
@@ -356,6 +507,14 @@ class SponsorRepository
             throw new InvalidArgumentException("$label: nur JPG, PNG, GIF oder WebP erlaubt");
         }
         [$w, $h] = [$info[0], $info[1]];
+        if ($size === null) {
+            $f = self::POSITIONS['bericht']['free'];
+            if ($w < $f['minW'] || $w > $f['maxW'] || $h < $f['minH'] || $h > $f['maxH']) {
+                throw new InvalidArgumentException(sprintf('%s hat %dx%d Pixel, erlaubt sind %d–%d breit und %d–%d hoch',
+                    $label, $w, $h, $f['minW'], $f['maxW'], $f['minH'], $f['maxH']));
+            }
+            return ['ext' => self::MIME_EXT[$info['mime']]];
+        }
         [$sw, $sh] = $size;
         if (!(($w === $sw && $h === $sh) || ($w === 2 * $sw && $h === 2 * $sh))) {
             throw new InvalidArgumentException(sprintf(

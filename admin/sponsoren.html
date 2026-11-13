@@ -73,7 +73,7 @@
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group.wide { grid-column: 1 / -1; }
         label { font-weight: 600; font-size: 0.85rem; color: var(--color-text-secondary); }
-        input[type=text], input[type=url], input[type=date], input[type=number], select {
+        input[type=text], input[type=url], input[type=date], input[type=number], select, textarea {
             padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px;
             font: inherit; background: #fff;
         }
@@ -155,6 +155,7 @@
                             <option value="top">Header – 728×90</option>
                             <option value="left">Links – 160×600</option>
                             <option value="right">Rechts – 160×600</option>
+                            <option value="bericht">Spielbericht – oben im Bericht</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -173,7 +174,7 @@
                         <span class="hint">JPG, PNG, GIF oder WebP, max. 1 MB. Auch doppelte Größe für scharfe Darstellung erlaubt.</span>
                         <div class="preview hidden" id="prev_main"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="grpAlt">
                         <label for="f_image_alt"><span id="altLabel">Mobil-Bild</span> <span id="altSize"></span> (optional)</label>
                         <input type="file" name="image_alt" id="f_image_alt" accept="image/jpeg,image/png,image/gif,image/webp" onchange="previewFile(this, 'alt')">
                         <span class="hint" id="altHint"></span>
@@ -190,7 +191,12 @@
                         <input type="date" name="end_date" id="f_end">
                         <span class="hint">Leer = unbegrenzt</span>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group hidden" id="grpTeams">
+                        <label for="f_teams">Vereine</label>
+                        <textarea name="teams" id="f_teams" rows="3" placeholder="z. B. USC Paloma&#10;Altona 93"></textarea>
+                        <span class="hint">Ein Verein pro Zeile, höchstens 10. Bei Spielberichten dieser Vereine schlägt der Editor diesen Banner vor.</span>
+                    </div>
+                    <div class="form-group" id="grpWeight">
                         <label for="f_weight">Gewichtung</label>
                         <input type="number" name="weight" id="f_weight" min="1" max="10" value="1">
                         <span class="hint">1–10: höher = wird bei der Rotation häufiger gezeigt</span>
@@ -327,6 +333,7 @@
                 banners = res.data.banners;
                 positions = res.data.positions;
                 renderList();
+                if (res.imported) toast(`${res.imported} bisherige Bericht-Banner übernommen`);
             } catch (e) {
                 toast('Laden fehlgeschlagen: ' + e.message, true);
             }
@@ -346,8 +353,9 @@
             for (const [key, pos] of Object.entries(positions)) {
                 const items = banners.filter(b => b.position === key);
                 const live = items.filter(b => status(b)[0] === 'läuft').length;
-                html += `<h3 class="pos-title">${esc(pos.label)} – ${pos.main[0]}×${pos.main[1]}
-                    <span style="text-transform:none;letter-spacing:0;font-weight:400;">(${live} aktiv${live > 1 ? ', rotierend' : ''})</span></h3>`;
+                const report = !pos.main;
+                html += `<h3 class="pos-title">${esc(pos.label)} – ${report ? 'freies Format' : `${pos.main[0]}×${pos.main[1]}`}
+                    <span style="text-transform:none;letter-spacing:0;font-weight:400;">(${live} aktiv${!report && live > 1 ? ', rotierend' : ''}${report ? ', Auswahl je Bericht im Editor' : ''})</span></h3>`;
                 if (!items.length) {
                     html += '<div class="empty">Noch kein Banner an dieser Position.</div>';
                     continue;
@@ -364,8 +372,10 @@
                         <div>
                             <h3>${esc(b.sponsor)}<span class="badge ${cls}">${st}</span></h3>
                             <div class="meta">
-                                Laufzeit: ${period} · Gewichtung ${Number(b.weight)}
-                                ${b.image_alt_url ? ` · ${esc(pos.altLabel)}-Bild ✓` : ` · <span class="err">kein ${esc(pos.altLabel)}-Bild</span>`}<br>
+                                Laufzeit: ${period}
+                                ${report
+                                    ? ` · in ${Number(b.reports || 0).toLocaleString('de-DE')} Berichten${b.teams && b.teams.length ? ` · Vereine: ${esc(b.teams.join(', '))}` : ''}`
+                                    : ` · Gewichtung ${Number(b.weight)}${b.image_alt_url ? ` · ${esc(pos.altLabel)}-Bild ✓` : ` · <span class="err">kein ${esc(pos.altLabel)}-Bild</span>`}`}<br>
                                 ${b.link_url ? `<a href="${esc(b.link_url)}" target="_blank" rel="noopener">${esc(b.link_url)}</a>` : '<i>kein Link</i>'}
                             </div>
                             <div class="stats">
@@ -390,6 +400,17 @@
         function updateSizeHints() {
             const p = positions[document.getElementById('f_position').value];
             if (!p) return;
+            const report = !p.main;
+            document.getElementById('grpAlt').classList.toggle('hidden', report);
+            document.getElementById('grpWeight').classList.toggle('hidden', report);
+            document.getElementById('grpTeams').classList.toggle('hidden', !report);
+            if (report) {
+                const f = p.free;
+                document.getElementById('mainSize').textContent = `(Breite ${f.minW}–${f.maxW}, Höhe ${f.minH}–${f.maxH} px)`;
+                const input = document.getElementById('f_image');
+                if (input.files.length) previewFile(input, 'main');
+                return;
+            }
             document.getElementById('mainSize').textContent = `(${p.main[0]}×${p.main[1]})`;
             document.getElementById('altLabel').textContent = p.altLabel + '-Bild';
             document.getElementById('altSize').textContent = `(${p.alt[0]}×${p.alt[1]})`;
@@ -426,6 +447,7 @@
                 document.getElementById('f_start').value = b.start_date || '';
                 document.getElementById('f_end').value = b.end_date || '';
                 document.getElementById('f_weight').value = b.weight;
+                document.getElementById('f_teams').value = (b.teams || []).join('\n');
                 document.getElementById('f_active').checked = !!Number(b.active);
                 showExisting('main', b.image_url);
                 if (b.image_alt_url) {
@@ -454,15 +476,25 @@
             const file = input.files[0];
             if (!file) { p.classList.add('hidden'); return; }
             const pos = positions[document.getElementById('f_position').value];
-            const [w, h] = kind === 'main' ? pos.main : pos.alt;
+            const size = kind === 'main' ? pos.main : pos.alt;
             const url = URL.createObjectURL(file);
             const img = new Image();
             img.onload = () => {
-                const okSize = (img.naturalWidth === w && img.naturalHeight === h) || (img.naturalWidth === 2 * w && img.naturalHeight === 2 * h);
+                const nw = img.naturalWidth, nh = img.naturalHeight;
+                let okSize, expect;
+                if (size) {
+                    const [w, h] = size;
+                    okSize = (nw === w && nh === h) || (nw === 2 * w && nh === 2 * h);
+                    expect = `erwartet ${w}×${h} oder ${2 * w}×${2 * h}`;
+                } else {
+                    const f = pos.free;
+                    okSize = nw >= f.minW && nw <= f.maxW && nh >= f.minH && nh <= f.maxH;
+                    expect = `erlaubt: Breite ${f.minW}–${f.maxW}, Höhe ${f.minH}–${f.maxH} px`;
+                }
                 const okBytes = file.size <= 1048576;
-                let msg = `${img.naturalWidth}×${img.naturalHeight} px, ${(file.size / 1024).toFixed(0)} KB – `;
+                let msg = `${nw}×${nh} px, ${(file.size / 1024).toFixed(0)} KB – `;
                 msg += okSize && okBytes ? '<span class="ok">passt</span>'
-                    : `<span class="err">${!okSize ? `erwartet ${w}×${h} oder ${2 * w}×${2 * h}` : 'größer als 1 MB'}</span>`;
+                    : `<span class="err">${!okSize ? expect : 'größer als 1 MB'}</span>`;
                 p.innerHTML = `<img src="${url}" alt=""><div class="msg">${msg}</div>`;
                 p.classList.remove('hidden');
             };
@@ -514,7 +546,9 @@
 
         async function deleteBanner(id) {
             const b = banners.find(x => Number(x.id) === id);
-            if (!confirm(`Banner „${b ? b.sponsor : id}“ endgültig löschen?\nBild und gesamte Statistik dieses Banners gehen verloren. Zum vorübergehenden Abschalten lieber „Pausieren“ nutzen.`)) return;
+            const inReports = b && b.position === 'bericht' && Number(b.reports)
+                ? `\nDer Banner verschwindet aus ${Number(b.reports).toLocaleString('de-DE')} Spielberichten.` : '';
+            if (!confirm(`Banner „${b ? b.sponsor : id}“ endgültig löschen?\nBild und gesamte Statistik dieses Banners gehen verloren.${inReports} Zum vorübergehenden Abschalten lieber „Pausieren“ nutzen.`)) return;
             try {
                 await post({ action: 'delete', id });
                 toast('Gelöscht');

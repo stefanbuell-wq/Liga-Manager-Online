@@ -167,8 +167,18 @@ try {
                 break;
 
             case 'banners':
-                // Banner aus den Berichten der letzten Jahre (Auswahl im Editor)
-                echo json_encode(['success' => true, 'banners' => NewsContent::bannerCatalog($pdo)], JSON_UNESCAPED_UNICODE);
+                // Bericht-Banner aus der Sponsorenverwaltung (Auswahl im Editor)
+                require_once __DIR__ . '/../lib/SponsorRepository.php';
+                $sponsors = new SponsorRepository();
+                $sponsors->importReportBannersOnce();
+                $list = [];
+                foreach ($sponsors->reportBanners() as $b) {
+                    $list[] = [
+                        'id' => $b['id'], 'label' => $b['sponsor'], 'src' => $b['img'], 'alt' => $b['alt'],
+                        'teams' => $b['teams'], 'live' => $b['live'], 'legacy' => $b['legacy_src'],
+                    ];
+                }
+                echo json_encode(['success' => true, 'banners' => $list], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 break;
 
             case 'search_matches':

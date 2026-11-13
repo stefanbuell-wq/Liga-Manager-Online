@@ -1178,7 +1178,7 @@
                             </select>
                             <img id="newsBannerPreview" alt="" hidden>
                         </div>
-                        <div class="form-hint" id="newsBannerHint">Beim Spielbericht wird der Banner passend zum Verein vorgeschlagen. Neue Banner richtet ein Administrator ein.</div>
+                        <div class="form-hint" id="newsBannerHint">Beim Spielbericht wird der Banner passend zum Verein vorgeschlagen. Banner, Bild und Link pflegt ein Administrator unter „Sponsoren“ (Position „Spielbericht“).</div>
                     </div>
 
                     <!-- Match Links (shared, all tabs) -->
@@ -2735,12 +2735,13 @@
             if (m.date && (!document.getElementById('newsMatchDate').value || newsDateAuto)) setNewsDate(m.date);
         }
 
-        // ===== Sponsoren-Banner =====
+        // ===== Sponsoren-Banner (Bericht-Banner aus der Sponsorenverwaltung) =====
         let bannerCatalog = null;
         let originalBanner = null;   // im gespeicherten Inhalt gefundener Banner
         let bannerTouched = false;
 
-        const fileBase = src => decodeURIComponent(String(src).split('?')[0].split('/').pop() || '');
+        const fileBase = src => decodeURIComponent(String(src || '').split('?')[0].split('/').pop() || '');
+        const OWN_BANNER_RE = /<center class="hafo-banner[^"]*">[\s\S]*?<\/center>(<br>)?/g;
 
         async function loadBannerCatalog() {
             if (bannerCatalog) return bannerCatalog;
@@ -2750,7 +2751,7 @@
             } catch (e) { bannerCatalog = []; }
             const sel = document.getElementById('newsBanner');
             sel.innerHTML = '<option value="">Kein Banner</option>' + bannerCatalog.map((b, i) =>
-                `<option value="${i}">${escapeHtml(b.label)}${b.teams.length ? ' (' + escapeHtml(b.teams.slice(0, 2).join(', ')) + ')' : ''}</option>`).join('');
+                `<option value="${i}">${escapeHtml(b.label)}${b.teams.length ? ' (' + escapeHtml(b.teams.slice(0, 2).join(', ')) + ')' : ''}${b.live ? '' : ' – derzeit nicht aktiv'}</option>`).join('');
             return bannerCatalog;
         }
 
@@ -2758,8 +2759,10 @@
             const list = await loadBannerCatalog();
             bannerTouched = false;
             originalBanner = null;
-            const head = String(content || '').slice(0, 2000);
-            const idx = list.findIndex(b => fileBase(b.src) && head.includes(fileBase(b.src)));
+            const head = String(content || '').slice(0, 2500);
+            const ref = head.match(/class="hafo-banner hafo-banner-(\d+)"/);
+            let idx = ref ? list.findIndex(b => b.id === Number(ref[1])) : -1;
+            if (idx < 0 && !ref) idx = list.findIndex(b => b.legacy && head.includes(fileBase(b.legacy)));
             if (idx >= 0) originalBanner = list[idx];
             document.getElementById('newsBanner').value = idx >= 0 ? String(idx) : '';
             showBannerPreview();
@@ -2767,7 +2770,7 @@
 
         function suggestBanner(teams) {
             if (bannerTouched || !bannerCatalog || originalBanner) return;
-            const idx = bannerCatalog.findIndex(b => teams.some(t => t && b.teams.includes(t)));
+            const idx = bannerCatalog.findIndex(b => b.live && teams.some(t => t && b.teams.includes(t)));
             document.getElementById('newsBanner').value = idx >= 0 ? String(idx) : '';
             showBannerPreview();
         }
@@ -2782,21 +2785,27 @@
             const img = document.getElementById('newsBannerPreview');
             img.hidden = !b;
             if (b) img.src = '../' + b.src;
+            const hint = document.getElementById('newsBannerHint');
+            if (hint) hint.textContent = b && !b.live
+                ? 'Dieser Banner ist pausiert oder abgelaufen und wird im Bericht derzeit nicht angezeigt.'
+                : 'Beim Spielbericht wird der Banner passend zum Verein vorgeschlagen. Banner, Bild und Link pflegt ein Administrator unter „Sponsoren“ (Position „Spielbericht“).';
         }
 
         function applyBanner(content) {
             const b = selectedBanner();
-            // Selbst eingesetzten Banner-Block immer erneuern
-            content = content.replace(/<center class="hafo-banner">[\s\S]*?<\/center>(<br>)?/g, '');
-            // Alten Banner nur entfernen, wenn bewusst ein anderer gewaehlt wurde
-            if (originalBanner && (!b || b.src !== originalBanner.src)) {
-                const name = fileBase(originalBanner.src).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const hadOwn = OWN_BANNER_RE.test(content);
+            OWN_BANNER_RE.lastIndex = 0;
+            // Unveraenderter Altbanner: Inhalt bleibt, die Website setzt Bild und Link aus der Verwaltung ein
+            if (originalBanner && b && b.id === originalBanner.id && !hadOwn) return content;
+            content = content.replace(OWN_BANNER_RE, '');
+            // Altbanner (festes Bild im Text) entfernen, wenn bewusst ein anderer oder keiner gewaehlt wurde
+            if (originalBanner && originalBanner.legacy && (!b || b.id !== originalBanner.id)) {
+                const name = fileBase(originalBanner.legacy).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 content = content.replace(new RegExp('<center>(?:(?!<\\/center>)[\\s\\S])*?' + name + '(?:(?!<\\/center>)[\\s\\S])*?<\\/center>(\\s*<br>)?', 'i'), '');
             }
-            if (!b || content.includes(fileBase(b.src))) return content;
-            const img = `<img src="${escapeHtml(b.src)}" alt="Sponsor">`;
-            const link = /^https?:\/\//i.test(b.link) ? b.link : '';
-            return `<center class="hafo-banner">${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${img}</a>` : img}</center><br>` + content;
+            if (!b) return content;
+            // Verweis per ID; Bild und Link setzt die Website beim Anzeigen aus der Sponsorenverwaltung ein
+            return `<center class="hafo-banner hafo-banner-${Number(b.id)}"><img src="${escapeHtml(b.src)}" alt="${escapeHtml(b.alt || b.label)}"></center><br>` + content;
         }
 
         // ===== Einfuegen aus Word: Absaetze, Fett, Kursiv behalten =====
