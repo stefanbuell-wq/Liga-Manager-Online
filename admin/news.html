@@ -1779,13 +1779,47 @@
             }
         }
 
+        // Gespeichertes HTML vor dem Einsetzen in die (bearbeitbare) Seite filtern – gleiche Regeln wie
+        // NewsContent::sanitize auf dem Server. DOMParser erzeugt ein inaktives Dokument: dort laufen
+        // keine Skripte und laden keine Bilder; uebernommen werden nur erlaubte Tags/Attribute.
+        const ED_ALLOWED_TAGS = new Set(['A','B','STRONG','I','EM','U','S','STRIKE','SUB','SUP','BR','P','DIV','SPAN','CENTER',
+            'FONT','H1','H2','H3','H4','H5','H6','UL','OL','LI','BLOCKQUOTE','HR','IMG','SMALL','BIG',
+            'TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','CAPTION','PRE','CODE','CITE','Q']);
+        const ED_DROP_TAGS = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','FORM','INPUT','BUTTON','TEXTAREA','SELECT',
+            'LINK','META','BASE','SVG','MATH','FRAME','FRAMESET','APPLET','TEMPLATE','NOSCRIPT']);
+        const ED_ALLOWED_ATTRS = new Set(['href','src','alt','title','style','class','align','width','height','border','colspan',
+            'rowspan','cellpadding','cellspacing','valign','color','size','face','target','rel','loading']);
+        function sanitizeForEditor(html) {
+            const doc = new DOMParser().parseFromString('<body>' + (html || '') + '</body>', 'text/html');
+            (function clean(node) {
+                for (const child of Array.from(node.childNodes)) {
+                    if (child.nodeType === Node.ELEMENT_NODE) {
+                        const tag = child.tagName.toUpperCase();
+                        if (ED_DROP_TAGS.has(tag)) { child.remove(); continue; }
+                        clean(child);
+                        if (!ED_ALLOWED_TAGS.has(tag)) { child.replaceWith(...Array.from(child.childNodes)); continue; }
+                        for (const attr of Array.from(child.attributes)) {
+                            const name = attr.name.toLowerCase(), val = attr.value.trim();
+                            let ok = ED_ALLOWED_ATTRS.has(name);
+                            if (ok && (name === 'href' || name === 'src')) ok = !/^(javascript|data|vbscript):/i.test(val.replace(/[\s\u0000-\u001f]+/g, ''));
+                            if (ok && name === 'style') ok = !/expression|javascript:|url\s*\(|behavior|@import/i.test(val);
+                            if (!ok) child.removeAttribute(attr.name);
+                        }
+                    } else if (child.nodeType !== Node.TEXT_NODE) {
+                        child.remove();   // Kommentare u. a.
+                    }
+                }
+            })(doc.body);
+            return Array.from(doc.body.childNodes).map(n => document.importNode(n, true));
+        }
+
         // Formatierte Ansicht ist Standard; Quelltext (HTML) nur auf Wunsch
         function setHtmlView(formattedView) {
             const textarea = document.getElementById('newsContent');
             const formatted = document.getElementById('newsContentFormatted');
             const btn = document.getElementById('btnToggleView');
             if (formattedView) {
-                if (!htmlViewFormatted) formatted.innerHTML = textarea.value;
+                if (!htmlViewFormatted) formatted.replaceChildren(...sanitizeForEditor(textarea.value));
                 textarea.style.display = 'none';
                 formatted.classList.remove('hidden');
                 btn.textContent = 'Quelltext anzeigen';
