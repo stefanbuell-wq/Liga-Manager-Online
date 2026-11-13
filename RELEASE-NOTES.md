@@ -24,11 +24,15 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 - Neu im Admin: **⚙️ Einstellungen**. Dort lassen sich bis zu zwei Kontaktpersonen eintragen, die bei jeder neuen Anfrage über das Kontaktformular eine E-Mail bekommen.
 - Mit „Test-Mail senden“ lässt sich prüfen, ob die Mails ankommen.
+- Registrierung: Das Feld „Benutzername“ wird nicht mehr vom Browser mit der E-Mail-Adresse vorausgefüllt; ein Hinweis erklärt, was dort hingehört.
+- E-Mails (Registrierung, Freischaltung, Passwort vergessen) kommen jetzt an; die gelbe Warnung in der Benutzerverwaltung ist entfallen.
 
 ### Technik
 
 - `lib/SettingsRepository.php` (Tabelle `app_settings`), `api/settings.php` (nur Admin, CSRF), `admin/einstellungen.html`
-- `ContactService`: Empfänger aus `contact_notify_1/_2`, Rückfall `config/mail.php`; Versand je Empfänger
+- `ContactService`: Empfänger aus `contact_notify_1/_2`, Rückfall `config/mail.php`; Versand je Empfänger (8a6447b)
+- `konto.html`: `autocomplete="nickname"` + Hinweis, `AccountService`: eigene Meldung bei „@“ im Benutzernamen (7e7dec9)
+- Admin-Warnung zu fehlender `config/mail.php` entfernt, Versand per `mail()` auf netcup geprüft (9942151)
 
 ---
 
