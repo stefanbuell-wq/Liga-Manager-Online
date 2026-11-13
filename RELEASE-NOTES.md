@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 6) – Benutzer bearbeiten
+
+### Für Redaktion und Leser
+
+- Admin → Benutzer: Nach einem Klick auf **Bearbeiten** oder **+ Neuer Benutzer** springt die Seite jetzt zum Formular. Bisher öffnete es sich unsichtbar unter der langen Benutzerliste.
+
+### Technik
+
+- `admin/index.html` `openUserEditor()`: `scrollIntoView` auf `#user-editor-panel`. Live seit 13.11.2026, Commit daca0a6.
+
+---
+
 ## 13.11.2026 (Nachtrag 5) – Login-Sperre korrigiert
 
 ### Für Redaktion und Leser
