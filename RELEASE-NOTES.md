@@ -22,6 +22,7 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 - `news-admin.php?action=banners` liefert die verwalteten Banner; Editor speichert Verweis per ID
 - `js/foerderer.js`: zählt Sichtkontakte von `.hafo-fd[data-fd-id]` in Berichten
 - Admin `sponsoren.html`: Feld „Vereine“, Anzeige „in N Berichten“, Löschwarnung
+- Live seit 13.11.2026, Commit 939b9c4. Sicherung `/hafo.de/backups/hafo-pre-939b9c4.tar.gz` + `database-pre-939b9c4.sqlite`. Der Import war beim Deploy noch nicht gelaufen; der Probelauf fand 11 Altbanner (zusätzlich `hebc2010-banner.jpg`, `mybed-banner2018.jpg`).
 
 ---
 
