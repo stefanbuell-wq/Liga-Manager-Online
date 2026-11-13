@@ -1578,11 +1578,8 @@
                 (!q || [u.username, u.display_name, u.email].some(v => (v || '').toLowerCase().includes(q))));
             const shown = others.slice(0, 200);
 
+            // Ohne config/mail.php versendet der Webserver selbst (mail()); auf netcup getestet 13.11.2026
             let html = '';
-            if (!data.mail_configured) {
-                html += `<div style="padding:10px 12px; margin-bottom:15px; border-radius:6px; background:rgba(245,158,11,0.15); color:#92400e;">
-                    ⚠ E-Mail-Versand ist nicht eingerichtet (<code>config/mail.php</code> fehlt). Registrierung und „Passwort vergessen“ funktionieren erst danach.</div>`;
-            }
             if (pending.length) {
                 html += `<h4 style="margin:0 0 10px;">Offene Registrierungen (${pending.length})</h4>
                 <table style="width:100%; border-collapse:collapse; margin-bottom:25px;">
