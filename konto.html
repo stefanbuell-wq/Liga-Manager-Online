@@ -132,7 +132,8 @@
                     </form>
 
                     <form class="account-form" id="form-register" data-pane="register" style="display:none">
-                        <label for="rg-user">Benutzername</label><input id="rg-user" required minlength="3" maxlength="30" autocomplete="username">
+                        <label for="rg-user">Benutzername</label><input id="rg-user" required minlength="3" maxlength="30" autocomplete="nickname" aria-describedby="rg-user-hint">
+                        <div class="hint" id="rg-user-hint">Dein Name im Forum, z. B. „Stefan B.“ – keine E-Mail-Adresse. 3–30 Zeichen: Buchstaben, Zahlen, Leerzeichen, . _ -</div>
                         <label for="rg-email">E-Mail</label><input type="email" id="rg-email" required autocomplete="email">
                         <label for="rg-pass">Passwort</label><input type="password" id="rg-pass" required minlength="8" autocomplete="new-password">
                         <div class="hint">Mind. 8 Zeichen, Buchstaben und Zahlen.</div>

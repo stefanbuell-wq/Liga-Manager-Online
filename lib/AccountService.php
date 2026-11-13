@@ -63,6 +63,9 @@ class AccountService
         $email = strtolower(trim($email));
         $legacyClaim = trim($legacyClaim);
 
+        if (str_contains($username, '@')) {
+            throw new InvalidArgumentException('Benutzername: bitte keine E-Mail-Adresse, sondern deinen Namen im Forum (z. B. „Stefan B.“). Die E-Mail gehört ins Feld darunter.');
+        }
         if (!preg_match('/^[\p{L}0-9 ._-]{3,30}$/u', $username)) {
             throw new InvalidArgumentException('Benutzername: 3–30 Zeichen, Buchstaben, Zahlen, Leerzeichen, . _ -');
         }
