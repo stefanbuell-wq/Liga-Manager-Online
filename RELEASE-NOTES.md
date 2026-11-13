@@ -5,6 +5,20 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 10) – Redakteur wurde immer wieder abgemeldet
+
+### Für Redaktion und Leser
+
+- Ein Redakteur kam beim Anlegen eines Spielberichts immer wieder zur Anmeldung. Sein Konto war noch als „deaktiviert“ eingetragen und ist jetzt wieder aktiv.
+- Ein gesperrtes Konto bekommt jetzt gleich beim Anmelden eine klare Meldung. Vorher wurde es erst angemeldet und beim nächsten Klick wieder abgemeldet.
+
+### Technik
+
+- Daten: `users` id 248 `status` von `disabled` auf `active` gesetzt (`active` war 1). Der Status stammte wohl vom Altkonten-Import am 10.11. Sicherung `/hafo.de/backups/database-pre-andi-status.sqlite`
+- `api/login.php`: nur `status = 'active'`, gleiche Regel wie `Security::syncAuthFromDb()`. Live seit 13.11.2026, Commit 8830ef2, Sicherung `/hafo.de/backups/hafo-pre-8830ef2.tar.gz`
+
+---
+
 ## 13.11.2026 (Nachtrag 9) – Forum: neueste Beiträge zuerst, Sortieren und Suchen
 
 ### Für Redaktion und Leser
