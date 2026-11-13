@@ -988,7 +988,7 @@
                                 <button type="button" onclick="format('p')">Absatz</button>
                                 <button type="button" onclick="format('a')">Link</button>
                                 <button type="button" onclick="format('br')">Umbruch</button>
-                                <button type="button" class="toggle-view" id="btnToggleView" onclick="toggleHtmlView()">Formatiert</button>
+                                <button type="button" class="toggle-view" id="btnToggleView" onclick="toggleHtmlView()">Quelltext anzeigen</button>
                             </div>
                             <textarea id="newsContent" class="large with-toolbar" placeholder="Der vollstaendige Bericht..."></textarea>
                             <div id="newsContentFormatted" contenteditable="true" class="hidden"></div>
@@ -1496,6 +1496,8 @@
                     activeTab = 'html';
                     document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'html'));
                     document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
+                    htmlViewFormatted = false;
+                    setHtmlView(true);
                 }
 
                 document.getElementById('editorModal').classList.add('show');
@@ -1509,12 +1511,7 @@
         function closeEditor() {
             document.getElementById('editorModal').classList.remove('show');
             // Reset formatted view
-            if (htmlViewFormatted) {
-                htmlViewFormatted = false;
-                document.getElementById('newsContent').style.display = '';
-                document.getElementById('newsContentFormatted').classList.add('hidden');
-                document.getElementById('btnToggleView').textContent = 'Formatiert';
-            }
+            if (htmlViewFormatted) setHtmlView(false);
         }
 
         // Save news
@@ -1782,27 +1779,48 @@
             }
         }
 
-        function toggleHtmlView() {
+        // Formatierte Ansicht ist Standard; Quelltext (HTML) nur auf Wunsch
+        function setHtmlView(formattedView) {
             const textarea = document.getElementById('newsContent');
             const formatted = document.getElementById('newsContentFormatted');
             const btn = document.getElementById('btnToggleView');
-
-            if (!htmlViewFormatted) {
-                // Switch to formatted view
-                formatted.innerHTML = textarea.value;
+            if (formattedView) {
+                if (!htmlViewFormatted) formatted.innerHTML = textarea.value;
                 textarea.style.display = 'none';
                 formatted.classList.remove('hidden');
-                btn.textContent = 'Quelltext';
-                htmlViewFormatted = true;
+                btn.textContent = 'Quelltext anzeigen';
             } else {
-                // Switch back to source view
-                textarea.value = formatted.innerHTML;
+                if (htmlViewFormatted) textarea.value = formatted.innerHTML;
                 formatted.classList.add('hidden');
                 textarea.style.display = '';
-                btn.textContent = 'Formatiert';
-                htmlViewFormatted = false;
+                btn.textContent = 'Formatiert anzeigen';
+            }
+            htmlViewFormatted = formattedView;
+        }
+
+        // Inhalt der formatierten Ansicht in das Textfeld uebernehmen (vor Lesen/Speichern)
+        function syncFormattedView() {
+            if (htmlViewFormatted) {
+                document.getElementById('newsContent').value =
+                    document.getElementById('newsContentFormatted').innerHTML;
             }
         }
+
+        function toggleHtmlView() {
+            setHtmlView(!htmlViewFormatted);
+        }
+
+        // Einfuegen in die formatierte Ansicht: nur Text mit fett/kursiv/Umbruechen uebernehmen,
+        // keine Word-Formatierung (Farben, Schriften), die z. B. weiss auf weiss ergeben kann
+        document.getElementById('newsContentFormatted').addEventListener('paste', (e) => {
+            const cd = e.clipboardData;
+            if (!cd) return;
+            const html = cd.getData('text/html');
+            const text = html ? wordHtmlToMarkup(html) : cd.getData('text/plain');
+            if (!text) return;
+            e.preventDefault();
+            document.execCommand('insertHTML', false, textToHtml(text));
+        });
 
         // Utility functions
         function escapeHtml(text) {
@@ -1839,6 +1857,7 @@
         let suppressTabWarning = false;
 
         function switchTab(tab) {
+            syncFormattedView();
             // When leaving a structured tab, generate HTML into the main fields
             if (activeTab !== 'html' && tab === 'html') {
                 generateFromActiveTab();
@@ -1855,6 +1874,10 @@
             activeTab = tab;
             document.querySelectorAll('.template-tab').forEach(t => t.classList.toggle('active', t.dataset.template === tab));
             document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-' + tab));
+            // HTML-Tab: formatiert anzeigen. Andere Tabs: Ansicht zuruecksetzen, damit beim Speichern
+            // nicht der alte formatierte Inhalt den aus dem Template erzeugten ueberschreibt
+            if (tab === 'html') { htmlViewFormatted = false; setHtmlView(true); }
+            else if (htmlViewFormatted) setHtmlView(false);
 
             // Load leagues on first access
             if ((tab === 'match' || tab === 'preview') && !leaguesCache) {
@@ -2662,10 +2685,7 @@
                 generateFromActiveTab();
             }
             // Sync formatted view back to textarea if active
-            if (htmlViewFormatted) {
-                document.getElementById('newsContent').value =
-                    document.getElementById('newsContentFormatted').innerHTML;
-            }
+            syncFormattedView();
         }
 
         // ===== Spiele automatisch verknuepfen (Spielbericht, Vorschau) =====
