@@ -265,8 +265,9 @@ class Security {
         $maxAttempts = $maxAttempts ?? self::MAX_LOGIN_ATTEMPTS;
         $pdo = self::getRateLimitDb();
 
-        // Clean old entries
-        $pdo->exec("DELETE FROM rate_limits WHERE expires_at < datetime('now')");
+        // Alte Eintraege loeschen. Zeiten werden in PHP-Ortszeit geschrieben, daher auch mit
+        // PHP-Zeit vergleichen (SQLite datetime('now') ist UTC und laege eine Stunde zurueck).
+        $pdo->prepare("DELETE FROM rate_limits WHERE expires_at < ?")->execute([date('Y-m-d H:i:s')]);
 
         // Check current attempts
         $stmt = $pdo->prepare("
@@ -286,6 +287,13 @@ class Security {
                     'remaining_seconds' => $remaining,
                     'message' => 'Zu viele Fehlversuche. Bitte warten Sie ' . ceil($remaining / 60) . ' Minuten.'
                 ];
+            }
+
+            // Sperre abgelaufen: Zaehler zuruecksetzen, damit es wieder volle Versuche gibt
+            // (sonst sperrte der naechste Versuch sofort erneut fuer 15 Minuten)
+            if ($record['locked_until']) {
+                $pdo->prepare("DELETE FROM rate_limits WHERE identifier = ?")->execute([$identifier]);
+                return ['allowed' => true];
             }
 
             // Check attempts
