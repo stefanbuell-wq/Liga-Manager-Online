@@ -260,9 +260,10 @@
             } catch (e) { return false; }
         }
 
-        async function loadLeague() {
+        async function loadLeague(keepRound = null) {
             try {
-                const res = await fetch(`${API_BASE}/get-league-data.php?liga=${ligaFile}`);
+                // no-store: die API erlaubt Browser-Cache (5 min) – im Editor immer den aktuellen Stand laden
+                const res = await fetch(`${API_BASE}/get-league-data.php?liga=${encodeURIComponent(ligaFile)}`, { cache: 'no-store' });
                 const data = await res.json();
 
                 if (data.error) {
@@ -279,7 +280,7 @@
                 const actual = parseInt(data.options.Actual);
 
                 // Check previous selection or default
-                currentRound = actual;
+                currentRound = (keepRound && keepRound >= 1 && keepRound <= rounds) ? keepRound : actual;
 
                 const select = document.getElementById('round-select');
                 select.innerHTML = '';
@@ -287,7 +288,7 @@
                     const opt = document.createElement('option');
                     opt.value = i;
                     opt.textContent = `Spieltag ${i}`;
-                    if (i === actual) opt.selected = true;
+                    if (i === currentRound) opt.selected = true;
                     select.appendChild(opt);
                 }
 
@@ -587,9 +588,7 @@
                     msg.textContent = 'Gespeichert! ✅';
                     msg.style.color = 'green';
                     // Reload data to ensure consistency
-                    await loadLeague();
-                    // Restore select
-                    document.getElementById('round-select').value = currentRound;
+                    await loadLeague(currentRound);
                 } else {
                     msg.textContent = 'Fehler: ' + (result.error || 'Unbekannt');
                     msg.style.color = 'red';

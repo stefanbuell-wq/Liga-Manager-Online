@@ -66,7 +66,9 @@ try {
     $stmtUpdate = $pdo->prepare("
         UPDATE matches
         SET home_goals = :hg, guest_goals = :gg,
-            match_date = :md, match_time = :mt, match_note = :mn
+            match_date = CASE WHEN :md_set THEN :md ELSE match_date END,
+            match_time = CASE WHEN :mt_set THEN :mt ELSE match_time END,
+            match_note = CASE WHEN :mn_set THEN :mn ELSE match_note END
         WHERE league_id = :lid
           AND round_nr = :r
           AND home_team_id = :hid
@@ -98,6 +100,13 @@ try {
             $mt = !empty($m['time']) ? $m['time'] : null;
             $mn = !empty($m['note']) ? trim($m['note']) : null;
 
+            // Felder, die der Aufrufer nicht mitschickt (admin/edit.html: nur Tore), bleiben unveraendert
+            $setFlags = [
+                ':md_set' => array_key_exists('date', $m) ? 1 : 0,
+                ':mt_set' => array_key_exists('time', $m) ? 1 : 0,
+                ':mn_set' => array_key_exists('note', $m) ? 1 : 0,
+            ];
+
             $params = [
                 ':hg' => $hg,
                 ':gg' => $gg,
@@ -110,7 +119,7 @@ try {
                 ':gid' => $gid
             ];
 
-            $stmtUpdate->execute($params);
+            $stmtUpdate->execute($params + $setFlags);
             if ($stmtUpdate->rowCount() === 0) {
                 // Prüfen ob Paarung bereits mit NULL-Werten existiert (SQLite rowCount ist 0 wenn Werte identisch)
                 $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM matches WHERE league_id = ? AND round_nr = ? AND home_team_id = ? AND guest_team_id = ?");

@@ -973,12 +973,14 @@
         }
 
         // -- LEAGUE EDITOR LOGIC --
-        async function openLeagueEditor(file) {
+        // keepRound: nach dem Speichern auf dem bearbeiteten Spieltag bleiben
+        async function openLeagueEditor(file, keepRound = null) {
             switchTab('editor'); // Show editor view
             document.getElementById('matches-container').innerHTML = 'Lade Daten...';
             currentLeagueFile = file;
 
-            const data = await (await fetch(`${API_BASE}/get-league-data.php?liga=${file}`)).json();
+            // no-store: die API erlaubt Browser-Cache (5 min) – im Editor immer den aktuellen Stand laden
+            const data = await (await fetch(`${API_BASE}/get-league-data.php?liga=${encodeURIComponent(file)}`, { cache: 'no-store' })).json();
             if (data.error) { alert(data.error); switchTab('dashboard'); return; }
 
             currentLeagueData = data;
@@ -987,7 +989,7 @@
             // Setup Rounds
             const rounds = parseInt(data.options.Rounds);
             const actual = parseInt(data.options.Actual);
-            currentRound = actual;
+            currentRound = (keepRound && keepRound >= 1 && keepRound <= rounds) ? keepRound : actual;
 
             const sel = document.getElementById('round-select');
             sel.innerHTML = '';
@@ -996,7 +998,7 @@
                 opt.value = i;
                 const firstDate = ((data.matches[i] || []).find(m => m.date) || {}).date;
                 opt.textContent = firstDate ? `Spieltag ${i} – ${firstDate}` : `Spieltag ${i}`;
-                if (i === actual) opt.selected = true;
+                if (i === currentRound) opt.selected = true;
                 sel.appendChild(opt);
             }
             renderMatches();
@@ -1154,8 +1156,8 @@
 
             if (result.success) {
                 alert("Gespeichert!");
-                // Reload to confirm data
-                openLeagueEditor(currentLeagueFile);
+                // Neu laden (gleicher Spieltag), damit die gespeicherten Werte sichtbar sind
+                openLeagueEditor(currentLeagueFile, currentRound);
             } else {
                 alert("Fehler: " + result.error);
             }
