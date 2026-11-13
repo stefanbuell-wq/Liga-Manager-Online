@@ -293,7 +293,7 @@ class AccountService
 
     private function url(string $path): string
     {
-        $base = rtrim($this->mailConfig('base_url') ?: 'https://hafo.buell-digital.de', '/');
+        $base = rtrim($this->mailConfig('base_url') ?: 'https://hafo.de', '/');
         return $base . '/' . ltrim($path, '/');
     }
 

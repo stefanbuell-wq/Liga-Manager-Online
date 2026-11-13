@@ -21,7 +21,7 @@ class Mailer
 
     public function fromAddress(): string
     {
-        return $this->cfg['from'] ?? ($this->cfg['username'] ?? 'noreply@hafo.buell-digital.de');
+        return $this->cfg['from'] ?? ($this->cfg['username'] ?? 'noreply@hafo.de');
     }
 
     /** Sendet eine Text-Mail. Wirft Exception bei Fehler. */

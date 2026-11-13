@@ -18,5 +18,5 @@ return [
     // Empfaenger fuer neue Kontaktanfragen (kontakt.html); leer = admin_notify
     'contact_notify' => '',
     // Basis-URL fuer Links in Mails
-    'base_url'  => 'https://hafo.buell-digital.de',
+    'base_url'  => 'https://hafo.de',
 ];

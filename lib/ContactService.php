@@ -106,7 +106,7 @@ class ContactService
         if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return;
         }
-        $base = rtrim($cfg['base_url'] ?? 'https://hafo.buell-digital.de', '/');
+        $base = rtrim($cfg['base_url'] ?? 'https://hafo.de', '/');
         $lines = [
             'Neue Kontaktanfrage #' . $id . ' über ' . $base,
             '',
