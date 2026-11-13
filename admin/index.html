@@ -1688,7 +1688,10 @@
 
 
         async function openUserEditor(userId) {
-            document.getElementById('user-editor-panel').classList.remove('hidden');
+            const panel = document.getElementById('user-editor-panel');
+            panel.classList.remove('hidden');
+            // Formular steht unter der (langen) Benutzerliste -> hinscrollen, sonst wirkt der Knopf wirkungslos
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
             document.getElementById('user-id').value = userId || '';
             document.getElementById('user-editor-title').textContent = userId ? 'Benutzer bearbeiten' : 'Neuer Benutzer';
             document.getElementById('btn-delete-user').classList.toggle('hidden', !userId);
