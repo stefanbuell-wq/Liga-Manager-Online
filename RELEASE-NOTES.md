@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 7) – Fetter Text im Editor wieder lesbar
+
+### Für Redaktion und Leser
+
+- Im Bericht-Editor war fett formatierter Text, zum Beispiel fette Überschriften, in der formatierten Ansicht weiß auf weiß. Jetzt erscheint er in der normalen Farbe.
+
+### Technik
+
+- `admin/news.html`: `#newsContentFormatted b, strong` hatte `color: #fff` (Rest des dunklen Designs), jetzt `inherit`. Live seit 13.11.2026, Commit 077461d.
+
+---
+
 ## 13.11.2026 (Nachtrag 6) – Benutzer bearbeiten
 
 ### Für Redaktion und Leser
