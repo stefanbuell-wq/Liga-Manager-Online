@@ -2,8 +2,9 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-// Cache für 5 Minuten (kann vom Client auch länger gecacht werden)
-header('Cache-Control: public, max-age=300');
+// Browser darf zwischenspeichern, muss aber jedes Mal nachfragen (ETag -> 304), damit
+// neu eingetragene Ergebnisse sofort sichtbar sind (Server-Datei-Cache wird beim Speichern geleert)
+header('Cache-Control: no-cache');
 
 // GZIP Kompression wenn unterstützt
 if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
@@ -49,8 +50,19 @@ $cacheFile = $cacheDir . '/' . md5($cacheKey) . '.json';
 $cacheTime = 300; // 5 Minuten
 
 // Cache prüfen
+function lgdSend(string $json): void
+{
+    $etag = '"' . md5($json) . '"';
+    header('ETag: ' . $etag);
+    if (trim($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) {
+        http_response_code(304);
+        exit;
+    }
+    echo $json;
+}
+
 if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
-    readfile($cacheFile);
+    lgdSend((string)file_get_contents($cacheFile));
     exit;
 }
 
@@ -65,7 +77,7 @@ try {
     }
     file_put_contents($cacheFile, $json);
 
-    echo $json;
+    lgdSend($json);
 } catch (InvalidArgumentException $e) {
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);

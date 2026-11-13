@@ -684,7 +684,7 @@
                 leagueData = data;
                 currentLigaFile = ligaFile;
                 document.querySelectorAll('.league-chip').forEach(b => b.classList.toggle('active', b.dataset.file === ligaFile));
-                currentRound = parseInt(data.options.Actual) || 1;
+                currentRound = parseInt(data.current_round || data.options.Actual, 10) || 1;
                 lastPlayedRound = getLastPlayedRound(data);
                 selectedTableRound = lastPlayedRound;
                 updateTableRoundSelectors();

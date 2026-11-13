@@ -200,8 +200,23 @@ class LmoRepository
             'matches' => $matchesOut,
             'table' => $table,
             'table_round' => $effectiveRound,
-            'last_played_round' => $lastPlayedRound
+            'last_played_round' => $lastPlayedRound,
+            // Aktueller Spieltag aus den Ergebnissen statt aus der Option "Actual" (wird nie fortgeschrieben)
+            'current_round' => $lastPlayedRound,
+            'edit_round' => $this->nextRoundToEdit($matchesOut, $lastPlayedRound, $maxRounds),
         ];
+    }
+
+    /** Spieltag fuer den Ergebnis-Editor: letzter gespielter, solange dort noch Spiele offen sind, sonst der naechste */
+    private function nextRoundToEdit(array $matchesOut, int $lastPlayed, int $maxRounds): int
+    {
+        $games = $matchesOut[$lastPlayed] ?? [];
+        $open = false;
+        foreach ($games as $g) {
+            if (empty($g['played'])) { $open = true; break; }
+        }
+        if ($open || !$games) return max(1, $lastPlayed);
+        return $maxRounds > 0 ? min($lastPlayed + 1, $maxRounds) : $lastPlayed + 1;
     }
 
     /**

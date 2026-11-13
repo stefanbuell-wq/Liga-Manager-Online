@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('h1').textContent = title;
 
         const totalRounds = parseInt(data.options.Rounds);
-        const actualRound = parseInt(data.options.Actual);
+        const actualRound = parseInt(data.current_round || data.options.Actual, 10);
 
         if (!currentRound) currentRound = actualRound;
 

@@ -988,7 +988,7 @@
 
             // Setup Rounds
             const rounds = parseInt(data.options.Rounds);
-            const actual = parseInt(data.options.Actual);
+            const actual = parseInt(data.edit_round || data.options.Actual, 10);
             currentRound = (keepRound && keepRound >= 1 && keepRound <= rounds) ? keepRound : actual;
 
             const sel = document.getElementById('round-select');

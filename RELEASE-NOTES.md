@@ -5,6 +5,21 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 12) – Aktueller Spieltag und frische Ergebnisse auf der Startseite
+
+### Für Redaktion und Leser
+
+- Startseite und Spielplan öffnen jetzt den letzten gespielten Spieltag (z. B. 15) statt eines fest hinterlegten (bisher immer 12).
+- Der Ergebnis-Editor öffnet den Spieltag, der als nächstes einzutragen ist: den letzten gespielten, solange dort noch Ergebnisse fehlen, sonst den folgenden.
+- Neu eingetragene Ergebnisse erscheinen auf der Startseite sofort und nicht erst nach bis zu 5 Minuten.
+
+### Technik
+
+- `LmoRepository::getLeagueDataFull`: `current_round` (= letzter gespielter Spieltag) und `edit_round`; `index.html`, `js/league-viewer.js`, `admin/edit.html`, `admin/index.html` nutzen diese statt `options.Actual`
+- `get-league-data.php`: `Cache-Control: no-cache` + `ETag` (304) statt `public, max-age=300`
+
+---
+
 ## 13.11.2026 (Nachtrag 11) – Ergebnisse: nach dem Speichern richtig anzeigen
 
 ### Für Redaktion und Leser
