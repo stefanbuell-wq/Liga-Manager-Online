@@ -5,6 +5,19 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 13) – Heimrecht tauschen im Ergebnis-Editor
+
+### Für Redaktion und Leser
+
+- Im Ergebnis-Editor gibt es beim Spiel den Knopf **⇄**: Er dreht die Paarung (Heim- und Gastteam), z. B. wenn bei einer Verlegung das Heimrecht getauscht wird. Gespeichert wird mit „Speichern“ nach einer Rückfrage. Verknüpfte Spielberichte bleiben erhalten, das Rückspiel bleibt unverändert.
+
+### Technik
+
+- `save-matchday.php`: Feld `swap` je Spiel tauscht `home_team_id`/`guest_team_id` in derselben Zeile (ID und `match_news` bleiben), Abbruch, wenn die umgekehrte Paarung am Spieltag schon existiert
+- `admin/index.html`: Knopf ⇄ (`toggleSwap`), Tore werden mitgedreht, Rückfrage beim Speichern
+
+---
+
 ## 13.11.2026 (Nachtrag 12) – Aktueller Spieltag und frische Ergebnisse auf der Startseite
 
 ### Für Redaktion und Leser

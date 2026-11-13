@@ -1072,10 +1072,13 @@
                 <div class="match-row" data-idx="${idx}" style="flex-direction:column; align-items:stretch; padding:15px 0;">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
                         <div class="teams-display">
-                            <span style="flex:1; text-align:right; font-weight:600;">${leagueEsc(m.home)}</span>
+                            <span class="team-home" style="flex:1; text-align:right; font-weight:600;">${leagueEsc(m.home)}</span>
                             <span style="padding:0 10px;">vs</span>
-                            <span style="flex:1; text-align:left; font-weight:600;">${leagueEsc(m.guest)}</span>
+                            <span class="team-guest" style="flex:1; text-align:left; font-weight:600;">${leagueEsc(m.guest)}</span>
                         </div>
+                        <button type="button" class="btn-swap" onclick="toggleSwap(this)"
+                                title="Heimrecht tauschen (z. B. bei Verlegung): Heim- und Gastteam werden beim Speichern getauscht"
+                                style="padding:4px 8px; border:1px solid var(--color-border, #ddd); border-radius:6px; background:transparent; color:inherit; cursor:pointer; white-space:nowrap;">⇄</button>
                         <div style="display:flex; gap:5px; align-items:center;">
                             <input type="text" class="score-input home-score" value="${leagueEsc(m.home_goals !== null ? m.home_goals : '')}" placeholder="-">
                             :
@@ -1100,11 +1103,30 @@
             `).join('');
         }
 
+        // Heimrecht tauschen: Anzeige und Tore sofort drehen, gespeichert wird erst mit "Speichern"
+        function toggleSwap(btn) {
+            const row = btn.closest('.match-row');
+            const swapped = row.dataset.swap !== '1';
+            row.dataset.swap = swapped ? '1' : '';
+            const h = row.querySelector('.team-home'), g = row.querySelector('.team-guest');
+            [h.textContent, g.textContent] = [g.textContent, h.textContent];
+            const hs = row.querySelector('.home-score'), gs = row.querySelector('.guest-score');
+            [hs.value, gs.value] = [gs.value, hs.value];
+            btn.style.background = swapped ? '#fff3cd' : 'transparent';
+            btn.style.color = swapped ? '#6b5200' : 'inherit';
+            btn.textContent = swapped ? '⇄ getauscht' : '⇄';
+            btn.title = swapped
+                ? 'Heimrecht wird beim Speichern getauscht. Nochmal klicken macht es rückgängig.'
+                : 'Heimrecht tauschen (z. B. bei Verlegung): Heim- und Gastteam werden beim Speichern getauscht';
+        }
+
         async function saveMatches() {
             const rows = document.querySelectorAll('.match-row');
             const dataToSave = [];
+            let cancelled = false;
 
             rows.forEach(row => {
+                if (cancelled) return;
                 const idx = row.dataset.idx;
                 const h = row.querySelector('.home-score').value;
                 const g = row.querySelector('.guest-score').value;
@@ -1130,10 +1152,16 @@
                 }
 
                 const original = currentLeagueData.matches[currentRound][idx];
+                const swap = row.dataset.swap === '1';
+                if (swap && !confirm(`Heimrecht tauschen?\n${original.home} – ${original.guest}\nwird zu\n${original.guest} – ${original.home}`)) {
+                    cancelled = true;
+                    return;
+                }
 
                 dataToSave.push({
                     home_id: original.home_id,
                     guest_id: original.guest_id,
+                    swap: swap,
                     home_goals: h,
                     guest_goals: g,
                     date: date,
@@ -1141,6 +1169,8 @@
                     note: note
                 });
             });
+
+            if (cancelled) return;
 
             const btn = document.getElementById('btn-save-matches');
             const oldText = btn.textContent;

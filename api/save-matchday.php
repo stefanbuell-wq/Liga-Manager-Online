@@ -85,12 +85,28 @@ try {
         )
     ");
 
+    // Heimrecht tauschen (z. B. verlegtes Spiel): Paarung umdrehen, Spiel-ID und Bericht-Verknuepfung bleiben
+    $stmtFind = $pdo->prepare("SELECT id FROM matches WHERE league_id = ? AND round_nr = ? AND home_team_id = ? AND guest_team_id = ?");
+    $stmtSwap = $pdo->prepare("UPDATE matches SET home_team_id = :gid, guest_team_id = :hid WHERE id = :id");
+
     $pdo->beginTransaction();
 
     foreach ($matches as $m) {
         // m contains home_id (original), guest_id (original)
         $hid = $teamLookup[$m['home_id']] ?? null;
         $gid = $teamLookup[$m['guest_id']] ?? null;
+
+        if ($hid && $gid && $hid !== $gid && !empty($m['swap'])) {
+            $stmtFind->execute([$lid, $round, $hid, $gid]);
+            $matchId = $stmtFind->fetchColumn();
+            $stmtFind->execute([$lid, $round, $gid, $hid]);
+            if (!$matchId || $stmtFind->fetchColumn()) {
+                throw new InvalidArgumentException('Heimrecht tauschen nicht moeglich: Paarung nicht gefunden oder umgekehrt schon vorhanden');
+            }
+            $stmtSwap->execute([':gid' => $gid, ':hid' => $hid, ':id' => $matchId]);
+            // Tore/Datum/Notiz kommen bereits aus Sicht des neuen Heimteams
+            [$hid, $gid] = [$gid, $hid];
+        }
 
         if ($hid && $gid && $hid !== $gid) {
             // Nullify empty values
