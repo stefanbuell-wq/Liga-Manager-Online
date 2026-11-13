@@ -5,6 +5,21 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 11) – Ergebnisse: nach dem Speichern richtig anzeigen
+
+### Für Redaktion und Leser
+
+- Nach dem Speichern von Ergebnissen sah es so aus, als wäre nichts gespeichert. Der Editor sprang auf einen anderen Spieltag und zeigte teilweise den Stand von vor dem Speichern. Jetzt bleibt er auf dem bearbeiteten Spieltag und zeigt die gespeicherten Ergebnisse.
+- Der zweite Ergebnis-Editor hätte beim Speichern Datum, Uhrzeit und Notiz der Spiele gelöscht. Das ist behoben. Gelöscht wurde bisher nichts, in den aktuellen Ligen hat jedes Spiel sein Datum.
+
+### Technik
+
+- `admin/index.html` (`openLeagueEditor(file, keepRound)`) und `admin/edit.html` (`loadLeague(keepRound)`): `fetch(..., { cache: 'no-store' })`, weil `get-league-data.php` `Cache-Control: public, max-age=300` sendet; nach dem Speichern derselbe Spieltag
+- `api/save-matchday.php`: Datum, Uhrzeit und Notiz werden nur geändert, wenn sie im Request vorkommen (`CASE WHEN :md_set ...`)
+- Live seit 13.11.2026, Commit aaa49e0, Sicherung `/hafo.de/backups/hafo-pre-aaa49e0.tar.gz`
+
+---
+
 ## 13.11.2026 (Nachtrag 10) – Redakteur wurde immer wieder abgemeldet
 
 ### Für Redaktion und Leser
