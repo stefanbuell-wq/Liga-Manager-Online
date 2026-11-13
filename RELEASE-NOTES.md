@@ -5,6 +5,24 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 13.11.2026 (Nachtrag 4) – 24 Stunden angemeldet bleiben
+
+### Für Redaktion und Leser
+
+- Wer sich anmeldet, bleibt bis zu **24 Stunden** ohne Aktivität angemeldet (bisher 2 Stunden), auch wenn der Browser zwischendurch geschlossen wird.
+- Das ungewollte Abmelden nach etwa 25 Minuten fällt weg.
+- An fremden oder gemeinsam genutzten Rechnern deshalb nach der Arbeit immer abmelden.
+- Beim Einspielen wurden alle einmalig abgemeldet.
+
+### Technik
+
+- `Security::SESSION_LIFETIME = 86400` für Inaktivitäts-Timeout, `session.gc_maxlifetime` und `session.cookie_lifetime`
+- Sitzungsdateien in `data/sessions/` (0700, per `data/.htaccess` gesperrt, gitignored, eigene GC 1/100). Grund: Die Aufräumroutine im Server-Standardordner löschte Sitzungen nach 1440 s.
+- Cookie-Ablauf wird bei angemeldeten Nutzern höchstens stündlich nachgezogen
+- Live seit 13.11.2026, Commit 23bc5a0, Sicherung `/hafo.de/backups/hafo-pre-23bc5a0.tar.gz`
+
+---
+
 ## 13.11.2026 (Nachtrag 3) – Banner in Spielberichten verwaltbar
 
 ### Für Redaktion und Leser
