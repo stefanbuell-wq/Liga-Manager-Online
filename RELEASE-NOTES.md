@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 15.11.2026 (Nachtrag 2) – Wappen TSV Buchholz 08
+
+### Für Redaktion und Leser
+
+- Beim TSV Buchholz 08 erschien statt des Wappens ein leeres graues Schild. Jetzt wird wieder das echte (kleinere) Wappen angezeigt.
+
+### Technik
+
+- fussball.de liefert für den Verein nur das Platzhalter-Schild; `img/teams/hd/TSVBuchholz08.png` entfernt, `aliases.json` `{"none": true}`, `map.json` ohne Datei -> `img/teams/TSVBuchholz08.gif` (28 px) greift wieder. Alle übrigen HD-Wappen geprüft: kein weiterer Platzhalter.
+
+---
+
 ## 15.11.2026 (Nachtrag) – Registrierung: keine Sperre mehr nach Tippfehlern
 
 ### Für Redaktion und Leser
