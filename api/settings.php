@@ -5,11 +5,15 @@
  *   GET  ?action=get                        – aktuelle Werte + csrf_token
  *   POST action=save, contact_notify_1, contact_notify_2 (CSRF)
  *   POST action=test_contact_mail (CSRF)    – Test-Mail an die gespeicherten Kontaktpersonen
+ *   POST action=briefing_save, recipients[], send_empty (CSRF) – Empfaenger des taeglichen Briefings
+ *   POST action=briefing_preview (CSRF)     – heutiger Inhalt je Empfaenger (ohne Versand)
+ *   POST action=briefing_test (CSRF)        – Briefing jetzt als [TEST] an alle senden
  */
 
 require_once __DIR__ . '/../lib/Security.php';
 require_once __DIR__ . '/../lib/SettingsRepository.php';
 require_once __DIR__ . '/../lib/ContactService.php';
+require_once __DIR__ . '/../lib/BriefingService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -34,6 +38,12 @@ try {
         foreach (ContactService::NOTIFY_KEYS as $k) {
             $data[$k] = $settings->get($k);
         }
+        $briefing = new BriefingService();
+        $data['briefing'] = $briefing->getConfig() + [
+            'sections' => BriefingService::SECTIONS,
+            'team' => $briefing->teamSuggestions(),
+            'max' => BriefingService::MAX_RECIPIENTS,
+        ];
         stJson(['success' => true, 'data' => $data, 'csrf_token' => Security::getCsrfToken()]);
     }
 
@@ -58,6 +68,32 @@ try {
                 $settings->set($k, $v);
             }
             stJson(['success' => true, 'data' => $values]);
+        }
+
+        if ($action === 'briefing_save') {
+            try {
+                $list = (new BriefingService())->saveConfig((array)($in['recipients'] ?? []), !empty($in['send_empty']));
+            } catch (InvalidArgumentException $e) {
+                stJson(['success' => false, 'error' => $e->getMessage()], 400);
+            }
+            stJson(['success' => true, 'data' => $list]);
+        }
+
+        if ($action === 'briefing_preview') {
+            $b = new BriefingService();
+            $cfg = $b->getConfig();
+            $data = $b->collect();
+            $out = [];
+            foreach ($cfg['recipients'] as $r) {
+                $mail = $b->render($r, $data, true);
+                $out[] = ['email' => $r['email'], 'name' => $r['name'], 'mail' => $mail,
+                          'would_send' => $mail !== null && ($mail['total'] > 0 || $cfg['send_empty'])];
+            }
+            stJson(['success' => true, 'data' => $out]);
+        }
+
+        if ($action === 'briefing_test') {
+            stJson(['success' => true, 'data' => (new BriefingService())->sendAll(true, true)]);
         }
 
         if ($action === 'test_contact_mail') {

@@ -33,7 +33,7 @@
             min-height: 100vh;
         }
 
-        .admin-container { max-width: 760px; margin: 0 auto; padding: 30px 20px; }
+        .admin-container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
         .header h1 { margin: 0; font-family: 'Urbanist', sans-serif; }
@@ -65,6 +65,23 @@
         .result .ok { color: var(--color-success); }
         .result .err { color: var(--color-danger); }
         .hidden { display: none !important; }
+
+        .bt { width: 100%; border-collapse: collapse; font-size: .9rem; }
+        .bt th { text-align: left; font-size: .78rem; color: var(--color-text-secondary); font-weight: 600; padding: 6px 6px; vertical-align: bottom; }
+        .bt th.c, .bt td.c { text-align: center; width: 92px; }
+        .bt td { padding: 6px; border-top: 1px solid var(--color-border); vertical-align: middle; }
+        .bt input[type=text], .bt input[type=email] { width: 100%; padding: 8px 9px; border: 1px solid rgba(0,0,0,.2); border-radius: 8px; font: inherit; }
+        .bt input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; }
+        .bt .del { background: none; border: none; color: var(--color-danger); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
+        .table-wrap { overflow-x: auto; margin-bottom: 12px; }
+        .row-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .row-tools select { padding: 8px 10px; border: 1px solid rgba(0,0,0,.2); border-radius: 8px; font: inherit; background: #fff; }
+        .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin: 6px 0 14px; }
+        .preview { margin-top: 14px; }
+        .preview h3 { font-size: .95rem; margin: 16px 0 6px; }
+        .preview pre { white-space: pre-wrap; background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; font-size: .82rem; line-height: 1.5; margin: 0; }
+        .badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: #eee; color: #555; margin-left: 6px; font-weight: 600; }
+        .badge.go { background: #dcfce7; color: var(--color-success); }
 
         #toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -113,6 +130,39 @@
                 Sie kommt von noreply@hafo.de; bitte notfalls im Spam-Ordner nachsehen.</p>
             <div class="result" id="testResult"></div>
         </form>
+
+        <div id="briefingCard" class="card hidden">
+            <h2>📋 Tägliches Briefing</h2>
+            <p>Jeden Morgen bekommt jede Person hier eine E-Mail mit den Aufgaben aus den angekreuzten Bereichen,
+                z. B. offene Anfragen oder Registrierungen zur Freigabe. Steht in den eigenen Bereichen nichts an,
+                kommt keine Mail (außer der Haken unten ist gesetzt).</p>
+
+            <div class="row-tools">
+                <select id="teamSelect" aria-label="Aus Redaktion übernehmen"></select>
+                <button type="button" class="btn btn-secondary" onclick="addFromTeam()">Übernehmen</button>
+                <button type="button" class="btn btn-secondary" onclick="addRow()">+ Andere Adresse</button>
+            </div>
+
+            <div class="table-wrap">
+                <table class="bt">
+                    <thead><tr id="btHead"></tr></thead>
+                    <tbody id="btBody"></tbody>
+                </table>
+            </div>
+            <p class="hint" id="btEmpty">Noch niemand eingetragen. Oben eine Person aus der Redaktion übernehmen oder eine Adresse hinzufügen.</p>
+
+            <label class="check"><input type="checkbox" id="sendEmpty"> Auch senden, wenn nichts ansteht („Nichts offen“)</label>
+
+            <div class="actions">
+                <button type="button" class="btn" id="btSave" onclick="saveBriefing()">Speichern</button>
+                <button type="button" class="btn btn-secondary" id="btPreview" onclick="previewBriefing()">Vorschau für heute</button>
+                <button type="button" class="btn btn-secondary" id="btTest" onclick="testBriefing()">Jetzt als Test senden</button>
+            </div>
+            <p class="hint" style="margin-top:12px;">Versand täglich morgens um etwa 7 Uhr. Vorschau und Test nutzen die
+                <strong>gespeicherten</strong> Einstellungen, also erst speichern. Zuletzt automatisch gesendet: <span id="btLast">–</span></p>
+            <div class="result" id="btResult"></div>
+            <div class="preview" id="btPreviewOut"></div>
+        </div>
     </div>
 
     <div id="toast"></div>
@@ -157,6 +207,7 @@
                 if (res.csrf_token) csrfToken = res.csrf_token;
                 KEYS.forEach(k => document.getElementById(k).value = res.data[k] || '');
                 document.getElementById('contactCard').classList.remove('hidden');
+                initBriefing(res.data.briefing);
             } catch (e) {
                 toast('Laden fehlgeschlagen: ' + e.message, true);
             }
@@ -183,6 +234,109 @@
                 await post(data);
                 toast('Gespeichert');
             } catch (e) { toast(e.message, true); }
+            btn.disabled = false;
+        }
+
+        // ===== Taegliches Briefing =====
+        let btSections = {}, btTeam = [], btMax = 8;
+
+        function initBriefing(b) {
+            if (!b) return;
+            btSections = b.sections; btTeam = b.team || []; btMax = b.max || 8;
+            document.getElementById('btHead').innerHTML = '<th>Name</th><th>E-Mail</th>'
+                + Object.values(btSections).map(l => `<th class="c">${esc(l)}</th>`).join('') + '<th></th>';
+            document.getElementById('btBody').innerHTML = '';
+            (b.recipients || []).forEach(r => addRow(r));
+            document.getElementById('sendEmpty').checked = !!b.send_empty;
+            document.getElementById('btLast').textContent = b.last_sent
+                ? b.last_sent.split('-').reverse().join('.') : 'noch nie';
+            fillTeamSelect();
+            updateEmpty();
+            document.getElementById('briefingCard').classList.remove('hidden');
+        }
+
+        function fillTeamSelect() {
+            const used = new Set([...document.querySelectorAll('#btBody .bt-email')].map(i => i.value.trim().toLowerCase()));
+            const free = btTeam.filter(t => !used.has(String(t.email).toLowerCase()));
+            const sel = document.getElementById('teamSelect');
+            sel.innerHTML = free.length
+                ? free.map((t, i) => `<option value="${esc(t.email)}" data-name="${esc(t.name)}">${esc(t.name)} (${t.role === 'admin' ? 'Admin' : 'Redaktion'})</option>`).join('')
+                : '<option value="">Alle aus der Redaktion sind eingetragen</option>';
+            sel.disabled = !free.length;
+        }
+
+        function addFromTeam() {
+            const opt = document.getElementById('teamSelect').selectedOptions[0];
+            if (!opt || !opt.value) return;
+            addRow({ name: opt.dataset.name, email: opt.value, sections: Object.keys(btSections) });
+        }
+
+        function addRow(r) {
+            const body = document.getElementById('btBody');
+            if (body.children.length >= btMax) { toast(`Höchstens ${btMax} Empfänger`, true); return; }
+            r = r || { name: '', email: '', sections: [] };
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><input type="text" class="bt-name" maxlength="80" placeholder="Name" value="${esc(r.name)}"></td>
+                <td><input type="email" class="bt-email" maxlength="200" placeholder="name@beispiel.de" value="${esc(r.email)}"></td>
+                ${Object.keys(btSections).map(k => `<td class="c"><input type="checkbox" class="bt-sec" value="${k}"
+                    ${(r.sections || []).includes(k) ? 'checked' : ''} aria-label="${esc(btSections[k])}"></td>`).join('')}
+                <td><button type="button" class="del" title="Entfernen" onclick="this.closest('tr').remove(); fillTeamSelect(); updateEmpty();">✕</button></td>`;
+            tr.querySelector('.bt-email').addEventListener('change', fillTeamSelect);
+            body.appendChild(tr);
+            fillTeamSelect();
+            updateEmpty();
+            if (!r.email) tr.querySelector('.bt-name').focus();
+        }
+
+        function updateEmpty() {
+            document.getElementById('btEmpty').classList.toggle('hidden', document.getElementById('btBody').children.length > 0);
+        }
+
+        function collectBriefing() {
+            return [...document.querySelectorAll('#btBody tr')].map(tr => ({
+                name: tr.querySelector('.bt-name').value.trim(),
+                email: tr.querySelector('.bt-email').value.trim(),
+                sections: [...tr.querySelectorAll('.bt-sec:checked')].map(c => c.value),
+            })).filter(r => r.name || r.email);
+        }
+
+        async function saveBriefing() {
+            const btn = document.getElementById('btSave');
+            btn.disabled = true;
+            try {
+                const list = collectBriefing();
+                const noSec = list.filter(r => !r.sections.length).map(r => r.name || r.email);
+                await post({ action: 'briefing_save', recipients: list, send_empty: document.getElementById('sendEmpty').checked });
+                toast(noSec.length ? `Gespeichert – ohne Bereich (bekommt nichts): ${noSec.join(', ')}` : 'Gespeichert');
+            } catch (e) { toast(e.message, true); }
+            btn.disabled = false;
+        }
+
+        async function previewBriefing() {
+            const out = document.getElementById('btPreviewOut');
+            out.textContent = 'Wird erstellt …';
+            try {
+                const res = await post({ action: 'briefing_preview' });
+                out.innerHTML = res.data.length ? res.data.map(p => `<h3>${esc(p.name || p.email)} &lt;${esc(p.email)}&gt;
+                    <span class="badge ${p.would_send ? 'go' : ''}">${p.would_send ? 'bekommt heute eine Mail' : 'keine Mail (nichts offen)'}</span></h3>
+                    ${p.mail ? `<pre><b>${esc(p.mail.subject)}</b>\n\n${esc(p.mail.body)}</pre>` : '<p class="hint">Keine Bereiche gewählt.</p>'}`).join('')
+                    : '<p class="hint">Noch keine Empfänger gespeichert.</p>';
+            } catch (e) { out.innerHTML = `<div class="result"><div class="err">✘ ${esc(e.message)}</div></div>`; }
+        }
+
+        async function testBriefing() {
+            const btn = document.getElementById('btTest');
+            const out = document.getElementById('btResult');
+            btn.disabled = true;
+            out.textContent = 'Wird gesendet …';
+            try {
+                const res = await post({ action: 'briefing_test' });
+                const rows = Object.entries(res.data);
+                out.innerHTML = rows.length ? rows.map(([to, r]) => r === 'gesendet'
+                    ? `<div class="ok">✔ Test gesendet an ${esc(to)}</div>`
+                    : `<div class="${r.startsWith('Fehler') ? 'err' : ''}">• ${esc(to)}: ${esc(r)}</div>`).join('')
+                    : '<div class="hint">Noch keine Empfänger gespeichert.</div>';
+            } catch (e) { out.innerHTML = `<div class="err">✘ ${esc(e.message)}</div>`; }
             btn.disabled = false;
         }
 

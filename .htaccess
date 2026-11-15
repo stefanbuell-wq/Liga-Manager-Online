@@ -39,11 +39,18 @@
 # Cache control
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType text/html "access plus 1 hour"
+    # HTML und JS: Browser fragt jedes Mal nach (ETag -> 304), damit Aenderungen sofort sichtbar sind
+    ExpiresByType text/html "access plus 0 seconds"
     ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 0 seconds"
+    ExpiresByType text/javascript "access plus 0 seconds"
     ExpiresByType image/jpeg "access plus 1 month"
     ExpiresByType image/png "access plus 1 month"
     ExpiresByType image/gif "access plus 1 month"
     ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html?|js)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
 </IfModule>

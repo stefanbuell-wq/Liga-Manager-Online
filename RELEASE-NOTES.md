@@ -5,6 +5,21 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 15.11.2026 – Tägliches Briefing, Seiten immer aktuell
+
+### Für Redaktion und Leser
+
+- Neu unter **⚙️ Einstellungen**: **Tägliches Briefing**. Jede eingetragene Person bekommt morgens gegen 7 Uhr eine E-Mail mit den Aufgaben aus ihren angekreuzten Bereichen: offene Kontaktanfragen, Registrierungen zur Freigabe, neue Forenbeiträge, auslaufende Sponsoren-Banner. Steht nichts an, kommt keine Mail. Mit Vorschau und Test-Versand.
+- Nach Änderungen an der Website zeigt jeder Browser sofort die neue Fassung; manuelles Neuladen (Strg+F5) ist nicht mehr nötig.
+
+### Technik
+
+- `lib/BriefingService.php`, `cron/daily-briefing.php` (`--dry-run`, `--force`; Plesk „Geplante Aufgaben“ täglich 07:05), `api/settings.php` (`briefing_save`/`_preview`/`_test`), `admin/einstellungen.html`; Einstellungen in `app_settings` (`briefing_recipients`, `briefing_send_empty`, `briefing_last_sent`, `briefing_last_run`)
+- `admin/index.html`: `#users` öffnet die Benutzerverwaltung (Link aus dem Briefing)
+- `.htaccess`: HTML und JS `Cache-Control: no-cache` (Revalidierung per ETag) statt 1 Stunde bzw. heuristischem Caching; Anlass: André sah in Firefox noch die alte Startseite
+
+---
+
 ## 13.11.2026 (Nachtrag 13) – Heimrecht tauschen im Ergebnis-Editor
 
 ### Für Redaktion und Leser
