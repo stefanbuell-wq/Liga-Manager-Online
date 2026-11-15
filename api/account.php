@@ -24,12 +24,15 @@ function out(array $data, int $code = 200) {
     exit;
 }
 
-/** Zaehlt Aktionen pro IP; nach 5 in 1 h -> 15 Min Sperre (nutzt Login-Rate-Limit) */
-function throttle(string $bucket) {
+/** Zaehlt Aktionen pro IP; nach $max in 1 h -> 15 Min Sperre (nutzt Login-Rate-Limit) */
+function throttle(string $bucket, ?int $max = null, bool $record = true) {
     $id = $bucket . ':' . Security::getClientIp();
-    $rc = Security::checkRateLimit($id);
-    if (!$rc['allowed']) out(['success' => false, 'error' => 'Zu viele Anfragen. Bitte später erneut versuchen.'], 429);
-    Security::recordFailedAttempt($id);
+    $rc = Security::checkRateLimit($id, $max);
+    if (!$rc['allowed']) {
+        $min = max(1, (int)ceil(($rc['remaining_seconds'] ?? 900) / 60));
+        out(['success' => false, 'error' => "Zu viele Versuche. Bitte in $min Minuten erneut versuchen."], 429);
+    }
+    if ($record) Security::recordFailedAttempt($id);
 }
 
 try {
@@ -53,9 +56,13 @@ try {
     switch ($action) {
         case 'register':
             if (!empty($in['website'])) out(['success' => true, 'message' => 'Fast geschafft! Bitte prüfe dein E-Mail-Postfach.']); // Honeypot
-            throttle('register');
+            // Tippfehler (Name vergeben, Passwort-Regel) sollen nicht nach 5 Versuchen sperren:
+            // Formular-Versuche grosszuegig (20/h), angelegte Konten streng (3/h je IP)
+            throttle('register_ok', 3, false);
+            throttle('register', 20);
             $pdo = LmoDatabase::getInstance();
             $res = $svc->register($in['username'] ?? '', $in['email'] ?? '', $in['password'] ?? '', '', $in['legacy_claim'] ?? '');
+            Security::recordFailedAttempt('register_ok:' . Security::getClientIp());
             out(['success' => true, 'message' => 'Fast geschafft! Wir haben dir eine E-Mail geschickt – bitte bestätige deine Adresse über den Link darin.']);
 
         case 'verify':

@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 15.11.2026 (Nachtrag) – Registrierung: keine Sperre mehr nach Tippfehlern
+
+### Für Redaktion und Leser
+
+- Wer sich registriert und sich vertippt (Name schon vergeben, Passwort zu kurz), wird nicht mehr nach 5 Versuchen für 15 Minuten gesperrt. Gesperrt wird erst bei auffällig vielen Versuchen; die Meldung nennt jetzt die Wartezeit.
+
+### Technik
+
+- `api/account.php`: `throttle('register', 20)` für Formularversuche, zusätzlich `register_ok` max. 3 angelegte Konten je IP und Stunde (gezählt erst nach erfolgreicher Registrierung). Anlass: Frank Ockens (Altkonto „Ocker“) war nach Tippfehlern gesperrt.
+
+---
+
 ## 15.11.2026 – Tägliches Briefing, Seiten immer aktuell
 
 ### Für Redaktion und Leser
