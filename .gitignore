@@ -43,6 +43,10 @@ data/sessions/
 # Hochgeladene Sponsorenbilder (nur auf dem Server, nicht im Repo)
 img/foerderer/*
 !img/foerderer/.htaccess
+# Profilbilder: hochgeladene nie committen, Altforum-Bilder und .htaccess schon
+img/avatars/*
+!img/avatars/.htaccess
+!img/avatars/legacy/
 config/*
 !config/.htaccess
 data/login.override

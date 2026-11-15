@@ -5,6 +5,22 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 15.11.2026 (Nachtrag 4) – Profilbilder im Forum
+
+### Für Redaktion und Leser
+
+- Unter **Mein Konto** gibt es jetzt **Profilbild**: eigenes Bild hochladen (JPG, PNG, WebP, GIF bis 2 MB, wird quadratisch zugeschnitten) oder ein Vereinswappen aus über 200 Wappen wählen. Das Bild steht im Forum neben jedem Beitrag; ohne Bild bleibt der Anfangsbuchstabe.
+- 79 Altkonten haben ihr Bild aus dem früheren Forum zurück (31 eigene Fotos, 3 Bilder aus „forumbilder“, 45 Vereins-Avatare, davon 16 als scharfes HD-Wappen). Wer sein Altkonto übernimmt, behält es.
+- Admins können unpassende Bilder unter 🔐 Benutzer mit „Bild entfernen“ löschen.
+
+### Technik
+
+- `lib/AvatarService.php` (GD: Zuschnitt 160 px, Neukodierung WebP/JPEG ohne Metadaten, EXIF-Drehung), `api/avatar.php` (upload/crest/remove/admin_remove, CSRF, 20 Änderungen/h), Spalte `users.avatar`
+- `img/avatars/` (hochgeladen, gitignored, `.htaccess` ohne Skriptausführung), `img/avatars/legacy/` + `data/legacy-avatars.json` (aus SMF-Dump `amatzsql1.sql`: `smf_members.avatar`, `smf_attachments` mit `id_member`); einmalige Zuordnung über `app_settings.legacy_avatars_imported` beim ersten Forum-Aufruf; Promi-Galerie (Actors) nicht übernommen
+- `ForumRepository`: `author_avatar` in allen Beitragsabfragen; `js/forum.js` `avatarHtml()`; `konto.html` Profilbild-Bereich; `admin/index.html` Vorschaubild + „Bild entfernen“
+
+---
+
 ## 15.11.2026 (Nachtrag 3) – Forum: Uhrzeiten eine Stunde zu früh
 
 ### Für Redaktion und Leser

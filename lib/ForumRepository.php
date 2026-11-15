@@ -22,6 +22,13 @@ class ForumRepository
     public function __construct()
     {
         $this->pdo = LmoDatabase::getInstance();
+        require_once __DIR__ . '/AvatarService.php';
+        AvatarService::ensureSchema($this->pdo);
+        static $imported = false;
+        if (!$imported) {
+            $imported = true;
+            try { (new AvatarService())->importLegacyOnce(); } catch (Throwable $e) { error_log('Avatar-Import: ' . $e->getMessage()); }
+        }
     }
 
     // ==================== BERECHTIGUNGEN ====================
@@ -234,7 +241,7 @@ class ForumRepository
         $stmt = $this->pdo->prepare("
             SELECT t.*,
                    u.username as author_name,
-                   u.display_name as author_display_name,
+                   u.display_name as author_display_name, u.avatar as author_avatar,
                    lu.username as last_post_author
             FROM forum_topics t
             LEFT JOIN users u ON t.user_id = u.id
@@ -265,7 +272,7 @@ class ForumRepository
         $stmt = $this->pdo->prepare("
             SELECT t.*,
                    u.username as author_name,
-                   u.display_name as author_display_name,
+                   u.display_name as author_display_name, u.avatar as author_avatar,
                    c.name as category_name
             FROM forum_topics t
             LEFT JOIN users u ON t.user_id = u.id
@@ -468,7 +475,7 @@ class ForumRepository
             SELECT t.*,
                    c.name as category_name,
                    u.username as author_name,
-                   u.display_name as author_display_name,
+                   u.display_name as author_display_name, u.avatar as author_avatar,
                    lu.username as last_post_author,
                    COALESCE(hit.n, 0) as hits
             FROM forum_topics t
@@ -502,7 +509,7 @@ class ForumRepository
             SELECT p.id, p.topic_id, p.user_id, p.guest_name, p.content, p.is_first_post,
                    p.edited_at, p.edited_by, p.created_at, nr.post_nr,
                    u.username as author_name,
-                   u.display_name as author_display_name,
+                   u.display_name as author_display_name, u.avatar as author_avatar,
                    eu.username as editor_name
             FROM forum_posts p
             JOIN nr ON nr.id = p.id
@@ -531,7 +538,7 @@ class ForumRepository
             SELECT p.id, p.topic_id, p.user_id, p.guest_name, p.content, p.is_first_post,
                    p.edited_at, p.edited_by, p.created_at, 1 AS post_nr,
                    u.username as author_name,
-                   u.display_name as author_display_name,
+                   u.display_name as author_display_name, u.avatar as author_avatar,
                    eu.username as editor_name
             FROM forum_posts p
             LEFT JOIN users u ON p.user_id = u.id
@@ -713,7 +720,7 @@ class ForumRepository
                    c.name as category_name,
                    c.view_permission,
                    u.username as author_name,
-                   u.display_name as author_display_name
+                   u.display_name as author_display_name, u.avatar as author_avatar
             FROM forum_topics t
             LEFT JOIN forum_categories c ON t.category_id = c.id
             LEFT JOIN users u ON t.user_id = u.id
@@ -746,7 +753,7 @@ class ForumRepository
             SELECT t.*,
                    c.name as category_name,
                    u.username as author_name,
-                   u.display_name as author_display_name
+                   u.display_name as author_display_name, u.avatar as author_avatar
             FROM forum_topics t
             JOIN forum_categories c ON t.category_id = c.id
             LEFT JOIN users u ON t.user_id = u.id
@@ -1074,7 +1081,7 @@ class ForumRepository
             SELECT t.*,
                    c.name as category_name,
                    u.username as author_name,
-                   u.display_name as author_display_name
+                   u.display_name as author_display_name, u.avatar as author_avatar
             FROM forum_topics t
             LEFT JOIN forum_categories c ON t.category_id = c.id
             LEFT JOIN users u ON t.user_id = u.id
@@ -1095,7 +1102,7 @@ class ForumRepository
             SELECT t.*,
                    c.name as category_name,
                    u.username as author_name,
-                   u.display_name as author_display_name
+                   u.display_name as author_display_name, u.avatar as author_avatar
             FROM forum_topics t
             LEFT JOIN forum_categories c ON t.category_id = c.id
             LEFT JOIN users u ON t.user_id = u.id
@@ -1115,7 +1122,7 @@ class ForumRepository
             SELECT t.*,
                    c.name as category_name,
                    u.username as author_name,
-                   u.display_name as author_display_name
+                   u.display_name as author_display_name, u.avatar as author_avatar
             FROM forum_topics t
             LEFT JOIN forum_categories c ON t.category_id = c.id
             LEFT JOIN users u ON t.user_id = u.id

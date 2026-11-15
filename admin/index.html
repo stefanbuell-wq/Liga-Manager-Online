@@ -1593,6 +1593,12 @@
         // Altkonto = aus dem frueheren Forum uebernommen, nie angemeldet, keine E-Mail (Status egal)
         const isLegacyUser = u => u.role === 'user' && !u.last_login && !u.email && !['pending_email', 'pending_approval'].includes(u.status);
 
+        async function removeUserAvatar(id, name) {
+            if (!confirm(`Profilbild von ${name} entfernen?`)) return;
+            const res = await postWithCsrf(`${API_BASE}/avatar.php`, { action: 'admin_remove', user_id: id });
+            if (res.success) { loadUsersList(); } else { alert('Fehler: ' + (res.error || 'unbekannt')); }
+        }
+
         function renderUsersList() {
             const data = usersCache;
             const container = document.getElementById('users-list');
@@ -1669,13 +1675,14 @@
                                    : ((u.status && u.status !== 'active' && STATUS_LABEL[u.status]) || STATUS_LABEL.disabled));
                             return `
                             <tr style="border-bottom:1px solid var(--border-color, #eee);">
-                                <td style="padding:12px; font-weight:600;">${uEsc(u.username)}${u.display_name && u.display_name !== u.username ? `<br><span style="font-weight:400; color:var(--color-text-muted); font-size:0.85rem;">${uEsc(u.display_name)}</span>` : ''}</td>
+                                <td style="padding:12px; font-weight:600;">${/^img\/(avatars|teams)\/[\w\/-]+\.(webp|jpg|png|gif)$/.test(u.avatar || '') ? `<img src="../${u.avatar}" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:6px; background:#fff; border:1px solid #eee;">` : ''}${uEsc(u.username)}${u.display_name && u.display_name !== u.username ? `<br><span style="font-weight:400; color:var(--color-text-muted); font-size:0.85rem;">${uEsc(u.display_name)}</span>` : ''}</td>
                                 <td style="padding:12px; font-size:0.9rem;">${uEsc(u.email) || '<span style="color:var(--color-text-muted)">–</span>'}</td>
                                 <td style="padding:12px; text-align:center;"><span style="padding:3px 8px; border-radius:4px; font-size:0.8rem; background:${r[1]}; color:${r[2]};">${r[0]}</span></td>
                                 <td style="padding:12px; text-align:center; color:${st[1]}; font-size:0.9rem;">${st[0]}</td>
                                 <td style="padding:12px; color:var(--color-text-muted); font-size:0.9rem;">${u.last_login ? new Date(u.last_login.replace(' ', 'T') + 'Z').toLocaleString('de') : 'Nie'}</td>
                                 <td style="padding:12px; text-align:right; white-space:nowrap;">
                                     ${u.email ? `<button onclick="userAction('send_reset', ${u.id})" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;" title="Mail zum Zurücksetzen des Passworts senden">Reset-Mail</button>` : ''}
+                                    ${u.avatar ? `<button onclick="removeUserAvatar(${u.id}, '${uEsc(u.username).replace(/'/g, '&#39;')}')" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;" title="Unpassendes Profilbild entfernen">Bild entfernen</button>` : ''}
                                     <button onclick="openUserEditor(${u.id})" class="btn-secondary" style="font-size:0.8rem; padding:5px 10px;">Bearbeiten</button>
                                 </td>
                             </tr>`;

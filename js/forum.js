@@ -560,6 +560,14 @@ async function loadTopic(topicId) {
 }
 
 /**
+ * Profilbild oder Anfangsbuchstabe (nur Pfade, die der Server vergibt)
+ */
+function avatarHtml(path, initial) {
+    const ok = typeof path === 'string' && /^img\/(avatars\/(legacy\/)?[A-Za-z0-9_-]+\.(webp|jpg|png|gif)|teams\/[A-Za-z0-9]+\.gif)$/.test(path);
+    return ok ? `<img src="${path}"${path.startsWith('img/teams/') ? ' class="is-crest"' : ''} alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${initial.replace(/[^\p{L}\p{N}]/gu, '')}'))">` : escapeHtml(initial);
+}
+
+/**
  * Render posts list
  */
 function renderPosts(posts, topic, firstPost = null) {
@@ -574,7 +582,7 @@ function renderPosts(posts, topic, firstPost = null) {
             <div class="post-card ${isFirst ? 'post-first' : ''}">
                 <div class="post-header">
                     <div class="post-author">
-                        <div class="post-avatar">${authorInitial}</div>
+                        <div class="post-avatar">${avatarHtml(post.author_avatar, authorInitial)}</div>
                         <div>
                             <div class="post-author-name">${escapeHtml(post.author_display_name || post.author_name || 'Unbekannt')}</div>
                             <div class="post-date">${formatDateTime(post.created_at)}</div>

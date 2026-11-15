@@ -58,6 +58,20 @@
         .hp { position: absolute; left: -9999px; }
         .account-links { margin-top: var(--spacing-md); font-size: 0.85rem; text-align: center; }
         .account-links a { color: var(--color-text-secondary); cursor: pointer; }
+        .av-box { display: flex; gap: var(--spacing-md); align-items: center; margin: var(--spacing-md) 0 var(--spacing-sm); flex-wrap: wrap; }
+        .av-pic { width: 80px; height: 80px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center;
+                  font-size: 2rem; font-weight: 700; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-color); }
+        .av-pic img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+        .av-pic img.is-crest { object-fit: contain; padding: 6px; box-sizing: border-box; }
+        .av-actions { display: flex; gap: var(--spacing-xs); flex-wrap: wrap; }
+        .av-actions .btn { font-size: .85rem; padding: 8px 12px; }
+        .av-crests { display: none; margin-top: var(--spacing-sm); }
+        .av-crests input { width: 100%; padding: 9px 12px; border: 1px solid var(--border-color-hover); border-radius: var(--radius-sm); background: var(--color-bg-elevated); color: var(--color-text-primary); font: inherit; box-sizing: border-box; }
+        .av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; max-height: 260px; overflow-y: auto; margin-top: 8px; }
+        .av-grid button { background: var(--color-bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 6px 4px; cursor: pointer;
+                          font: inherit; font-size: .7rem; color: var(--color-text-secondary); display: flex; flex-direction: column; align-items: center; gap: 4px; line-height: 1.2; }
+        .av-grid button:hover { border-color: var(--color-primary); }
+        .av-grid img { width: 40px; height: 40px; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -101,6 +115,25 @@
                     <h2 style="margin-top:0">Mein Konto</h2>
                     <p>Angemeldet als <strong id="me-name"></strong> <span id="me-role" style="color:var(--color-text-muted)"></span></p>
                     <p id="me-admin" style="display:none"><a href="admin/index.html" class="btn btn-secondary">Zum Admin-Bereich</a></p>
+                    <div class="account-form">
+                        <h3>Profilbild</h3>
+                        <div class="av-box">
+                            <div class="av-pic" id="av-pic"></div>
+                            <div>
+                                <div class="av-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="$('av-file').click()">Bild hochladen</button>
+                                    <button type="button" class="btn btn-secondary" onclick="toggleCrests()">Vereinswappen wählen</button>
+                                    <button type="button" class="btn btn-ghost" id="av-remove" onclick="removeAvatar()">Entfernen</button>
+                                </div>
+                                <div class="hint">JPG, PNG, WebP oder GIF bis 2 MB. Das Bild wird quadratisch zugeschnitten und im Forum neben deinen Beiträgen angezeigt.</div>
+                            </div>
+                        </div>
+                        <input type="file" id="av-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+                        <div class="av-crests" id="av-crests">
+                            <input type="search" id="av-q" placeholder="Verein suchen, z. B. Altona" autocomplete="off">
+                            <div class="av-grid" id="av-grid"></div>
+                        </div>
+                    </div>
                     <form class="account-form" id="form-email">
                         <h3>E-Mail-Adresse</h3>
                         <label for="em-email">E-Mail</label><input type="email" id="em-email" required autocomplete="email">
@@ -243,6 +276,8 @@
             $('me-role').textContent = me.user.staff ? `(${me.user.role === 'admin' ? 'Administrator' : 'Redaktion'})` : '';
             $('me-admin').style.display = me.user.staff ? '' : 'none';
             $('em-email').value = me.user.email || '';
+            initial = (me.user.display_name || me.user.username || '?').charAt(0).toUpperCase();
+            loadAvatar();
         } else {
             $('view-guest').style.display = '';
             showTab(params.get('tab') || 'login');
@@ -286,6 +321,78 @@
         const d = await post(`${API}/account.php`, { action: 'update_email', email: $('em-email').value, current_password: $('em-pass').value });
         msg(d.message || d.error, !!d.success); $('em-pass').value = '';
     };
+    // ===== Profilbild =====
+    let initial = '?', crests = null;
+    function showAvatar(path) {
+        const box = $('av-pic');
+        box.textContent = '';
+        if (path) {
+            const img = document.createElement('img');
+            img.src = path;
+            img.alt = 'Dein Profilbild';
+            if (path.startsWith('img/teams/')) img.className = 'is-crest';
+            box.appendChild(img);
+        } else box.textContent = initial;
+        $('av-remove').style.display = path ? '' : 'none';
+    }
+    async function loadAvatar() {
+        const d = await (await fetch(`${API}/avatar.php`, { credentials: 'include' })).json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        showAvatar(d.success ? d.data.avatar : null);
+    }
+    $('av-file').onchange = async e => {
+        const f = e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        if (f.size > 2 * 1048576) return msg('Das Bild ist größer als 2 MB.', false);
+        const fd = new FormData();
+        fd.append('action', 'upload'); fd.append('file', f); fd.append('csrf_token', csrf);
+        $('av-pic').textContent = '…';
+        const r = await fetch(`${API}/avatar.php`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': csrf }, body: fd });
+        const d = await r.json().catch(() => ({ error: 'Serverfehler' }));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (d.success) { showAvatar(d.data.avatar); msg(d.message); } else { loadAvatar(); msg(d.error || 'Upload fehlgeschlagen', false); }
+    };
+    async function toggleCrests() {
+        const box = $('av-crests');
+        const open = box.style.display !== 'block';
+        box.style.display = open ? 'block' : 'none';
+        if (!open) return;
+        if (!crests) {
+            const d = await (await fetch(`${API}/avatar.php?action=crests`)).json().catch(() => ({}));
+            crests = d.success ? d.data : [];
+        }
+        renderCrests();
+        $('av-q').focus();
+    }
+    function renderCrests() {
+        const q = $('av-q').value.trim().toLowerCase();
+        const list = crests.filter(c => !q || c.name.toLowerCase().includes(q)).slice(0, 60);
+        const grid = $('av-grid');
+        grid.textContent = '';
+        list.forEach(c => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.title = c.name;
+            const img = document.createElement('img'); img.src = c.img; img.alt = ''; img.loading = 'lazy';
+            const span = document.createElement('span'); span.textContent = c.name;
+            b.append(img, span);
+            b.onclick = () => chooseCrest(c.key, c.name);
+            grid.appendChild(b);
+        });
+        if (!list.length) grid.textContent = 'Kein Verein gefunden.';
+    }
+    $('av-q').oninput = renderCrests;
+    async function chooseCrest(key, name) {
+        const d = await post(`${API}/avatar.php`, { action: 'crest', key });
+        if (d.success) { showAvatar(d.data.avatar); $('av-crests').style.display = 'none'; msg(`Wappen ${name} als Profilbild gespeichert.`); }
+        else msg(d.error || 'Fehler', false);
+    }
+    async function removeAvatar() {
+        const d = await post(`${API}/avatar.php`, { action: 'remove' });
+        if (d.success) { showAvatar(null); msg(d.message); } else msg(d.error || 'Fehler', false);
+    }
+
     async function logout() { await post(`${API}/logout.php`, {}); location.href = 'konto.html'; }
     init();
     </script>
