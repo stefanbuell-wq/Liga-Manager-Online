@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 15.11.2026 (Nachtrag 3) – Forum: Uhrzeiten eine Stunde zu früh
+
+### Für Redaktion und Leser
+
+- Im Forum standen alle Uhrzeiten eine Stunde zu früh (im Sommer zwei), bei neuen wie bei alten Beiträgen. Jetzt wird überall die deutsche Uhrzeit angezeigt.
+
+### Technik
+
+- Zeiten in `forum_posts`/`forum_topics` sind UTC (SQLite `CURRENT_TIMESTAMP`, SMF-Import per `date()` in UTC – geprüft an Beitrag 5000 gegen `poster_time` im SMF-Dump). `js/forum.js`: `parseDbDate()` liest als UTC, Anzeige mit `timeZone: 'Europe/Berlin'`; `api/search.php`: Datum „letzter Beitrag“ ebenso umgerechnet. Meldung Andreas Killat (Beitrag von WORTSPIELER).
+
+---
+
 ## 15.11.2026 (Nachtrag 2) – Wappen TSV Buchholz 08
 
 ### Für Redaktion und Leser

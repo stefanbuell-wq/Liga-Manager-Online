@@ -302,7 +302,7 @@ if ($want('forum')) {
         $total = count($all);
         foreach (array_slice($all, $skip(), $take('forum')) as $r) {
             $items[] = ['id' => (int)$r['id'], 'title' => $r['title'], 'posts' => (int)$r['post_count'],
-                        'hits' => (int)$r['hits'], 'last' => $r['last_hit'] ? date('d.m.Y', strtotime($r['last_hit'])) : null];
+                        'hits' => (int)$r['hits'], 'last' => $r['last_hit'] ? (new DateTime($r['last_hit'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Europe/Berlin'))->format('d.m.Y') : null];
         }
     }
     $result['forum'] = ['total' => $total, 'items' => $items];

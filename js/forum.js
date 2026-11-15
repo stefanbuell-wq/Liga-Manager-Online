@@ -1140,15 +1140,25 @@ function formatPostContent(content) {
 }
 
 /**
+ * Zeitpunkte aus der DB ("YYYY-MM-DD HH:MM:SS") sind UTC (SQLite CURRENT_TIMESTAMP,
+ * Altbeitraege aus SMF ebenfalls UTC) -> als UTC lesen und in deutscher Zeit anzeigen
+ */
+function parseDbDate(dateStr) {
+    const s = String(dateStr).trim();
+    return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(s) ? new Date(s.replace(' ', 'T') + 'Z') : new Date(s);
+}
+
+/**
  * Format date for display
  */
 function formatDate(dateStr) {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
+    const date = parseDbDate(dateStr);
     return date.toLocaleDateString('de-DE', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric'
+        year: 'numeric',
+        timeZone: 'Europe/Berlin'
     });
 }
 
@@ -1157,13 +1167,14 @@ function formatDate(dateStr) {
  */
 function formatDateTime(dateStr) {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
+    const date = parseDbDate(dateStr);
     return date.toLocaleDateString('de-DE', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Europe/Berlin'
     });
 }
 
