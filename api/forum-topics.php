@@ -59,9 +59,11 @@ try {
             // View-Counter erhöhen
             $repo->incrementTopicViews($topicId);
 
-            // Sortierung: new = neueste zuerst (Standard, Eroeffnungsbeitrag oben angeheftet), old = chronologisch
+            // Sortierung: new = neueste zuerst (Standard), old = chronologisch.
+            // Der Eroeffnungsbeitrag wird nicht mehr oben angeheftet (Wunsch aus dem Forum 16.11.2026):
+            // bei alten Themen stand sonst ein Beitrag von vor 20 Jahren ueber den neuen.
             $order = $sort === 'old' ? 'asc' : 'desc';
-            $pinFirst = $order === 'desc' && $search === '';
+            $pinFirst = false;
 
             // Lesestand vor diesem Besuch (fuer "Neu"-Markierung), danach als gelesen speichern
             $readSince = null;

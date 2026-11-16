@@ -5,6 +5,23 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 16.11.2026 (Nachtrag 3) – Forum: Neueste oben, „Neu“ auf der Startseite, dunkles Design
+
+### Für Redaktion und Leser
+
+- **Neueste Beiträge oben, ohne angehefteten Eröffnungsbeitrag:** Ein Thema beginnt jetzt direkt mit dem neuesten Beitrag. Der Eröffnungsbeitrag steht chronologisch ganz hinten; oben führt „Worum geht's? Zum Eröffnungsbeitrag“ mit einem Klick dorthin. „Älteste zuerst“ gibt es weiterhin.
+- **„Neu“ schon auf der Forum-Startseite:** Angemeldete sehen oben den Kasten **„Neu seit deinem letzten Besuch“** mit den Themen, in denen seitdem geschrieben wurde (ein Klick springt zum ersten neuen Beitrag), und an jeder Kategorie „3 neu“. Eigene Beiträge zählen nicht als neu. „✓ Alles gelesen“ setzt alles zurück.
+- **Dunkles Design:** Oben rechts schaltet 🌙 / ☀️ zwischen hell und dunkel um (auf dem Handy im Menü). Ohne eigene Wahl folgt die Seite der Einstellung von Gerät bzw. Browser. Gilt für Startseite, Forum, Suche, Konto und Kontakt; die Wahl merkt sich der Browser.
+
+### Technik
+
+- `api/forum-topics.php`: `$pinFirst = false` (kein `first_post` mehr); `js/forum.js` Link `.first-post-link` → `goToPage(letzte, true)` scrollt zu `.post-first`
+- `ForumComfort::unreadOverview()` (Zähler je Kategorie + 10 neueste ungelesene Themen, gleiche Regel wie `annotateTopics`); `api/forum-categories.php` liefert `unread_count` und `unread_topics` für Mitglieder, `renderCategories` zeigt Kasten `.unread-box`
+- `js/darkmode.js` (im `<head>`, setzt `html[data-theme]`, `localStorage` `hafo_color_mode`, sonst `prefers-color-scheme`); dunkle Farben in `portal.css` mit `!important`, weil der Theme-Loader die Farben inline setzt; fest eingetragene Schrift-/Hintergrundfarben in Berichten und Beiträgen werden im dunklen Design neutralisiert
+- `portal.css?v=20261121` und `forum.js?v=20261121` auf allen fünf Seiten
+
+---
+
 ## 16.11.2026 (Nachtrag 2) – Forum: Löschen direkt im Thema
 
 ### Für Redaktion und Leser

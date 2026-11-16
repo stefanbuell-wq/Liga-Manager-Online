@@ -100,6 +100,44 @@ class ForumComfort
     }
 
     /**
+     * Forum-Startseite: ungelesene Themen je Kategorie und die neuesten davon
+     * (nur in den uebergebenen, fuer den Nutzer sichtbaren Kategorien)
+     * @return array{counts: array<int,int>, topics: array}
+     */
+    public function unreadOverview(int $userId, array $categoryIds, int $limit = 10): array
+    {
+        $categoryIds = array_values(array_filter(array_map('intval', $categoryIds)));
+        if (!$categoryIds) return ['counts' => [], 'topics' => []];
+        $base = $this->readAllAt($userId);
+        $in = implode(',', $categoryIds); // nur Ganzzahlen
+        $where = "t.category_id IN ($in)
+              AND t.last_post_at > :base
+              AND t.last_post_at > COALESCE(r.read_at, '')
+              AND COALESCE(t.last_post_user_id, 0) <> :uid";
+        $from = "FROM forum_topics t
+            LEFT JOIN forum_reads r ON r.topic_id = t.id AND r.user_id = :uid";
+
+        $st = $this->pdo->prepare("SELECT t.category_id, COUNT(*) $from WHERE $where GROUP BY t.category_id");
+        $st->execute([':uid' => $userId, ':base' => $base]);
+        $counts = [];
+        foreach ($st->fetchAll(PDO::FETCH_NUM) as [$cat, $n]) $counts[(int)$cat] = (int)$n;
+
+        $topics = [];
+        if ($counts) {
+            $st = $this->pdo->prepare("SELECT t.id, t.title, t.category_id, t.post_count, t.last_post_at,
+                       c.name AS category_name, lu.username AS last_post_author, lu.display_name AS last_post_display_name
+                $from
+                LEFT JOIN forum_categories c ON c.id = t.category_id
+                LEFT JOIN users lu ON lu.id = t.last_post_user_id
+                WHERE $where
+                ORDER BY t.last_post_at DESC LIMIT " . max(1, min(50, $limit)));
+            $st->execute([':uid' => $userId, ':base' => $base]);
+            $topics = $st->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return ['counts' => $counts, 'topics' => $topics];
+    }
+
+    /**
      * Thema wird angesehen: bisherigen Lesestand zurueckgeben (fuer "Neu"-Markierung),
      * danach als gelesen speichern und Abo-Sperre aufheben.
      */

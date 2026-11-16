@@ -9,6 +9,7 @@ header('Access-Control-Allow-Origin: *');
 
 require_once __DIR__ . '/../lib/ForumRepository.php';
 require_once __DIR__ . '/../lib/Security.php';
+require_once __DIR__ . '/../lib/ForumComfort.php';
 
 Security::initSession();
 
@@ -32,11 +33,24 @@ try {
         $cat['can_create'] = $repo->hasPermission($cat['create_permission'] ?? 'registered', $userRole);
     }
 
+    // "Neu seit dem letzten Besuch" (nur angemeldete Forenkonten)
+    $unreadTopics = null;
+    if ($userId && Security::isMember()) {
+        $comfort = new ForumComfort();
+        $overview = $comfort->unreadOverview((int)$userId, array_column($categories, 'id'));
+        foreach ($categories as &$cat) {
+            $cat['unread_count'] = $overview['counts'][(int)$cat['id']] ?? 0;
+        }
+        unset($cat);
+        $unreadTopics = $overview['topics'];
+    }
+
     $stats = $repo->getStats();
 
     echo json_encode([
         'success' => true,
         'categories' => $categories,
+        'unread_topics' => $unreadTopics,
         'stats' => $stats,
         'user' => [
             'id' => $userId,

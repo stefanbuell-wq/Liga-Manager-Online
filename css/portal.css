@@ -1265,3 +1265,52 @@ h4 { font-size: 1.25rem; }
     .srow { grid-template-columns: 24px minmax(0, 1fr) 46px minmax(0, 1fr) 22px 24px; font-size: 0.85rem; gap: 5px; }
     .srow-when { grid-column: 2 / -1; grid-row: 2; text-align: center; }
 }
+
+/* ===== Dunkles Design (js/darkmode.js setzt html[data-theme]) =====
+   !important, weil der Theme-Loader (api/theme.php) die Farben als Inline-Stil auf <html> setzt */
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --color-primary: #ff3347 !important;
+    --color-primary-hover: #ff5c6c !important;
+    --color-primary-dark: #d8001a !important;
+    --color-bg-dark: #121416 !important;
+    --color-bg-card: #1c1f23 !important;
+    --color-bg-card-hover: #262a30 !important;
+    --color-bg-elevated: #23272c !important;
+    --color-bg: #16191c;
+    --color-text-primary: #e8eaed !important;
+    --color-text-secondary: #bfc5cc !important;
+    --color-text-muted: #9aa1a9 !important;
+    --color-live: #2fc27a !important;
+    --border-color: rgba(255, 255, 255, 0.12) !important;
+    --border-color-hover: rgba(255, 255, 255, 0.22) !important;
+    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.45) !important;
+    --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.55) !important;
+}
+html[data-theme="dark"] .header { background: rgba(18, 20, 22, 0.92); }
+/* Wappen/Banner mit transparentem Hintergrund bleiben auf dunklem Grund erkennbar */
+html[data-theme="dark"] img[src*="img/teams/"] { filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)); }
+/* Alt-Inhalte (Berichte, Forum) mit fest eingetragener Schriftfarbe lesbar halten */
+html[data-theme="dark"] .news-body [style*="color"],
+html[data-theme="dark"] .post-content [style*="color"],
+html[data-theme="dark"] .news-body font[color],
+html[data-theme="dark"] .post-content font[color] { color: inherit !important; }
+html[data-theme="dark"] .news-body [style*="background"],
+html[data-theme="dark"] .post-content [style*="background"] { background: transparent !important; }
+
+.theme-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; padding: 0;
+    background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);
+    color: var(--color-text-primary); cursor: pointer; font-size: 1.1rem; line-height: 1;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.theme-toggle:hover { background: var(--color-bg-card-hover); border-color: var(--border-color-hover); }
+.theme-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+/* Meldungen in konto.html/kontakt.html (dort dunkle Schrift fest eingetragen) */
+html[data-theme="dark"] .account-msg.ok, html[data-theme="dark"] .contact-msg.ok { color: #86efac; }
+html[data-theme="dark"] .account-msg.err, html[data-theme="dark"] .contact-msg.err { color: #fca5a5; }
+/* Handy: Kopfzeile ist schon voll -> Umschalter im Menue (js/darkmode.js) */
+.mobile-nav .theme-toggle-link { width: 100%; text-align: left; background: none; border: 0; font-family: inherit; cursor: pointer; }
+@media (max-width: 640px) { .header .theme-toggle.has-menu-twin { display: none; } }
+@media (min-width: 641px) { .mobile-nav .theme-toggle-link { display: none; } }

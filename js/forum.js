@@ -291,7 +291,7 @@ async function loadCategories() {
     renderToolbar('categories');
 
     try {
-        const res = await fetch(`${API_BASE}/forum-categories.php`);
+        const res = await fetch(`${API_BASE}/forum-categories.php`, { credentials: 'include', cache: 'no-store' });
         const data = await res.json();
 
         if (!data.success) {
@@ -310,7 +310,7 @@ async function loadCategories() {
             csrfToken = data.csrf_token;
         }
 
-        renderCategories(data.categories || []);
+        renderCategories(data.categories || [], data.unread_topics || null);
 
     } catch (e) {
         console.error('Error loading categories:', e);
@@ -327,8 +327,9 @@ async function loadCategories() {
 /**
  * Render categories list
  */
-function renderCategories(categories) {
+function renderCategories(categories, unreadTopics = null) {
     const container = document.getElementById('forum-content');
+    const unreadHtml = unreadOverviewHtml(unreadTopics);
 
     if (categories.length === 0) {
         container.innerHTML = `
@@ -340,11 +341,11 @@ function renderCategories(categories) {
         return;
     }
 
-    container.innerHTML = categories.map(cat => `
-        <div class="category-card" onclick="navigateTo('category', ${cat.id})">
+    container.innerHTML = unreadHtml + categories.map(cat => `
+        <div class="category-card${cat.unread_count > 0 ? ' has-unread' : ''}" onclick="navigateTo('category', ${parseInt(cat.id)})">
             <div class="category-header">
                 <div class="category-info">
-                    <div class="category-name">${escapeHtml(cat.name)}</div>
+                    <div class="category-name">${escapeHtml(cat.name)}${cat.unread_count > 0 ? ` <span class="new-badge" title="Themen mit neuen Beiträgen seit deinem letzten Besuch">${parseInt(cat.unread_count)} neu</span>` : ''}</div>
                     ${cat.description ? `<div class="category-description">${escapeHtml(cat.description)}</div>` : ''}
                 </div>
                 <div class="category-stats">
@@ -362,6 +363,32 @@ function renderCategories(categories) {
     `).join('');
 
     document.getElementById('pagination-container').innerHTML = '';
+}
+
+/**
+ * Kasten "Neu seit deinem letzten Besuch" ueber den Kategorien (nur angemeldet).
+ * null = nicht angemeldet (kein Kasten), [] = alles gelesen
+ */
+function unreadOverviewHtml(topics) {
+    if (!currentUser || !Array.isArray(topics)) return '';
+    if (topics.length === 0) {
+        return `<div class="unread-box unread-box-empty">✓ Keine neuen Beiträge seit deinem letzten Besuch.</div>`;
+    }
+    const rows = topics.map(t => {
+        const href = `?topic=${parseInt(t.id)}&unread=1`;
+        const who = t.last_post_display_name || t.last_post_author || '';
+        return `
+            <a class="unread-row" href="${href}" onclick="event.preventDefault(); openTopicLink('${href}')">
+                <span class="new-badge">Neu</span>
+                <span class="unread-title">${escapeHtml(t.title)}</span>
+                <span class="unread-meta">${escapeHtml(t.category_name || '')} · ${who ? escapeHtml(who) + ', ' : ''}${formatDateTime(t.last_post_at)}</span>
+            </a>`;
+    }).join('');
+    return `
+        <div class="unread-box">
+            <div class="unread-head"><strong>Neu seit deinem letzten Besuch</strong></div>
+            ${rows}
+        </div>`;
 }
 
 // ============================================
@@ -614,7 +641,7 @@ function renderPosts(posts, topic, firstPost = null) {
                             <div class="post-date">${formatDateTime(post.created_at)}</div>
                         </div>
                     </div>
-                    <span style="color: var(--color-text-muted); font-size: 0.85rem;">${isNew ? '<span class="new-badge">Neu</span> ' : ''}${pinned ? '📌 Eröffnungsbeitrag · ' : ''}#${parseInt(post.post_nr) || ''}</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.85rem;">${isNew ? '<span class="new-badge">Neu</span> ' : ''}${isFirst ? 'Eröffnungsbeitrag · ' : ''}#${parseInt(post.post_nr) || ''}</span>
                 </div>
                 <div class="post-content" id="post-content-${parseInt(post.id)}">
                     ${formatPostContent(post.content)}
@@ -675,11 +702,14 @@ function renderPosts(posts, topic, firstPost = null) {
         `;
     }
 
-    // Neueste zuerst: Eroeffnungsbeitrag oben, Antwortfeld direkt darunter (nur Seite 1),
-    // sonst wie gewohnt am Ende der Seite
+    // Neueste zuerst: Antwortfeld oben (nur Seite 1), sonst wie gewohnt am Ende der Seite.
+    // Der Eroeffnungsbeitrag steht chronologisch ganz hinten; bei mehreren Seiten fuehrt ein Link dorthin.
     const replyOnTop = postSort === 'new' && !searchQuery;
     let html = currentUser ? subscribeBarHtml() : '';
     if (firstPost) html += renderPost(firstPost, true);
+    if (replyOnTop && currentPage < totalPages) {
+        html += `<div class="first-post-link"><a href="#" onclick="event.preventDefault(); goToPage(${totalPages}, true)">Worum geht's? Zum Eröffnungsbeitrag ↓</a></div>`;
+    }
     if (replyOnTop && currentPage === 1) html += replyHtml;
     html += posts.map(p => renderPost(p)).join('');
     if (!replyOnTop) html += replyHtml;
@@ -1246,6 +1276,7 @@ async function toggleSubscribe(on) {
 async function markAllRead() {
     const data = await forumAction({ action: 'mark_all_read' });
     if (!data) return;
+    if (currentView === 'categories') { loadCategories(); return; }
     document.querySelectorAll('.topic-row.unread').forEach(r => r.classList.remove('unread'));
     document.querySelectorAll('.topic-row .new-badge').forEach(b => b.remove());
     document.querySelectorAll('.topic-row a.topic-title').forEach(a => a.setAttribute('href', a.getAttribute('href').replace('&unread=1', '')));
@@ -1390,7 +1421,7 @@ function renderPagination() {
 /**
  * Go to a specific page
  */
-function goToPage(page) {
+function goToPage(page, toFirstPost = false) {
     if (page < 1 || page > totalPages || page === currentPage) return;
 
     currentPage = page;
@@ -1411,7 +1442,14 @@ function goToPage(page) {
     } else if (currentView === 'search') {
         loadSearch();
     } else if (currentView === 'topic') {
-        loadTopic(currentTopicId);
+        const loaded = loadTopic(currentTopicId);
+        if (toFirstPost) {
+            loaded.then(() => {
+                const first = document.querySelector('.post-card.post-first');
+                if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            return;
+        }
     }
 
     // Scroll to top
