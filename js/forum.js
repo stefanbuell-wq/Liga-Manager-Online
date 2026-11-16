@@ -598,6 +598,7 @@ function renderPosts(posts, topic, firstPost = null) {
         const canEdit = currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin');
         const isNew = !!(readSince && currentUser && post.created_at > readSince && post.user_id !== currentUser.id);
         const canQuote = currentUser && !topic.is_locked;
+        const canReport = currentUser && post.user_id !== currentUser.id;
 
         return `
             <div class="post-card ${isFirst ? 'post-first' : ''}${isNew ? ' post-new' : ''}" id="post-${parseInt(post.id)}" data-created="${escapeAttr(post.created_at || '')}">
@@ -615,8 +616,9 @@ function renderPosts(posts, topic, firstPost = null) {
                     ${formatPostContent(post.content)}
                     ${post.edited_at ? `<div class="post-edited">Bearbeitet am ${formatDateTime(post.edited_at)}${post.editor_name ? ` von ${escapeHtml(post.editor_name)}` : ''}</div>` : ''}
                 </div>
-                ${canQuote || canEdit ? `
+                ${canQuote || canEdit || canReport ? `
                     <div class="post-footer">
+                        ${canReport ? `<button class="btn btn-ghost post-report" onclick="reportPost(${post.id})" title="Beitrag an die Moderation melden">⚑ Melden</button>` : ''}
                         ${canQuote ? `<button class="btn btn-ghost" onclick="quotePost(${post.id})" style="font-size: 0.85rem;">❝ Zitieren</button>` : ''}
                         ${canEdit ? `<button class="btn btn-ghost" onclick="editPost(${post.id})" style="font-size: 0.85rem;">Bearbeiten</button>` : ''}
                         ${canEdit && !isFirst ? `<button class="btn btn-ghost" onclick="deletePost(${post.id})" style="font-size: 0.85rem; color: var(--color-primary);">Löschen</button>` : ''}
@@ -994,13 +996,76 @@ function editorHtml(id, placeholder = '', minHeight = 120) {
                 ${b('🔗', 'Link', `bbLink('${id}')`)}
                 ${b('•≡', 'Liste', `bbList('${id}')`)}
                 ${b('❝', 'Zitat', `bbWrap('${id}','[quote]','[/quote]')`)}
+                ${b('🖼 Bild', 'Bild hochladen (auch per Einfügen oder Hineinziehen)', `document.getElementById('${id}-file').click()`)}
+                <input type="file" id="${id}-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="bbUploadFiles('${id}', this.files); this.value=''">
+                <span class="bb-status" id="${id}-status"></span>
                 <span class="bb-sep"></span>
                 <span class="bb-smileys">${SMILEYS.map(e => `<button type="button" class="bb-smiley" onmousedown="event.preventDefault()" onclick="bbInsert('${id}','${e}')" title="${e}">${e}</button>`).join('')}</span>
                 <button type="button" class="bb-btn bb-preview-btn" onclick="bbPreview('${id}', this)">Vorschau</button>
             </div>
-            <textarea id="${id}" placeholder="${escapeAttr(placeholder)}" style="min-height:${parseInt(minHeight)}px" oninput="saveDraft('${id}')"></textarea>
+            <textarea id="${id}" placeholder="${escapeAttr(placeholder)}" style="min-height:${parseInt(minHeight)}px" oninput="saveDraft('${id}')"
+                onpaste="bbPaste(event, '${id}')" ondragover="event.preventDefault()" ondrop="bbDrop(event, '${id}')"></textarea>
             <div class="bb-preview post-content" id="${id}-preview" hidden></div>
         </div>`;
+}
+
+/** Bilder hochladen und als [img]…[/img] einfuegen */
+async function bbUploadFiles(id, files) {
+    const list = [...(files || [])].filter(f => /^image\/(jpeg|png|webp|gif)$/.test(f.type));
+    if (!list.length) return;
+    const status = document.getElementById(id + '-status');
+    for (const f of list.slice(0, 5)) {
+        if (f.size > 8 * 1048576) { alert(`„${f.name}“ ist größer als 8 MB.`); continue; }
+        if (status) status.textContent = 'Bild wird hochgeladen …';
+        const fd = new FormData();
+        fd.append('file', f);
+        fd.append('csrf_token', csrfToken || '');
+        try {
+            const res = await fetch(`${API_BASE}/forum-image.php`, { method: 'POST', credentials: 'include', body: fd });
+            const data = await res.json();
+            if (data.csrf_token) csrfToken = data.csrf_token;
+            if (data.success) bbInsert(id, `\n[img]${data.path}[/img]\n`);
+            else alert(data.error || 'Upload fehlgeschlagen');
+        } catch (e) {
+            alert('Netzwerkfehler beim Hochladen');
+        }
+    }
+    if (status) status.textContent = '';
+}
+
+function bbPaste(e, id) {
+    const files = [...(e.clipboardData?.files || [])];
+    if (files.some(f => f.type.startsWith('image/'))) {
+        e.preventDefault();
+        bbUploadFiles(id, files);
+    }
+}
+
+function bbDrop(e, id) {
+    const files = [...(e.dataTransfer?.files || [])];
+    if (files.length) {
+        e.preventDefault();
+        bbUploadFiles(id, files);
+    }
+}
+
+/** Beitrag an die Moderation melden */
+async function reportPost(postId) {
+    const reason = prompt('Was ist an diesem Beitrag nicht in Ordnung? (optional)', '');
+    if (reason === null) return;
+    try {
+        const res = await fetch(`${API_BASE}/forum-posts.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ action: 'report', post_id: postId, reason, csrf_token: csrfToken })
+        });
+        const data = await res.json();
+        if (data.csrf_token) csrfToken = data.csrf_token;
+        alert(data.success ? data.message : (data.error || 'Melden fehlgeschlagen'));
+    } catch (e) {
+        alert('Netzwerkfehler beim Melden');
+    }
 }
 
 function bbField(id) {
@@ -1100,6 +1165,9 @@ function bbInline(t) {
         const u = safeUrl(url.replace(/&amp;/g, '&'));
         return u ? `<a href="${escapeAttr(u)}" target="_blank" rel="noopener noreferrer nofollow">${txt}</a>` : null;
     };
+    // Bilder nur aus dem eigenen Upload-Ordner
+    t = t.replace(/\[img\](img\/forum\/[a-f0-9]{24}\.(?:webp|jpg))\[\/img\]/gi, (m, src) =>
+        `<a href="${src}" target="_blank" rel="noopener" class="post-img-link"><img src="${src}" class="post-img" alt="Bild" loading="lazy"></a>`);
     t = t.replace(/\[list\]\n?([\s\S]*?)\[\/list\]\n?/gi, (m, body) =>
         '\u0001<ul>' + body.split(/\[\*\]/).map(x => x.trim()).filter(Boolean).map(x => `<li>${x.replace(/\n/g, '<br>')}</li>`).join('') + '</ul>\u0001');
     for (let k = 0; k < 3; k++) {

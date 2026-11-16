@@ -47,6 +47,17 @@ class ForumComfort
             PRIMARY KEY (user_id, topic_id)
         )");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_forum_subscriptions_topic ON forum_subscriptions(topic_id)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS forum_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            reporter_id INTEGER NOT NULL,
+            reason TEXT,
+            status TEXT NOT NULL DEFAULT 'open',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            handled_by INTEGER,
+            handled_at TEXT,
+            UNIQUE (post_id, reporter_id)
+        )");
         $done = true;
     }
 
@@ -227,10 +238,67 @@ class ForumComfort
         }
     }
 
+    /* ---------- Meldungen ---------- */
+
+    /** Beitrag melden; false, wenn dieser Nutzer ihn schon gemeldet hat */
+    public function report(int $postId, int $userId, string $reason): bool
+    {
+        $st = $this->pdo->prepare("SELECT user_id FROM forum_posts WHERE id = ?");
+        $st->execute([$postId]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$row) throw new InvalidArgumentException('Beitrag nicht gefunden');
+        if ((int)$row['user_id'] === $userId) throw new InvalidArgumentException('Eigene Beiträge kannst du nicht melden.');
+        $reason = trim(mb_substr(preg_replace('/\s+/u', ' ', $reason), 0, 500));
+        $ins = $this->pdo->prepare("INSERT OR IGNORE INTO forum_reports (post_id, reporter_id, reason) VALUES (?, ?, ?)");
+        $ins->execute([$postId, $userId, $reason !== '' ? $reason : null]);
+        if ($ins->rowCount() === 0) {
+            // schon gemeldet: erledigte Meldung wieder oeffnen, falls erneut gemeldet
+            $this->pdo->prepare("UPDATE forum_reports SET status = 'open', reason = COALESCE(?, reason), created_at = CURRENT_TIMESTAMP
+                WHERE post_id = ? AND reporter_id = ? AND status <> 'open'")->execute([$reason !== '' ? $reason : null, $postId, $userId]);
+            return false;
+        }
+        return true;
+    }
+
+    /** Offene Meldungen, je Beitrag zusammengefasst */
+    public function openReports(): array
+    {
+        $rows = $this->pdo->query("SELECT r.id, r.post_id, r.reason, r.created_at,
+                COALESCE(NULLIF(ru.display_name, ''), ru.username) AS reporter,
+                p.content, p.topic_id, p.created_at AS post_created, t.title,
+                COALESCE(NULLIF(au.display_name, ''), au.username, p.guest_name, 'Gast') AS author
+            FROM forum_reports r
+            LEFT JOIN forum_posts p ON p.id = r.post_id
+            LEFT JOIN forum_topics t ON t.id = p.topic_id
+            LEFT JOIN users ru ON ru.id = r.reporter_id
+            LEFT JOIN users au ON au.id = p.user_id
+            WHERE r.status = 'open'
+            ORDER BY r.created_at")->fetchAll(PDO::FETCH_ASSOC);
+        $out = [];
+        foreach ($rows as $r) {
+            $k = (int)$r['post_id'];
+            if (!isset($out[$k])) {
+                $out[$k] = ['post_id' => $k, 'topic_id' => (int)$r['topic_id'], 'title' => $r['title'], 'author' => $r['author'],
+                    'post_created' => $r['post_created'], 'deleted' => $r['content'] === null,
+                    'excerpt' => mb_substr(self::plainText((string)$r['content']), 0, 300), 'reports' => []];
+            }
+            $out[$k]['reports'][] = ['reporter' => $r['reporter'], 'reason' => $r['reason'], 'created_at' => $r['created_at']];
+        }
+        return array_values($out);
+    }
+
+    /** Alle Meldungen zu einem Beitrag als erledigt markieren */
+    public function closeReports(int $postId, int $adminId): void
+    {
+        $this->pdo->prepare("UPDATE forum_reports SET status = 'done', handled_by = ?, handled_at = CURRENT_TIMESTAMP
+            WHERE post_id = ? AND status = 'open'")->execute([$adminId, $postId]);
+    }
+
     /** Beitragstext ohne BBCode/HTML fuer Mails */
     public static function plainText(string $content): string
     {
         $t = preg_replace('#\[quote(?:=[^\]]*)?\].*?\[/quote\]#is', '[Zitat] ', $content);
+        $t = preg_replace('#\[img\][^\[]*\[/img\]#i', '[Bild] ', $t);
         $t = preg_replace('#\[url=([^\]]+)\](.*?)\[/url\]#is', '$2 ($1)', $t);
         $t = preg_replace('#\[/?(?:b|i|u|s|url|list|\*)\]#i', '', $t);
         $t = html_entity_decode(strip_tags(preg_replace('#<br\s*/?>|</p>#i', "\n", $t)), ENT_QUOTES, 'UTF-8');

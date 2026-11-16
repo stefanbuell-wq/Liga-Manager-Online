@@ -92,6 +92,29 @@ try {
                 'csrf_token' => Security::getCsrfToken()
             ]);
 
+        } elseif ($action === 'report') {
+            // Beitrag melden (nur angemeldete Forenkonten)
+            if (!$userId || !Security::isMember()) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => 'Zum Melden bitte anmelden', 'csrf_token' => Security::getCsrfToken()]);
+                exit;
+            }
+            $rl = 'report:' . (int)$userId;
+            if (!Security::checkRateLimit($rl, 20)['allowed']) {
+                throw new Exception('Zu viele Meldungen in kurzer Zeit. Bitte später erneut versuchen.');
+            }
+            Security::recordFailedAttempt($rl);
+            try {
+                $new = (new ForumComfort())->report(intval($input['post_id'] ?? 0), (int)$userId, (string)($input['reason'] ?? ''));
+            } catch (InvalidArgumentException $e) {
+                throw new Exception($e->getMessage());
+            }
+            echo json_encode([
+                'success' => true,
+                'message' => $new ? 'Danke! Die Moderation schaut sich den Beitrag an.' : 'Du hast diesen Beitrag bereits gemeldet.',
+                'csrf_token' => Security::getCsrfToken()
+            ]);
+
         } elseif ($action === 'edit') {
             $postId = intval($input['post_id'] ?? 0);
             $content = trim($input['content'] ?? '');

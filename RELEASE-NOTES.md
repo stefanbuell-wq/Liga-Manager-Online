@@ -5,6 +5,20 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 16.11.2026 (Nachtrag) – Forum: Bilder in Beiträgen, Beitrag melden
+
+### Für Redaktion und Leser
+
+- **Bilder:** Knopf „🖼 Bild“ in der Formatierungsleiste; am Computer geht auch Einfügen (Strg+V) oder Hineinziehen ins Textfeld. JPG, PNG, WebP, GIF bis 8 MB, bis zu 5 auf einmal. Bilder werden auf höchstens 1600 Pixel verkleinert, richtig gedreht und ohne Kamera-/Standortdaten gespeichert; im Beitrag erscheinen sie in angenehmer Größe, ein Klick öffnet das große Bild.
+- **Melden:** „⚑ Melden“ an fremden Beiträgen (mit optionaler Begründung). Admins sehen die Meldungen im Forum-Admin unter **Meldungen** (mit Zähler) und können „Erledigt“ oder „Beitrag löschen“ wählen. Im täglichen Briefing gibt es dafür den neuen Bereich „Gemeldete Forenbeiträge“.
+
+### Technik
+
+- `api/forum-image.php` (GD, max. 1600 px, WebP/JPEG, EXIF-Drehung, 30 Bilder/h je Konto), `img/forum/` (gitignored, `.htaccess` ohne Skriptausführung); im Text `[img]img/forum/<24 hex>.webp[/img]`, `renderBBCode` lässt nur diesen Pfad zu
+- `forum_reports` (eindeutig je Beitrag und Melder), `ForumComfort::report/openReports/closeReports`, `forum-posts.php` action `report` (20/h), `forum-admin.php` `reports`, `report_done`, `report_delete`; `admin/forum.html` Reiter „Meldungen“; `BriefingService` Bereich `meldungen`
+
+---
+
 ## 16.11.2026 – Forum: Ungelesen, Zitieren, E-Mail bei Antworten, Formatierung
 
 ### Für Redaktion und Leser

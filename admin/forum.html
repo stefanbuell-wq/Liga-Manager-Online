@@ -380,6 +380,7 @@
                 <button class="tab-btn" onclick="switchTab('permissions')">Berechtigungen</button>
                 <button class="tab-btn" onclick="switchTab('users')">Benutzer</button>
                 <button class="tab-btn" onclick="switchTab('topics')">Alle Themen</button>
+                <button class="tab-btn" onclick="switchTab('reports')">Meldungen <span id="reports-count" class="badge badge-danger" style="display:none"></span></button>
                 <button class="tab-btn" onclick="switchTab('leagues')">Liga-Integration</button>
             </div>
 
@@ -472,6 +473,14 @@
             </div>
 
             <!-- Tab: Topics -->
+            <div id="tab-reports" class="tab-content">
+                <div class="card">
+                    <h3>Gemeldete Beiträge</h3>
+                    <p style="color: var(--color-text-muted); margin-bottom: 16px;">Von Forennutzern gemeldet. „Erledigt“ lässt den Beitrag stehen, „Beitrag löschen“ entfernt ihn endgültig.</p>
+                    <div id="reports-list" style="color: var(--color-text-muted);">Laden...</div>
+                </div>
+            </div>
+
             <div id="tab-topics" class="tab-content">
                 <div class="card">
                     <h3>Alle Themen</h3>
@@ -810,6 +819,7 @@
 
         function loadAll() {
             loadStats();
+            loadReports();
             loadCategories();
             loadUsers();
             loadLeagues();
@@ -826,6 +836,7 @@
             document.getElementById(`tab-${tab}`).classList.add('active');
 
             if (tab === 'topics') loadTopics();
+            if (tab === 'reports') loadReports();
             if (tab === 'permissions') renderPermissionsTable();
             if (tab === 'users') loadUsers();
             if (tab === 'leagues') loadLeagues();
@@ -1193,6 +1204,55 @@
         // ============================================
         // TOPICS
         // ============================================
+
+        // ============================================
+        // MELDUNGEN
+        // ============================================
+
+        async function loadReports() {
+            const box = document.getElementById('reports-list');
+            try {
+                const res = await fetch(`${API_BASE}/forum-admin.php?action=reports`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.csrf_token) csrfToken = data.csrf_token;
+                const list = data.reports || [];
+                const badge = document.getElementById('reports-count');
+                badge.textContent = list.length;
+                badge.style.display = list.length ? '' : 'none';
+                if (!list.length) { box.innerHTML = 'Keine offenen Meldungen. 👍'; return; }
+                box.innerHTML = list.map(r => `
+                    <div class="card" style="margin-bottom: 12px; border-left: 3px solid var(--color-danger, #dc3545);">
+                        <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                            <div>
+                                <a href="../forum.html?topic=${parseInt(r.topic_id)}" target="_blank" style="font-weight:600; color: var(--color-text-primary);">${escapeHtml(r.title || '(Thema gelöscht)')}</a>
+                                <div style="font-size:.85rem; color: var(--color-text-muted);">Beitrag von <strong>${escapeHtml(r.author || '?')}</strong>${r.deleted ? ' · <em>bereits gelöscht</em>' : ''}</div>
+                            </div>
+                            <div style="white-space:nowrap;">
+                                <button class="btn btn-secondary" onclick="handleReport(${parseInt(r.post_id)}, 'report_done')">Erledigt</button>
+                                ${r.deleted ? '' : `<button class="btn btn-danger" onclick="handleReport(${parseInt(r.post_id)}, 'report_delete')">Beitrag löschen</button>`}
+                            </div>
+                        </div>
+                        ${r.excerpt ? `<blockquote style="margin:10px 0; padding:8px 12px; background: var(--color-bg-elevated); border-radius:6px; white-space:pre-wrap; font-size:.9rem;">${escapeHtml(r.excerpt)}</blockquote>` : ''}
+                        <ul style="margin:6px 0 0 18px; font-size:.85rem;">
+                            ${r.reports.map(x => `<li><strong>${escapeHtml(x.reporter || '?')}</strong>: ${escapeHtml(x.reason || '(ohne Begründung)')}</li>`).join('')}
+                        </ul>
+                    </div>`).join('');
+            } catch (e) {
+                box.textContent = 'Fehler beim Laden der Meldungen.';
+            }
+        }
+
+        async function handleReport(postId, action) {
+            if (action === 'report_delete' && !confirm('Beitrag endgültig löschen?')) return;
+            const res = await fetch(`${API_BASE}/forum-admin.php`, {
+                method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, post_id: postId, csrf_token: csrfToken })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (data.csrf_token) csrfToken = data.csrf_token;
+            if (!data.success) alert(data.error || 'Fehler');
+            loadReports();
+        }
 
         async function loadTopics() {
             const categoryId = document.getElementById('filter-category').value;

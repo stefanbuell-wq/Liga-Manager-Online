@@ -47,6 +47,8 @@ img/foerderer/*
 img/avatars/*
 !img/avatars/.htaccess
 !img/avatars/legacy/
+img/forum/*
+!img/forum/.htaccess
 config/*
 !config/.htaccess
 data/login.override

@@ -26,6 +26,7 @@ class BriefingService
         'anfragen'        => 'Kontaktanfragen',
         'registrierungen' => 'Registrierungen (Forum)',
         'forum'           => 'Forum: neue Beiträge',
+        'meldungen'       => 'Gemeldete Forenbeiträge',
         'banner'          => 'Auslaufende Sponsoren-Banner',
     ];
     public const MAX_RECIPIENTS = 8;
@@ -106,6 +107,7 @@ class BriefingService
             'anfragen'        => $this->openRequests($now),
             'registrierungen' => $this->pendingRegistrations($now),
             'forum'           => $this->forumActivity($now),
+            'meldungen'       => $this->forumReports(),
             'banner'          => $this->expiringBanners($now),
         ];
     }
@@ -178,6 +180,19 @@ class BriefingService
             $lines[] = '      ' . $this->base . '/forum.html?topic=' . (int)$r['topic_id'];
         }
         return ['count' => count($rows), 'lines' => $lines, 'link' => $this->base . '/forum.html'];
+    }
+
+    private function forumReports(): array
+    {
+        if (!$this->tableExists('forum_reports')) return $this->empty('admin/forum.html');
+        require_once __DIR__ . '/ForumComfort.php';
+        $lines = [];
+        foreach ((new ForumComfort())->openReports() as $r) {
+            $why = array_filter(array_map(fn($x) => $x['reason'], $r['reports']));
+            $lines[] = sprintf('"%s" – Beitrag von %s, %d× gemeldet%s', $r['title'] ?? '?', $r['author'] ?? '?', count($r['reports']),
+                $why ? ': ' . mb_substr(implode(' / ', $why), 0, 120) : '');
+        }
+        return ['count' => count($lines), 'lines' => $lines, 'link' => $this->base . '/admin/forum.html'];
     }
 
     private function expiringBanners(DateTimeImmutable $now): array
@@ -295,6 +310,7 @@ class BriefingService
             'registrierungen' => $n === 1 ? 'Freigabe' : 'Freigaben',
             'forum' => $n === 1 ? 'Forenbeitrag' : 'Forenbeiträge',
             'banner' => $n === 1 ? 'Banner läuft aus' : 'Banner laufen aus',
+            'meldungen' => $n === 1 ? 'gemeldeter Beitrag' : 'gemeldete Beiträge',
         ][$s];
     }
 

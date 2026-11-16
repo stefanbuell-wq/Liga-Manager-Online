@@ -241,6 +241,33 @@ try {
             ]);
             break;
 
+        // ==================== MELDUNGEN ====================
+
+        case 'reports':
+            require_once __DIR__ . '/../lib/ForumComfort.php';
+            echo json_encode([
+                'success' => true,
+                'reports' => (new ForumComfort())->openReports(),
+                'csrf_token' => Security::getCsrfToken()
+            ]);
+            break;
+
+        case 'report_done':
+        case 'report_delete':
+            require_once __DIR__ . '/../lib/ForumComfort.php';
+            $postId = intval($input['post_id'] ?? 0);
+            if ($postId <= 0) throw new Exception('Kein Beitrag angegeben');
+            if ($action === 'report_delete') {
+                $post = $repo->getPostById($postId);
+                if ($post && !empty($post['is_first_post'])) {
+                    throw new Exception('Eröffnungsbeitrag: bitte das ganze Thema unter „Alle Themen“ löschen.');
+                }
+                if ($post) $repo->deletePost($postId);
+            }
+            (new ForumComfort())->closeReports($postId, (int)($_SESSION['lmo26_user_id'] ?? 0));
+            echo json_encode(['success' => true, 'csrf_token' => Security::getCsrfToken()]);
+            break;
+
         // ==================== STATISTIKEN ====================
 
         case 'stats':
