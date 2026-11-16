@@ -45,8 +45,7 @@ function prefSet(key, value) {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
-    parseUrl();
+    checkAuth().finally(parseUrl);
 });
 
 // Handle browser back/forward
@@ -122,6 +121,7 @@ function renderToolbar(view, info = '') {
                 <button type="submit" class="btn btn-secondary">Suchen</button>
             </form>
             ${sortHtml}
+            ${currentUser && view !== 'topic' ? `<button type="button" class="btn btn-ghost mark-read-btn" onclick="markAllRead()" title="Alle Themen als gelesen markieren">✓ Alles gelesen</button>` : ''}
             ${info ? `<div class="forum-search-info">${info}</div>` : ''}
         </div>`;
 }
@@ -465,7 +465,8 @@ function renderTopics(topics, category, isGlobalSearch = false) {
 
                 // Bei Suche mit Treffern in Beitraegen: Thema gefiltert auf diese Beitraege oeffnen
                 const hits = parseInt(topic.hits) || 0;
-                const href = `?topic=${parseInt(topic.id)}` + (searchQuery && hits ? `&q=${encodeURIComponent(searchQuery)}` : '');
+                const href = `?topic=${parseInt(topic.id)}` + (searchQuery && hits ? `&q=${encodeURIComponent(searchQuery)}` : '')
+                    + (topic.unread && !(searchQuery && hits) ? '&unread=1' : '');
                 const where = isGlobalSearch && topic.category_name ? ` • in ${escapeHtml(topic.category_name)}` : '';
                 const hitText = searchQuery
                     ? (hits ? ` • <span class="topic-hits">${hits} Treffer in Beiträgen</span>` : ' • <span class="topic-hits">Treffer im Titel</span>')
@@ -474,11 +475,11 @@ function renderTopics(topics, category, isGlobalSearch = false) {
                     ? ` • letzte Antwort ${formatDate(topic.last_post_at)}` : '';
 
                 return `
-                    <div class="topic-row" onclick="openTopicLink(this.querySelector('a.topic-title').getAttribute('href'))">
+                    <div class="topic-row${topic.unread ? ' unread' : ''}" onclick="openTopicLink(this.querySelector('a.topic-title').getAttribute('href'))">
                         <div class="topic-icon ${iconClass}">${icon}</div>
                         <div class="topic-info">
                             <a href="${escapeAttr(href)}" class="topic-title" onclick="event.stopPropagation(); event.preventDefault(); openTopicLink(this.getAttribute('href'))">
-                                ${escapeHtml(topic.title)}
+                                ${topic.unread ? '<span class="new-badge" title="Neue Beiträge seit deinem letzten Besuch">Neu</span> ' : ''}${escapeHtml(topic.title)}
                             </a>
                             <div class="topic-meta">
                                 von <strong>${escapeHtml(topic.author_display_name || topic.author_name || 'Unbekannt')}</strong>
@@ -518,7 +519,9 @@ async function loadTopic(topicId) {
 
     try {
         const q = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : '';
-        const res = await fetch(`${API_BASE}/forum-topics.php?id=${topicId}&sort=${postSort}${q}&limit=20&offset=${(currentPage - 1) * 20}`);
+        const unreadJump = new URLSearchParams(window.location.search).get('unread') === '1';
+        const res = await fetch(`${API_BASE}/forum-topics.php?id=${topicId}&sort=${postSort}${q}&limit=20&offset=${(currentPage - 1) * 20}${unreadJump ? '&unread=1' : ''}`,
+            { credentials: 'include', cache: 'no-store' });
         const data = await res.json();
 
         if (!data.success) {
@@ -543,9 +546,23 @@ async function loadTopic(topicId) {
         // Pagination
         totalPages = data.pagination?.pages || 1;
         allPostsInTopic = data.all_posts || 0;
+        if (data.jumped && data.page) {
+            currentPage = data.page;
+        }
+        if (unreadJump) {
+            // unread nur einmal auswerten; Seite in der Adresse festhalten
+            const p = new URLSearchParams(window.location.search);
+            p.delete('unread');
+            if (currentPage > 1) p.set('page', currentPage); else p.delete('page');
+            history.replaceState({}, '', 'forum.html?' + p.toString());
+        }
+        readSince = data.read_since || null;
+        topicSubscribed = !!data.subscribed;
+        canReplyHere = !!data.permissions?.can_reply;
 
         renderToolbar('topic', searchInfo(data.pagination?.total || 0, 'Beitrag', 'Beiträge'));
         renderPosts(data.posts || [], data.topic, data.first_post);
+        if (unreadJump) scrollToFirstNew();
 
     } catch (e) {
         console.error('Error loading topic:', e);
@@ -573,13 +590,17 @@ function avatarHtml(path, initial) {
 function renderPosts(posts, topic, firstPost = null) {
     const container = document.getElementById('forum-content');
 
+    postCache = {};
     const renderPost = (post, pinned = false) => {
+        postCache[post.id] = post;
         const isFirst = post.is_first_post;
         const authorInitial = (post.author_display_name || post.author_name || 'U').charAt(0).toUpperCase();
         const canEdit = currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin');
+        const isNew = !!(readSince && currentUser && post.created_at > readSince && post.user_id !== currentUser.id);
+        const canQuote = currentUser && !topic.is_locked;
 
         return `
-            <div class="post-card ${isFirst ? 'post-first' : ''}">
+            <div class="post-card ${isFirst ? 'post-first' : ''}${isNew ? ' post-new' : ''}" id="post-${parseInt(post.id)}" data-created="${escapeAttr(post.created_at || '')}">
                 <div class="post-header">
                     <div class="post-author">
                         <div class="post-avatar">${avatarHtml(post.author_avatar, authorInitial)}</div>
@@ -588,16 +609,17 @@ function renderPosts(posts, topic, firstPost = null) {
                             <div class="post-date">${formatDateTime(post.created_at)}</div>
                         </div>
                     </div>
-                    <span style="color: var(--color-text-muted); font-size: 0.85rem;">${pinned ? '📌 Eröffnungsbeitrag · ' : ''}#${parseInt(post.post_nr) || ''}</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.85rem;">${isNew ? '<span class="new-badge">Neu</span> ' : ''}${pinned ? '📌 Eröffnungsbeitrag · ' : ''}#${parseInt(post.post_nr) || ''}</span>
                 </div>
-                <div class="post-content">
+                <div class="post-content" id="post-content-${parseInt(post.id)}">
                     ${formatPostContent(post.content)}
                     ${post.edited_at ? `<div class="post-edited">Bearbeitet am ${formatDateTime(post.edited_at)}${post.editor_name ? ` von ${escapeHtml(post.editor_name)}` : ''}</div>` : ''}
                 </div>
-                ${canEdit && !isFirst ? `
+                ${canQuote || canEdit ? `
                     <div class="post-footer">
-                        <button class="btn btn-ghost" onclick="editPost(${post.id})" style="font-size: 0.85rem;">Bearbeiten</button>
-                        <button class="btn btn-ghost" onclick="deletePost(${post.id})" style="font-size: 0.85rem; color: var(--color-primary);">Löschen</button>
+                        ${canQuote ? `<button class="btn btn-ghost" onclick="quotePost(${post.id})" style="font-size: 0.85rem;">❝ Zitieren</button>` : ''}
+                        ${canEdit ? `<button class="btn btn-ghost" onclick="editPost(${post.id})" style="font-size: 0.85rem;">Bearbeiten</button>` : ''}
+                        ${canEdit && !isFirst ? `<button class="btn btn-ghost" onclick="deletePost(${post.id})" style="font-size: 0.85rem; color: var(--color-primary);">Löschen</button>` : ''}
                     </div>
                 ` : ''}
             </div>
@@ -623,8 +645,11 @@ function renderPosts(posts, topic, firstPost = null) {
             replyHtml = `
                 <div class="reply-form" id="reply-form">
                     <h3>Antwort schreiben</h3>
-                    <textarea id="reply-content" placeholder="Deine Antwort..."></textarea>
-                    <button class="btn btn-primary" onclick="submitReply()">Antworten</button>
+                    ${editorHtml('reply-content', 'Deine Antwort...')}
+                    <div class="reply-actions">
+                        <button class="btn btn-primary" onclick="submitReply()">Antworten</button>
+                        ${topicSubscribed ? '' : `<label class="sub-check"><input type="checkbox" id="reply-subscribe" checked> 🔔 Bei neuen Antworten per E-Mail benachrichtigen</label>`}
+                    </div>
                 </div>
             `;
         } else {
@@ -647,7 +672,7 @@ function renderPosts(posts, topic, firstPost = null) {
     // Neueste zuerst: Eroeffnungsbeitrag oben, Antwortfeld direkt darunter (nur Seite 1),
     // sonst wie gewohnt am Ende der Seite
     const replyOnTop = postSort === 'new' && !searchQuery;
-    let html = '';
+    let html = currentUser ? subscribeBarHtml() : '';
     if (firstPost) html += renderPost(firstPost, true);
     if (replyOnTop && currentPage === 1) html += replyHtml;
     html += posts.map(p => renderPost(p)).join('');
@@ -656,6 +681,7 @@ function renderPosts(posts, topic, firstPost = null) {
     container.innerHTML = html;
     if (searchQuery) highlightMatches(container, searchQuery);
     renderPagination();
+    restoreDraft('reply-content');
 }
 
 // ============================================
@@ -697,7 +723,8 @@ function showNewTopicForm() {
             </div>
             <div class="form-group">
                 <label>Inhalt</label>
-                <textarea id="topic-content" style="min-height: 200px;" placeholder="Dein Beitrag..." required></textarea>
+                ${editorHtml('topic-content', 'Dein Beitrag...', 200)}
+                <label class="sub-check"><input type="checkbox" id="topic-subscribe" checked> 🔔 Bei Antworten per E-Mail benachrichtigen</label>
             </div>
             <div style="display: flex; gap: var(--spacing-md);">
                 <button class="btn btn-primary" onclick="submitNewTopic()">Thema erstellen</button>
@@ -713,6 +740,7 @@ function showNewTopicForm() {
         loadCategorySelect();
     }
 
+    restoreDraft('topic-content');
     // Focus title input
     document.getElementById('topic-title').focus();
 }
@@ -780,6 +808,7 @@ async function submitNewTopic() {
                 category_id: parseInt(categoryId),
                 title,
                 content,
+                subscribe: document.getElementById('topic-subscribe')?.checked !== false,
                 csrf_token: csrfToken
             })
         });
@@ -791,6 +820,7 @@ async function submitNewTopic() {
             if (data.csrf_token) {
                 csrfToken = data.csrf_token;
             }
+            clearDraft('topic-content');
             // Navigate to the new topic
             navigateTo('topic', data.topic_id);
         } else {
@@ -827,6 +857,7 @@ async function submitReply() {
                 action: 'create',
                 topic_id: currentTopicId,
                 content,
+                subscribe: topicSubscribed || document.getElementById('reply-subscribe')?.checked !== false,
                 csrf_token: csrfToken
             })
         });
@@ -838,6 +869,7 @@ async function submitReply() {
             if (data.csrf_token) {
                 csrfToken = data.csrf_token;
             }
+            clearDraft('reply-content');
             // Neue Antwort zeigen: bei "neueste zuerst" Seite 1, sonst letzte Seite; Suche aufheben
             const page = postSort === 'new' ? 1 : Math.max(1, Math.ceil((allPostsInTopic + 1) / 20));
             updateUrl({ q: null, page });
@@ -854,10 +886,23 @@ async function submitReply() {
  * Edit a post
  */
 async function editPost(postId) {
-    const content = prompt('Bearbeiteter Text:');
-    if (content === null) return;
+    const post = postCache[postId];
+    const box = document.getElementById('post-content-' + postId);
+    if (!post || !box || box.querySelector('.bb-editor')) return;
+    const id = 'edit-' + postId;
+    box.innerHTML = editorHtml(id, '', 160) + `
+        <div class="reply-actions">
+            <button class="btn btn-primary" onclick="saveEdit(${postId})">Speichern</button>
+            <button class="btn btn-secondary" onclick="loadTopic(currentTopicId)">Abbrechen</button>
+        </div>`;
+    const ta = document.getElementById(id);
+    ta.value = post.content || '';
+    ta.focus();
+}
 
-    if (content.trim().length < 3) {
+async function saveEdit(postId) {
+    const content = (document.getElementById('edit-' + postId)?.value || '').trim();
+    if (content.length < 3) {
         alert('Der Text muss mindestens 3 Zeichen haben.');
         return;
     }
@@ -870,7 +915,7 @@ async function editPost(postId) {
             body: JSON.stringify({
                 action: 'edit',
                 post_id: postId,
-                content: content.trim(),
+                content,
                 csrf_token: csrfToken
             })
         });
@@ -923,6 +968,249 @@ async function deletePost(postId) {
         console.error('Error deleting post:', e);
         alert('Netzwerkfehler beim Löschen');
     }
+}
+
+// ============================================
+// KOMFORT: Editor, Zitat, Ungelesen, Abo, Entwurf
+// ============================================
+
+let postCache = {};
+let readSince = null;
+let topicSubscribed = false;
+let canReplyHere = false;
+
+const SMILEYS = ['😀', '😂', '😉', '😍', '😎', '🤔', '😮', '😢', '😡', '🙈', '👍', '👎', '👏', '🙏', '💪', '⚽', '🥅', '🏆', '🔥', '🍺', '❤️', '🟨', '🟥', '🤝'];
+
+/** Textfeld mit Formatierungsleiste, Smileys und Vorschau */
+function editorHtml(id, placeholder = '', minHeight = 120) {
+    const b = (label, title, action) => `<button type="button" class="bb-btn" title="${title}" onmousedown="event.preventDefault()" onclick="${action}">${label}</button>`;
+    return `
+        <div class="bb-editor" data-for="${id}">
+            <div class="bb-toolbar" role="toolbar" aria-label="Formatierung">
+                ${b('<b>B</b>', 'Fett', `bbWrap('${id}','[b]','[/b]')`)}
+                ${b('<i>I</i>', 'Kursiv', `bbWrap('${id}','[i]','[/i]')`)}
+                ${b('<u>U</u>', 'Unterstrichen', `bbWrap('${id}','[u]','[/u]')`)}
+                ${b('<s>S</s>', 'Durchgestrichen', `bbWrap('${id}','[s]','[/s]')`)}
+                ${b('🔗', 'Link', `bbLink('${id}')`)}
+                ${b('•≡', 'Liste', `bbList('${id}')`)}
+                ${b('❝', 'Zitat', `bbWrap('${id}','[quote]','[/quote]')`)}
+                <span class="bb-sep"></span>
+                <span class="bb-smileys">${SMILEYS.map(e => `<button type="button" class="bb-smiley" onmousedown="event.preventDefault()" onclick="bbInsert('${id}','${e}')" title="${e}">${e}</button>`).join('')}</span>
+                <button type="button" class="bb-btn bb-preview-btn" onclick="bbPreview('${id}', this)">Vorschau</button>
+            </div>
+            <textarea id="${id}" placeholder="${escapeAttr(placeholder)}" style="min-height:${parseInt(minHeight)}px" oninput="saveDraft('${id}')"></textarea>
+            <div class="bb-preview post-content" id="${id}-preview" hidden></div>
+        </div>`;
+}
+
+function bbField(id) {
+    return document.getElementById(id);
+}
+
+function bbWrap(id, open, close) {
+    const ta = bbField(id);
+    if (!ta) return;
+    const { selectionStart: a, selectionEnd: e, value: v } = ta;
+    const sel = v.slice(a, e);
+    ta.value = v.slice(0, a) + open + sel + close + v.slice(e);
+    const pos = sel ? a + open.length + sel.length + close.length : a + open.length;
+    ta.focus();
+    ta.setSelectionRange(pos, pos);
+    saveDraft(id);
+}
+
+function bbInsert(id, text) {
+    const ta = bbField(id);
+    if (!ta) return;
+    const { selectionStart: a, selectionEnd: e, value: v } = ta;
+    ta.value = v.slice(0, a) + text + v.slice(e);
+    ta.focus();
+    ta.setSelectionRange(a + text.length, a + text.length);
+    saveDraft(id);
+}
+
+function bbLink(id) {
+    const ta = bbField(id);
+    if (!ta) return;
+    const url = prompt('Adresse des Links (https://…):', 'https://');
+    if (!url || !/^https?:\/\/\S+$/i.test(url.trim())) return;
+    const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    bbWrap(id, `[url=${url.trim()}]`, sel ? '[/url]' : 'Linktext[/url]');
+}
+
+function bbList(id) {
+    const ta = bbField(id);
+    if (!ta) return;
+    const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    const items = sel ? sel.split(/\n/).filter(l => l.trim()).map(l => '[*]' + l.trim()).join('\n') : '[*]';
+    bbWrap(id, '[list]\n' + items + '\n', '[/list]');
+}
+
+function bbPreview(id, btn) {
+    const ta = bbField(id);
+    const pv = document.getElementById(id + '-preview');
+    if (!ta || !pv) return;
+    const show = pv.hidden;
+    pv.hidden = !show;
+    ta.hidden = show;
+    btn.textContent = show ? 'Bearbeiten' : 'Vorschau';
+    btn.classList.toggle('active', show);
+    if (show) pv.innerHTML = formatPostContent(ta.value) || '<p style="color:var(--color-text-muted)">Noch kein Text.</p>';
+}
+
+/**
+ * BBCode fuer Beitraege ohne HTML: [b] [i] [u] [s] [url] [url=…] [list][*] [quote] [quote=Name]
+ * Zuerst wird alles maskiert; erzeugt werden nur feste, sichere Tags (Links nur http/https).
+ */
+function renderBBCode(content) {
+    return bbBlock(escapeHtml(String(content).replace(/\r\n?/g, '\n')), 0);
+}
+
+/** Zitate (auch verschachtelt) als Bloecke, dazwischen normaler Text */
+function bbBlock(t, depth) {
+    const openRe = /\[quote(?:=([^\]\n]{1,60}))?\]/gi;
+    let out = '';
+    let i = 0;
+    while (true) {
+        openRe.lastIndex = i;
+        const m = openRe.exec(t);
+        if (!m) { out += bbInline(t.slice(i)); break; }
+        // passendes [/quote] suchen (Verschachtelung zaehlen)
+        const tagRe = /\[quote(?:=[^\]\n]{1,60})?\]|\[\/quote\]/gi;
+        tagRe.lastIndex = m.index + m[0].length;
+        let level = 1, close = null, tm;
+        while ((tm = tagRe.exec(t))) {
+            level += tm[0].toLowerCase() === '[/quote]' ? -1 : 1;
+            if (level === 0) { close = tm; break; }
+        }
+        if (!close) { out += bbInline(t.slice(i)); break; }
+        out += bbInline(t.slice(i, m.index));
+        const inner = t.slice(m.index + m[0].length, close.index).replace(/^\n+|\n+$/g, '');
+        out += `<blockquote class="forum-quote">${m[1] ? `<div class="quote-header">${m[1]} schrieb:</div>` : ''}`
+            + `<div class="quote-body">${depth < 4 ? bbBlock(inner, depth + 1) : bbInline(inner)}</div></blockquote>`;
+        i = close.index + close[0].length;
+        if (t[i] === '\n') i++;
+    }
+    return out;
+}
+
+function bbInline(t) {
+    const safeUrl = u => /^https?:\/\/[^\s"'<>]+$/i.test(u) ? u : null;
+    const link = (url, txt) => {
+        const u = safeUrl(url.replace(/&amp;/g, '&'));
+        return u ? `<a href="${escapeAttr(u)}" target="_blank" rel="noopener noreferrer nofollow">${txt}</a>` : null;
+    };
+    t = t.replace(/\[list\]\n?([\s\S]*?)\[\/list\]\n?/gi, (m, body) =>
+        '\u0001<ul>' + body.split(/\[\*\]/).map(x => x.trim()).filter(Boolean).map(x => `<li>${x.replace(/\n/g, '<br>')}</li>`).join('') + '</ul>\u0001');
+    for (let k = 0; k < 3; k++) {
+        t = t.replace(/\[(b|i|u|s)\]([\s\S]*?)\[\/\1\]/gi, (m, tag, body) => `<${tag.toLowerCase()}>${body}</${tag.toLowerCase()}>`);
+    }
+    t = t.replace(/\[url=([^\]\s]+)\]([\s\S]*?)\[\/url\]/gi, (m, url, txt) => link(url, txt) || m);
+    t = t.replace(/\[url\]([^\[\s]+)\[\/url\]/gi, (m, url) => link(url, url) || m);
+    // Absaetze; Listen bleiben eigene Bloecke
+    return t.split('\u0001').map((part, idx) => idx % 2
+        ? part
+        : part.split(/\n\n+/).map(p => p.trim() ? `<p>${p.trim().replace(/\n/g, '<br>')}</p>` : '').join('')).join('');
+}
+
+/** Beitrag als Zitat ins Antwortfeld uebernehmen */
+function quotePost(postId) {
+    const post = postCache[postId];
+    const ta = document.getElementById('reply-content');
+    if (!post) return;
+    if (!ta) {
+        alert('Zum Zitieren bitte anmelden – oder das Thema ist geschlossen.');
+        return;
+    }
+    let text = String(post.content || '');
+    if (/<[a-z][\s\S]*>/i.test(text)) {
+        const d = new DOMParser().parseFromString(text.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n'), 'text/html');
+        d.querySelectorAll('blockquote, .forum-quote').forEach(q => q.remove());
+        text = d.body.textContent || '';
+    }
+    text = text.replace(/\[quote(?:=[^\]]*)?\][\s\S]*?\[\/quote\]\n?/gi, '').trim();
+    if (text.length > 1500) text = text.slice(0, 1500) + ' …';
+    const who = (post.author_display_name || post.author_name || post.guest_name || '').replace(/[\[\]\n]/g, '').slice(0, 60);
+    const block = `[quote${who ? '=' + who : ''}]${text}[/quote]\n`;
+    ta.value = (ta.value.trim() ? ta.value.replace(/\s*$/, '\n\n') : '') + block;
+    saveDraft('reply-content');
+    ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+
+/** Erster ungelesener Beitrag (chronologisch) in den Blick */
+function scrollToFirstNew() {
+    const news = [...document.querySelectorAll('.post-card.post-new')]
+        .sort((a, b) => (a.dataset.created || '').localeCompare(b.dataset.created || ''));
+    if (news.length) setTimeout(() => news[0].scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+function subscribeBarHtml() {
+    return `
+        <div class="sub-bar" id="sub-bar">
+            ${topicSubscribed
+                ? `<span>🔔 Du bekommst eine E-Mail bei neuen Antworten.</span><button class="btn btn-ghost" onclick="toggleSubscribe(false)">Abbestellen</button>`
+                : `<span>🔕 Keine E-Mails zu diesem Thema.</span><button class="btn btn-ghost" onclick="toggleSubscribe(true)">🔔 Abonnieren</button>`}
+        </div>`;
+}
+
+async function toggleSubscribe(on) {
+    const data = await forumAction({ action: on ? 'subscribe' : 'unsubscribe', topic_id: currentTopicId });
+    if (!data) return;
+    topicSubscribed = !!data.subscribed;
+    const bar = document.getElementById('sub-bar');
+    if (bar) bar.outerHTML = subscribeBarHtml();
+    const chk = document.getElementById('reply-subscribe');
+    if (chk) chk.closest('label').style.display = topicSubscribed ? 'none' : '';
+}
+
+async function markAllRead() {
+    const data = await forumAction({ action: 'mark_all_read' });
+    if (!data) return;
+    document.querySelectorAll('.topic-row.unread').forEach(r => r.classList.remove('unread'));
+    document.querySelectorAll('.topic-row .new-badge').forEach(b => b.remove());
+    document.querySelectorAll('.topic-row a.topic-title').forEach(a => a.setAttribute('href', a.getAttribute('href').replace('&unread=1', '')));
+}
+
+async function forumAction(body) {
+    try {
+        const res = await fetch(`${API_BASE}/forum-topics.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ ...body, csrf_token: csrfToken })
+        });
+        const data = await res.json();
+        if (data.csrf_token) csrfToken = data.csrf_token;
+        if (!data.success) { alert(data.error || 'Fehler'); return null; }
+        return data;
+    } catch (e) {
+        alert('Netzwerkfehler');
+        return null;
+    }
+}
+
+/** Entwurf im Browser sichern, damit eine angefangene Antwort nicht verloren geht */
+function draftKey(id) {
+    return 'hafo_draft_' + (id === 'reply-content' ? 'topic_' + currentTopicId : id === 'topic-content' ? 'new_' + (currentCategoryId || 0) : id);
+}
+let draftTimer = null;
+function saveDraft(id) {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(() => {
+        const ta = bbField(id);
+        if (!ta || id.startsWith('edit-')) return;
+        try { ta.value.trim() ? localStorage.setItem(draftKey(id), ta.value) : localStorage.removeItem(draftKey(id)); } catch (e) {}
+    }, 400);
+}
+function restoreDraft(id) {
+    const ta = bbField(id);
+    if (!ta || ta.value) return;
+    try { const v = localStorage.getItem(draftKey(id)); if (v) ta.value = v; } catch (e) {}
+}
+function clearDraft(id) {
+    try { localStorage.removeItem(draftKey(id)); } catch (e) {}
 }
 
 // ============================================
@@ -1086,8 +1374,7 @@ function formatPostContent(content) {
 
     const hasHtml = /<(?:br|p|div|span|strong|b|em|i|u|s|sub|sup|blockquote|ul|ol|li|pre|code|a|img|hr|table|tr|td|th)\b/i.test(content);
     if (!hasHtml) {
-        const escaped = escapeHtml(content);
-        return escaped.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+        return renderBBCode(content);
     }
 
     // Sanitize HTML via DOMParser (allow safe formatting tags & attributes only)

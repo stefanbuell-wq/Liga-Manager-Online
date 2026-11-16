@@ -5,6 +5,25 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 16.11.2026 – Forum: Ungelesen, Zitieren, E-Mail bei Antworten, Formatierung
+
+### Für Redaktion und Leser
+
+- **Neu seit dem letzten Besuch:** Themen mit neuen Beiträgen sind fett mit „Neu“ markiert; ein Klick springt zum ersten ungelesenen Beitrag, neue Beiträge haben einen roten Rand. „✓ Alles gelesen“ setzt alles zurück. Beim allerersten Besuch gilt alles Bisherige als gelesen.
+- **Zitieren:** Knopf „❝ Zitieren“ an jedem Beitrag übernimmt Name und Text als Zitat ins Antwortfeld.
+- **E-Mail bei neuen Antworten:** Eigene Themen und Themen, in denen man antwortet, werden abonniert (abwählbar). Pro Thema kommt höchstens eine Mail bis zum nächsten Besuch. Oben im Thema „🔔 Abonnieren“/„Abbestellen“, in jeder Mail ein Abmeldelink.
+- **Formatierung:** Leiste mit Fett, Kursiv, Unterstrichen, Durchgestrichen, Link, Liste, Zitat, Smileys und Vorschau. Bearbeiten geht jetzt direkt im Beitrag (mit vorausgefülltem Text) statt im kleinen Fenster.
+- Eine angefangene Antwort bleibt im Browser gespeichert, auch nach Neuladen.
+
+### Technik
+
+- `lib/ForumComfort.php` (Tabellen `forum_user_state`, `forum_reads`, `forum_subscriptions`; Startpunkt beim ersten Besuch = jetzt), `api/forum-abo.php` (signierter Abmeldelink, Schlüssel `app_settings.forum_abo_secret`)
+- `api/forum-topics.php`: `unread` je Thema, `read_since`/`subscribed`/`jumped`, `?unread=1` springt bei „älteste zuerst“ auf die Seite des ersten ungelesenen Beitrags; POST `mark_all_read`, `subscribe`, `unsubscribe`; neues Thema abonniert den Autor
+- `api/forum-posts.php`: Antwort abonniert (abwählbar), markiert gelesen, benachrichtigt Abonnenten (`notified` sperrt bis zum nächsten Besuch, max. 50 Mails je Beitrag)
+- `js/forum.js`: BBCode-Darstellung für Klartext-Beiträge (`renderBBCode`, nur http/https-Links), Editor `editorHtml()`, `quotePost()`, Inline-Bearbeiten, Entwürfe in localStorage; Auth wird vor dem ersten Laden geprüft (Antwortfeld fehlte sonst gelegentlich)
+
+---
+
 ## 15.11.2026 (Nachtrag 4) – Profilbilder im Forum
 
 ### Für Redaktion und Leser

@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../lib/ForumRepository.php';
 require_once __DIR__ . '/../lib/Security.php';
+require_once __DIR__ . '/../lib/ForumComfort.php';
 
 Security::initSession();
 
@@ -25,6 +26,9 @@ try {
     // Benutzerrolle ermitteln
     $userId = $_SESSION['lmo26_user_id'] ?? null;
     $userRole = $userId ? $repo->getUserRole($userId) : null;
+    // Ungelesen/Abos nur fuer angemeldete Forenkonten
+    $memberId = ($userId && Security::isMember()) ? (int)$userId : 0;
+    $comfort = $memberId ? new ForumComfort() : null;
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Topics abrufen
@@ -58,6 +62,19 @@ try {
             // Sortierung: new = neueste zuerst (Standard, Eroeffnungsbeitrag oben angeheftet), old = chronologisch
             $order = $sort === 'old' ? 'asc' : 'desc';
             $pinFirst = $order === 'desc' && $search === '';
+
+            // Lesestand vor diesem Besuch (fuer "Neu"-Markierung), danach als gelesen speichern
+            $readSince = null;
+            $jumped = false;
+            if ($comfort) {
+                $readSince = $comfort->markTopicRead($memberId, $topicId);
+                // ?unread=1 bei "aelteste zuerst": direkt die Seite mit dem ersten ungelesenen Beitrag
+                if (!empty($_GET['unread']) && $order === 'asc' && $offset === 0 && $search === '') {
+                    $readCount = $comfort->countReadPosts($topicId, $readSince);
+                    $offset = (int)(floor(min($readCount, max(0, $repo->getPostCountByTopic($topicId) - 1)) / $limit) * $limit);
+                    $jumped = $offset > 0;
+                }
+            }
             $posts = $repo->getPostsByTopic($topicId, $limit, $offset, $order, $search, $pinFirst);
             $totalPosts = $repo->countPostsByTopic($topicId, $search, $pinFirst);
             $firstPost = ($pinFirst && $offset === 0) ? $repo->getFirstPost($topicId) : null;
@@ -72,6 +89,10 @@ try {
                 'posts' => $posts,
                 'sort' => $order === 'asc' ? 'old' : 'new',
                 'search' => $search,
+                'read_since' => $readSince,
+                'subscribed' => $comfort ? $comfort->isSubscribed($memberId, $topicId) : false,
+                'page' => (int)floor($offset / $limit) + 1,
+                'jumped' => $jumped,
                 'all_posts' => (int)$repo->getPostCountByTopic($topicId),
                 'pagination' => [
                     'total' => $totalPosts,
@@ -109,7 +130,7 @@ try {
             }
 
             $list = $repo->listTopics([$categoryId], $sort, $search, $limit, $offset);
-            $topics = $list['topics'];
+            $topics = $comfort ? $comfort->annotateTopics($list['topics'], $memberId) : $list['topics'];
             $totalTopics = $list['total'];
 
             // Berechtigungsinfo hinzufügen
@@ -146,7 +167,7 @@ try {
 
             echo json_encode([
                 'success' => true,
-                'topics' => $list['topics'],
+                'topics' => $comfort ? $comfort->annotateTopics($list['topics'], $memberId) : $list['topics'],
                 'search' => $search,
                 'pagination' => [
                     'total' => $list['total'],
@@ -193,6 +214,29 @@ try {
             exit;
         }
 
+        // Komfort-Aktionen: alles gelesen, Thema abonnieren/abbestellen
+        $action = $input['action'] ?? 'create';
+        if ($action !== 'create') {
+            if (!$comfort) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => 'Anmeldung erforderlich', 'csrf_token' => Security::getCsrfToken()]);
+                exit;
+            }
+            $tid = intval($input['topic_id'] ?? 0);
+            if ($action === 'mark_all_read') {
+                $comfort->markAllRead($memberId);
+            } elseif ($action === 'subscribe' || $action === 'unsubscribe') {
+                $t = $tid > 0 ? $repo->getTopicById($tid) : null;
+                if (!$t || !$repo->canViewCategory($t['category_id'], $userRole)) throw new Exception('Thema nicht gefunden');
+                $action === 'subscribe' ? $comfort->subscribe($memberId, $tid) : $comfort->unsubscribe($memberId, $tid);
+            } else {
+                throw new Exception('Unbekannte Aktion');
+            }
+            echo json_encode(['success' => true, 'subscribed' => $tid > 0 && $comfort->isSubscribed($memberId, $tid),
+                'csrf_token' => Security::getCsrfToken()]);
+            exit;
+        }
+
         $categoryId = intval($input['category_id'] ?? 0);
         $title = trim($input['title'] ?? '');
         $content = trim($input['content'] ?? '');
@@ -225,6 +269,8 @@ try {
 
         $userId = $_SESSION['lmo26_user_id'] ?? null;
         $topicId = $repo->createTopic($categoryId, $userId, $title, $content);
+        // Eigenes Thema automatisch abonnieren (Mail bei Antworten)
+        if ($comfort && !empty($input['subscribe'] ?? true)) $comfort->subscribe($memberId, (int)$topicId);
 
         echo json_encode([
             'success' => true,

@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../lib/ForumRepository.php';
 require_once __DIR__ . '/../lib/Security.php';
+require_once __DIR__ . '/../lib/ForumComfort.php';
 
 Security::initSession();
 
@@ -75,6 +76,14 @@ try {
             }
 
             $postId = $repo->createPost($topicId, $userId, $content);
+
+            // Abos: Antwortenden abonnieren (abwaehlbar), andere Abonnenten benachrichtigen
+            $comfort = new ForumComfort();
+            if ($userId && Security::isMember()) {
+                if (!empty($input['subscribe'] ?? true)) $comfort->subscribe((int)$userId, $topicId);
+                $comfort->markTopicRead((int)$userId, $topicId);
+            }
+            $comfort->notifyNewPost($topicId, (int)$postId, $userId ? (int)$userId : null);
 
             echo json_encode([
                 'success' => true,
