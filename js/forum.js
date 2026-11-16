@@ -599,6 +599,10 @@ function renderPosts(posts, topic, firstPost = null) {
         const isNew = !!(readSince && currentUser && post.created_at > readSince && post.user_id !== currentUser.id);
         const canQuote = currentUser && !topic.is_locked;
         const canReport = currentUser && post.user_id !== currentUser.id;
+        // Loeschen: Admin/Redaktion immer, eigene Beitraege innerhalb 1 Stunde (Thema nur ohne Antworten)
+        const isStaff = currentUser && ['admin', 'editor'].includes(currentUser.role);
+        const ownRecent = currentUser && post.user_id === currentUser.id && (Date.now() - parseDbDate(post.created_at).getTime()) < 3600000;
+        const canDelete = isStaff || (ownRecent && (!isFirst || allPostsInTopic <= 1));
 
         return `
             <div class="post-card ${isFirst ? 'post-first' : ''}${isNew ? ' post-new' : ''}" id="post-${parseInt(post.id)}" data-created="${escapeAttr(post.created_at || '')}">
@@ -616,12 +620,12 @@ function renderPosts(posts, topic, firstPost = null) {
                     ${formatPostContent(post.content)}
                     ${post.edited_at ? `<div class="post-edited">Bearbeitet am ${formatDateTime(post.edited_at)}${post.editor_name ? ` von ${escapeHtml(post.editor_name)}` : ''}</div>` : ''}
                 </div>
-                ${canQuote || canEdit || canReport ? `
+                ${canQuote || canEdit || canReport || canDelete ? `
                     <div class="post-footer">
                         ${canReport ? `<button class="btn btn-ghost post-report" onclick="reportPost(${post.id})" title="Beitrag an die Moderation melden">⚑ Melden</button>` : ''}
                         ${canQuote ? `<button class="btn btn-ghost" onclick="quotePost(${post.id})" style="font-size: 0.85rem;">❝ Zitieren</button>` : ''}
                         ${canEdit ? `<button class="btn btn-ghost" onclick="editPost(${post.id})" style="font-size: 0.85rem;">Bearbeiten</button>` : ''}
-                        ${canEdit && !isFirst ? `<button class="btn btn-ghost" onclick="deletePost(${post.id})" style="font-size: 0.85rem; color: var(--color-primary);">Löschen</button>` : ''}
+                        ${canDelete ? `<button class="btn btn-ghost" onclick="deletePost(${post.id}, ${isFirst ? 'true' : 'false'})" style="font-size: 0.85rem; color: var(--color-primary);">${isFirst ? 'Thema löschen' : 'Löschen'}</button>` : ''}
                     </div>
                 ` : ''}
             </div>
@@ -941,8 +945,10 @@ async function saveEdit(postId) {
 /**
  * Delete a post
  */
-async function deletePost(postId) {
-    if (!confirm('Beitrag wirklich löschen?')) return;
+async function deletePost(postId, isFirst = false) {
+    if (!confirm(isFirst
+        ? `Ganzes Thema mit allen ${allPostsInTopic > 1 ? allPostsInTopic + ' Beiträgen' : 'Beiträgen'} endgültig löschen?`
+        : 'Beitrag wirklich löschen?')) return;
 
     try {
         const res = await fetch(`${API_BASE}/forum-posts.php`, {
@@ -961,6 +967,10 @@ async function deletePost(postId) {
         if (data.success) {
             if (data.csrf_token) {
                 csrfToken = data.csrf_token;
+            }
+            if (data.topic_deleted) {
+                navigateTo(data.category_id ? 'category' : 'categories', data.category_id || null);
+                return;
             }
             loadTopic(currentTopicId);
         } else {

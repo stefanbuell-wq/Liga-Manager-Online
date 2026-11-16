@@ -5,6 +5,19 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 16.11.2026 (Nachtrag 2) – Forum: Löschen direkt im Thema
+
+### Für Redaktion und Leser
+
+- Am Eröffnungsbeitrag gibt es jetzt **„Thema löschen“** (ganzes Thema mit allen Antworten). Admins und Redaktion können jeden Beitrag und jedes Thema löschen; Nutzer ihre eigenen Beiträge innerhalb einer Stunde, ein eigenes Thema nur, solange noch niemand geantwortet hat.
+- Der Löschen-Knopf erscheint nur noch, wenn man auch löschen darf (vorher sah die Redaktion ihn nicht, Nutzer sahen ihn auch nach Ablauf der Stunde).
+
+### Technik
+
+- `api/forum-posts.php` action `delete`: Eröffnungsbeitrag löscht das Thema (`deleteTopic`), Zeitvergleich mit `created_at` als UTC (vorher Serverzeit); `js/forum.js` `canDelete` passend dazu, nach Thema-Löschen zurück zur Kategorie
+
+---
+
 ## 16.11.2026 (Nachtrag) – Forum: Bilder in Beiträgen, Beitrag melden
 
 ### Für Redaktion und Leser

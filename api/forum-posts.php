@@ -163,13 +163,28 @@ try {
             // Nur eigene Posts (innerhalb 1h), Editor oder Admin darf löschen
             $isOwnPost = $userId !== null && $post['user_id'] !== null
                       && (int)$post['user_id'] === (int)$userId;
-            $isRecent = strtotime($post['created_at']) > (time() - 3600); // 1 Stunde
+            $isRecent = strtotime($post['created_at'] . ' UTC') > (time() - 3600); // DB-Zeit ist UTC, 1 Stunde
+            $isStaff = in_array($userRole, ['editor', 'admin'], true);
 
-            $canDelete = ($isOwnPost && $isRecent) ||
-                         ($userRole === 'editor') ||
-                         ($userRole === 'admin');
+            // Eroeffnungsbeitrag = ganzes Thema loeschen; eigenes Thema nur, solange niemand geantwortet hat
+            if (!empty($post['is_first_post'])) {
+                $replies = $repo->getPostCountByTopic((int)$post['topic_id']) - 1;
+                if (!$isStaff && !($isOwnPost && $isRecent && $replies <= 0)) {
+                    throw new Exception('Keine Berechtigung: eigene Themen nur innerhalb 1 Stunde und ohne Antworten löschbar');
+                }
+                $topic = $repo->getTopicById((int)$post['topic_id']);
+                $repo->deleteTopic((int)$post['topic_id']);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Thema gelöscht',
+                    'topic_deleted' => true,
+                    'category_id' => $topic['category_id'] ?? null,
+                    'csrf_token' => Security::getCsrfToken()
+                ]);
+                exit;
+            }
 
-            if (!$canDelete) {
+            if (!($isOwnPost && $isRecent) && !$isStaff) {
                 throw new Exception('Keine Berechtigung zum Löschen (eigene Posts nur innerhalb 1 Stunde)');
             }
 
