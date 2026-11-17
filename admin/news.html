@@ -693,6 +693,13 @@
             margin-bottom: 0;
         }
 
+        .repeater-up {
+            position: absolute; top: 8px; right: 38px; width: 24px; height: 24px; border-radius: 50%;
+            border: 1px solid var(--color-border, #ccc); background: transparent; color: inherit;
+            cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center;
+        }
+        #tplPreviewGames .repeater-item { padding-top: 40px; }
+        #tplPreviewGames .repeater-item:first-child .repeater-up { display: none; }
         .repeater-remove {
             position: absolute;
             top: 8px;
@@ -1498,6 +1505,14 @@
                     document.querySelectorAll('.template-container').forEach(c => c.classList.toggle('active', c.id === 'template-html'));
                     htmlViewFormatted = false;
                     setHtmlView(true);
+                    // Spieltagsvorschau: Spiele zurueck in den Vorschau-Tab laden, damit beim
+                    // Ergaenzen weiterer Spiele die bereits gespeicherten erhalten bleiben
+                    const pv = parsePreviewHTML(news.content || '');
+                    if (pv) {
+                        await fillPreviewFromParsed(pv, linked, news.short_content || '');
+                        suppressTabWarning = true;
+                        switchTab('preview');
+                    }
                 }
 
                 document.getElementById('editorModal').classList.add('show');
@@ -1896,6 +1911,15 @@
             if (activeTab !== 'html' && tab === 'html') {
                 generateFromActiveTab();
             }
+            // HTML -> Vorschau: vorhandene Vorschau-Spiele uebernehmen statt sie beim Speichern zu ueberschreiben
+            if (activeTab === 'html' && tab === 'preview' && !suppressTabWarning
+                && !document.querySelector('#tplPreviewGames .repeater-item')) {
+                const pv = parsePreviewHTML(document.getElementById('newsContent').value);
+                if (pv) {
+                    fillPreviewFromParsed(pv, linkedMatchesData || [], document.getElementById('newsShortContent').value);
+                    suppressTabWarning = true;
+                }
+            }
             if (activeTab === 'html' && tab !== 'html' && !suppressTabWarning) {
                 // Warn if there's existing content
                 const content = document.getElementById('newsContent').value.trim();
@@ -2244,6 +2268,7 @@
 
             div.innerHTML = `
                 <button type="button" class="repeater-remove" onclick="this.parentElement.remove()">&times;</button>
+                <button type="button" class="repeater-up" title="Spiel nach oben schieben" onclick="const p=this.parentElement; if (p.previousElementSibling) p.parentElement.insertBefore(p, p.previousElementSibling)">&#9650;</button>
                 <div class="form-row">
                     <div class="form-group" style="margin-bottom:8px">
                         <select class="pgame-home">
@@ -2274,6 +2299,94 @@
                 </div>
             `;
             container.appendChild(div);
+        }
+
+        // ===== Reverse Parser: Vorschau-HTML -> Vorschau-Felder =====
+        // Gegenstueck zu generatePreviewHTML(): Intro, Spiele (Heim, Gast, Termin|Ort, Text, Tipp), Outro
+        function parsePreviewHTML(html) {
+            if (!html || !/<b class="match-head">/.test(html)) return null;
+            html = html.replace(OWN_BANNER_RE, '');
+            OWN_BANNER_RE.lastIndex = 0;
+            const chunks = html.split(/<hr class="match-sep">/i);
+            const headRe = /<b class="match-head">([\s\S]*?)\s+–\s+([\s\S]*?)<\/b>/i;
+            const logosRe = /<center><img[^>]*>\s*&nbsp;\s*<img[^>]*><\/center>\s*<br>/i;
+            const result = { intro: '', outro: '', games: [] };
+            const textOf = h => htmlToText(h).replace(/^\s+|\s+$/g, '');
+            for (let i = 0; i < chunks.length; i++) {
+                let chunk = chunks[i];
+                const head = chunk.match(headRe);
+                if (!head) {
+                    // Kein Spielkopf: nur am Ende als Abschluss-Text verwerten
+                    if (i === chunks.length - 1) result.outro = textOf(chunk);
+                    continue;
+                }
+                let before = chunk.substring(0, head.index);
+                let rest = chunk.substring(head.index + head[0].length);
+                if (i === 0) {
+                    before = before.replace(logosRe, '').replace(/(\s*<br>\s*)+$/i, '');
+                    result.intro = textOf(before);
+                }
+                const game = { home: textOf(head[1]), guest: textOf(head[2]), datetime: '', venue: '', text: '', tip: '' };
+                if (game.home === '?') game.home = '';
+                if (game.guest === '?') game.guest = '';
+                // Termin | Ort: einzelner Zeilenumbruch direkt nach dem Kopf
+                const meta = rest.match(/^\s<br>(?!\s*<br>)([^<]*)/i);
+                if (meta) {
+                    const parts = textOf(meta[1]).split(' | ');
+                    game.datetime = parts.shift() || '';
+                    game.venue = parts.join(' | ');
+                    rest = rest.substring(meta[0].length);
+                }
+                // HAFO-Tipp; alles danach (im letzten Spiel) ist der Abschluss-Text
+                const tip = rest.match(/\s<br><b>HAFO-Tipp:<\/b>\s*([^<]*)/i);
+                let after = '';
+                if (tip) {
+                    game.tip = textOf(tip[1]);
+                    after = rest.substring(tip.index + tip[0].length);
+                    rest = rest.substring(0, tip.index);
+                }
+                game.text = textOf(rest.replace(/^\s*<br>\s*<br>/i, ''));
+                if (i === chunks.length - 1 && after.trim()) result.outro = textOf(after.replace(/^\s*<br>\s*<br>/i, ''));
+                result.games.push(game);
+            }
+            return result.games.length ? result : null;
+        }
+
+        async function fillPreviewFromParsed(pv, linked, shortContent) {
+            resetTemplateFields();
+            if (!leaguesCache) await loadLeagues();
+            let leagueFile = ((linked || []).find(m => m.league_file) || {}).league_file || null;
+            const g0 = pv.games.find(g => g.home && g.guest);
+            if (!leagueFile && g0) {
+                for (const league of (leaguesCache || [])) {
+                    setLeagueValue('tplPreviewLeague', league.file);
+                    await loadTeamsForTemplate('preview');
+                    const names = (teamsCache[league.file] || []).map(t => t.name);
+                    if (names.includes(g0.home) && names.includes(g0.guest)) { leagueFile = league.file; break; }
+                }
+            }
+            setLeagueValue('tplPreviewLeague', leagueFile || '');
+            if (leagueFile) await loadTeamsForTemplate('preview');
+            const sc = String(shortContent || '').trim();
+            if (sc && sc !== 'Spieltagsvorschau') document.getElementById('tplPreviewRound').value = sc.split(' – ')[0].trim();
+            document.getElementById('tplPreviewIntro').value = pv.intro;
+            document.getElementById('tplPreviewOutro').value = pv.outro;
+            const setSel = (sel, v) => {
+                if (!v) return;
+                if (![...sel.options].some(o => o.value === v)) sel.add(new Option(v, v));
+                sel.value = v;
+            };
+            for (const g of pv.games) {
+                addPreviewGame();
+                const items = document.querySelectorAll('#tplPreviewGames .repeater-item');
+                const item = items[items.length - 1];
+                setSel(item.querySelector('.pgame-home'), g.home);
+                setSel(item.querySelector('.pgame-guest'), g.guest);
+                item.querySelector('.pgame-datetime').value = g.datetime;
+                item.querySelector('.pgame-venue').value = g.venue;
+                item.querySelector('.pgame-text').value = g.text;
+                item.querySelector('.pgame-tip').value = g.tip;
+            }
         }
 
         // ===== Simple Format (Allgemeine News) =====

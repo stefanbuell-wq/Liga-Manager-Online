@@ -5,6 +5,20 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 17.11.2026 – Spieltagsvorschau: gespeicherte Spiele bleiben beim Ergänzen erhalten
+
+### Für Redaktion und Leser
+
+- **Fehler behoben:** Wer eine gespeicherte Vorschau wieder öffnete und im Tab „Vorschau“ weitere Spiele hinzufügte, hat beim Speichern die vorher gespeicherten Spiele überschrieben (der Tab war beim Öffnen leer, nur die neuen Spiele landeten im Bericht).
+- **Jetzt:** Beim Öffnen einer Vorschau stehen Liga, Spieltag, Einleitung, alle Spiele (Termin, Ort, Text, Tipp) und Schlusswort wieder im Tab „Vorschau“. Einfach Spiele ergänzen und speichern.
+- **Reihenfolge:** Mit ▲ schiebt man ein Spiel nach oben.
+
+### Technik
+
+- `admin/news.html`: `parsePreviewHTML()` (Gegenstück zu `generatePreviewHTML()`, Round-Trip identisch), `fillPreviewFromParsed()` (Liga aus verknüpften Spielen bzw. Teamsuche); `editNews()` öffnet erkannte Vorschauen im Vorschau-Tab; `switchTab()` HTML→Vorschau übernimmt vorhandene Spiele statt sie zu überschreiben; Button `.repeater-up`
+
+---
+
 ## 16.11.2026 (Nachtrag 3) – Forum: Neueste oben, „Neu“ auf der Startseite, dunkles Design
 
 ### Für Redaktion und Leser
