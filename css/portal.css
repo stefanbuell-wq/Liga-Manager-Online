@@ -1314,3 +1314,22 @@ html[data-theme="dark"] .account-msg.err, html[data-theme="dark"] .contact-msg.e
 .mobile-nav .theme-toggle-link { width: 100%; text-align: left; background: none; border: 0; font-family: inherit; cursor: pointer; }
 @media (max-width: 640px) { .header .theme-toggle.has-menu-twin { display: none; } }
 @media (min-width: 641px) { .mobile-nav .theme-toggle-link { display: none; } }
+
+/* === TABELLENRECHNER === */
+.calc-panel { max-width: 900px; margin-top: var(--spacing-lg); padding: var(--spacing-lg); }
+.calc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: var(--spacing-md); flex-wrap: wrap; }
+.calc-hint { color: var(--color-text-muted); font-size: .88rem; }
+.calc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--spacing-lg); }
+@media (max-width: 760px) { .calc-grid { grid-template-columns: 1fr; } }
+.calc-round { display: block; margin-bottom: 10px; font-weight: 600; }
+.calc-round select { margin-left: 6px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--color-bg-card); color: var(--color-text-primary); }
+.calc-game { display: grid; grid-template-columns: 1fr 48px 10px 48px 1fr; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: .9rem; }
+.calc-game input { width: 48px; padding: 6px 4px; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; background: var(--color-bg-card); color: var(--color-text-primary); font-size: 1rem; }
+.calc-team.h { text-align: right; }
+.calc-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.calc-table .league-table td { padding: 6px 8px; }
+.calc-hypo td { background: rgba(0, 163, 92, .06); }
+.calc-move { font-size: .72rem; font-weight: 700; }
+.calc-move.up { color: var(--color-live); }
+.calc-move.down { color: var(--color-primary); }
+.calc-empty { color: var(--color-text-muted); }

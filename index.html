@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261121">
+    <link rel="stylesheet" href="css/portal.css?v=20261122">
     <script src="js/darkmode.js?v=20261121"></script>
     <link rel="stylesheet" href="css/newsprint.css">
 
@@ -323,6 +323,7 @@
                                 <span id="full-table-subtitle" class="table-subtitle"></span>
                             </div>
                             <div class="table-round-control">
+                                <button type="button" class="btn btn-secondary" data-feature="calculator" hidden onclick="openCalculator()">🧮 Was wäre wenn?</button>
                                 <label for="table-round-select" class="table-round-label">Stand nach Spieltag</label>
                                 <select id="table-round-select" class="btn btn-secondary table-round-select" onchange="loadTableForRound(this.value)">
                                 </select>
@@ -345,6 +346,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
+                    <div id="calc-panel" class="table-card calc-panel" hidden></div>
                 </div>
 
                 <!-- Tab: Statistiken -->
@@ -686,6 +688,7 @@
 
                 leagueData = data;
                 currentLigaFile = ligaFile;
+                if (window.TableCalc) { TableCalc.reset(); const cp = document.getElementById('calc-panel'); if (cp) cp.hidden = true; }
                 document.querySelectorAll('.league-chip').forEach(b => b.classList.toggle('active', b.dataset.file === ligaFile));
                 currentRound = parseInt(data.current_round || data.options.Actual, 10) || 1;
                 lastPlayedRound = getLastPlayedRound(data);
@@ -715,6 +718,11 @@
             } catch (e) {
                 console.error('Error loading league:', e);
             }
+        }
+
+        // === TABELLENRECHNER (zuschaltbar: Admin -> Einstellungen) ===
+        function openCalculator() {
+            if (window.TableCalc && leagueData) TableCalc.open(leagueData, document.getElementById('calc-panel'));
         }
 
         // === RENDER TABLE ===
@@ -1618,6 +1626,7 @@
     </script>
     <script src="js/newsprint.js"></script>
     <script src="js/foerderer.js" defer></script>
+    <script src="js/tabellenrechner.js?v=20261118"></script>
     <script src="js/instance.js?v=20261118b"></script>
 </body>
 
