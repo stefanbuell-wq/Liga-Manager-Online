@@ -42,6 +42,16 @@ und fragt das Passwort für das erste Admin-Konto ab. Danach:
 
 Lokal ausprobieren: `php -S localhost:8000` im Projektordner, dann http://localhost:8000/.
 
+### Demo
+
+```bash
+php scripts/install.php --demo
+```
+
+Installiert die Oberfläche im Stil von [hafo.de](https://hafo.de) (Name, Farben, „HAFO-Tipp“) mit Beispieldaten:
+eine Liga mit zehn erfundenen Hamburger Vereinen, acht gespielte Spieltage, ein Spielbericht, eine Vorschau und ein
+kleines Forum. Ohne `--demo` heißt die Seite „Liga Manager Online“ und startet leer.
+
 Weitere Admin-Konten oder ein vergessenes Admin-Passwort: `php cron/create-admin.php <name>`.
 
 ## Eigene Installation anpassen

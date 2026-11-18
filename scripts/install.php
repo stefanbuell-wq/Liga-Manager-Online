@@ -3,6 +3,7 @@
  * Ersteinrichtung einer neuen Installation (nur Kommandozeile).
  *
  *   php scripts/install.php --name="Musterliga.de" [--tagline="Fußball in Musterstadt"] [--url=https://musterliga.de] [--admin=admin]
+ *   php scripts/install.php --demo [--url=...]     Demo im Stil von hafo.de mit erfundenen Beispieldaten
  *
  * - prueft PHP-Version und Erweiterungen
  * - legt data/ (Datenbank, Cache, Sessions) an
@@ -16,7 +17,8 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 
 $root = dirname(__DIR__);
-$opt = getopt('', ['name:', 'tagline:', 'url:', 'admin:']);
+$opt = getopt('', ['name:', 'tagline:', 'url:', 'admin:', 'demo']);
+$demo = array_key_exists('demo', $opt);
 
 function out(string $s): void { fwrite(STDOUT, $s . "\n"); }
 function fail(string $s): void { fwrite(STDERR, "FEHLER: $s\n"); exit(1); }
@@ -37,16 +39,18 @@ if (!is_writable("$root/data")) fail('data/ ist nicht beschreibbar.');
 // 3. Instanz-Konfiguration
 $instFile = "$root/config/instance.php";
 if (!is_file($instFile)) {
-    $name = trim($opt['name'] ?? '') ?: 'Liga Manager Online';
+    $name = trim($opt['name'] ?? '') ?: ($demo ? 'HAFO.de' : 'Liga Manager Online');
     $cfg = [
         'site_name'    => $name,
-        'site_tagline' => trim($opt['tagline'] ?? ''),
+        'site_tagline' => trim($opt['tagline'] ?? '') ?: ($demo ? 'Hamburger Fußball Online – Demo' : ''),
         'base_url'     => rtrim(trim($opt['url'] ?? ''), '/'),
-        'mail_tag'     => '',
-        'tip_label'    => 'Tipp',
-        'region'       => '',
+        'mail_tag'     => $demo ? 'HAFO' : '',
+        'tip_label'    => $demo ? 'HAFO-Tipp' : 'Tipp',
+        'region'       => $demo ? 'Hamburger Amateurfußball' : '',
         'legacy_forum' => false,
         'legacy_host'  => '',
+        'default_league' => $demo ? 'demooberliga' : '',
+        'league_short_names' => $demo ? ['Oberliga Demo' => 'Oberliga'] : [],
     ];
     file_put_contents($instFile, "<?php\n// Instanz-Einstellungen (angelegt von scripts/install.php am " . date('d.m.Y') . ")\nreturn " . var_export($cfg, true) . ";\n");
     out("config/instance.php angelegt ($name).");
@@ -57,12 +61,18 @@ if (!is_file($instFile)) {
 // 4. Datenbank
 require_once "$root/lib/LmoDatabase.php";
 require_once "$root/lib/AccountService.php";
-LmoDatabase::createSchema();
+// createSchema() legt Spiele/Berichte neu an (DROP TABLE) – deshalb nur bei leerer Datenbank
+$pdo = LmoDatabase::getInstance();
+$hasLeagues = (bool)$pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'leagues'")->fetchColumn();
+if ($hasLeagues) {
+    out('Datenbank vorhanden – Schema bleibt unveraendert.');
+} else {
+    LmoDatabase::createSchema();
+    out('Datenbank angelegt: data/database.sqlite');
+}
 new AccountService();
-out('Datenbank bereit: data/database.sqlite');
 
 // 5. Admin-Konto
-$pdo = LmoDatabase::getInstance();
 $admins = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
 if ($admins > 0) {
     out("Es gibt bereits $admins Admin-Konto(en). Weitere/Passwort neu: php cron/create-admin.php <name>");
@@ -82,6 +92,11 @@ if ($admins > 0) {
     $pdo->prepare("INSERT INTO users (username, password_hash, display_name, role, active, status) VALUES (?, ?, ?, 'admin', 1, 'active')")
         ->execute([$user, password_hash($pw, PASSWORD_DEFAULT), $user]);
     out("Admin '$user' angelegt.");
+}
+
+// 6. Demo-Inhalte
+if ($demo) {
+    (function () { require __DIR__ . '/demo-data.php'; })();
 }
 
 out('');
