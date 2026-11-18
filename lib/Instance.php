@@ -53,6 +53,13 @@ class Instance
         return $name;
     }
 
+    /** Untertitel; ein im Design-Editor gespeicherter Untertitel hat Vorrang. */
+    public static function siteTagline(): string
+    {
+        $fromDesign = self::themeSetting('siteTagline');
+        return $fromDesign !== '' ? $fromDesign : (string)self::get('site_tagline');
+    }
+
     /** Kuerzel fuer Betreffzeilen interner Mails: "[HAFO] ..." */
     public static function mailTag(): string
     {

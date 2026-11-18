@@ -6,6 +6,13 @@
     RedirectMatch 301 (?i)^/main\.php$ /
 </IfModule>
 
+# Oeffentliche Seiten mit Instanz-Namen im HTML ausliefern (page.php); ohne mod_rewrite gehen die .html direkt raus
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ page.php?p=index [L,QSA]
+    RewriteRule ^(index|forum|kontakt|konto|suche)\.html$ page.php?p=$1 [L,QSA]
+</IfModule>
+
 # Security Headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
