@@ -55,9 +55,14 @@
             var bar = document.createElement('div');
             bar.id = 'lmo-test-banner';
             bar.setAttribute('role', 'status');
-            bar.style.cssText = 'position:sticky;top:0;z-index:10000;background:#b00020;color:#fff;text-align:center;font:600 14px/1.4 system-ui,sans-serif;padding:6px 12px';
-            bar.textContent = inst.testBanner;
-            document.body.insertBefore(bar, document.body.firstChild);
+            bar.title = inst.testBanner;
+            bar.setAttribute('aria-label', inst.testBanner);
+            bar.style.cssText = 'position:fixed;left:0;top:0;bottom:0;width:22px;z-index:10000;background:#b00020;color:#fff;'
+                + 'display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);'
+                + 'font:700 12px/1 system-ui,sans-serif;letter-spacing:.25em;text-transform:uppercase;cursor:help;user-select:none';
+            bar.textContent = 'Testumgebung';
+            document.body.appendChild(bar);
+            document.body.style.paddingLeft = '22px';
         }
         window.LMO_INSTANCE = { siteName: name, siteTagline: tagline, region: inst.region || '', tipLabel: inst.tipLabel || 'Tipp', legacyForum: !!inst.legacyForum };
         try { document.dispatchEvent(new CustomEvent('lmo:instance', { detail: window.LMO_INSTANCE })); } catch (e) {}
