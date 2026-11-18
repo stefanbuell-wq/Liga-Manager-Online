@@ -11,16 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // === INIT ===
     (async () => {
         if (!liga) {
-            // Standard: neueste Saison der Hamburg-Oberliga
+            // Standard: Standardliga der Instanz (api/list-leagues.php: default)
             try {
                 const res = await fetch('api/list-leagues.php');
                 const data = await res.json();
-                const oberliga = (data.leagues || [])
-                    .filter(l => /^hhoberliga\d{4}\.l98$/i.test(l.file))
-                    .sort((a, b) => b.file.localeCompare(a.file));
-                liga = (oberliga[0] || (data.leagues || [])[0] || {}).file || 'hhoberliga2627.l98';
+                liga = data.default || ((data.leagues || [])[0] || {}).file || '';
             } catch (e) {
-                liga = 'hhoberliga2627.l98';
+                liga = '';
             }
         }
         initTabs();
@@ -233,8 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const scoreClass = m.played ? '' : 'pending';
                     const scoreDisplay = m.played ? `${hGoals}:${gGoals}` : '-:-';
 
-                    const homeLogo = `<img src="${getLogoUrl(m.home)}" class="team-logo" onerror="this.src='img/teams/blank.png'">`;
-                    const guestLogo = `<img src="${getLogoUrl(m.guest)}" class="team-logo" onerror="this.src='img/teams/blank.png'">`;
+                    const homeLogo = `<img src="${getLogoUrl(m.home)}" class="team-logo" onerror="this.onerror=null;this.src='img/teams/blank.png'">`;
+                    const guestLogo = `<img src="${getLogoUrl(m.guest)}" class="team-logo" onerror="this.onerror=null;this.src='img/teams/blank.png'">`;
 
                     html += `
                         <div class="match-row">
@@ -322,8 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hGoals = m.played ? m.home_goals : '-';
                 const gGoals = m.played ? m.guest_goals : '-';
                 const dateStr = m.date ? `<span style="font-size:0.8em; color:#666;">${m.date} ${m.time || ''}</span>` : '';
-                const homeLogo = `<img src="${getLogoUrl(m.home)}" class="team-logo-small" style="height:20px; vertical-align:middle; margin-right:5px;" onerror="this.src='img/teams/blank.png'">`;
-                const guestLogo = `<img src="${getLogoUrl(m.guest)}" class="team-logo-small" style="height:20px; vertical-align:middle; margin-left:5px;" onerror="this.src='img/teams/blank.png'">`;
+                const homeLogo = `<img src="${getLogoUrl(m.home)}" class="team-logo-small" style="height:20px; vertical-align:middle; margin-right:5px;" onerror="this.onerror=null;this.src='img/teams/blank.png'">`;
+                const guestLogo = `<img src="${getLogoUrl(m.guest)}" class="team-logo-small" style="height:20px; vertical-align:middle; margin-left:5px;" onerror="this.onerror=null;this.src='img/teams/blank.png'">`;
 
                 html += `
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f0f0f0; padding:5px;">

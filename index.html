@@ -255,8 +255,8 @@
                                     <header class="newsprint-header" style="padding: 1rem;">
                                         <div class="newsprint-masthead" style="font-size: 1.8rem;">LIVE</div>
                                         <div class="newsprint-edition" style="font-size: 0.6rem;">
-                                            HAMBURG<br>
-                                            LIVE
+                                            LIVE<br>
+                                            TICKER
                                         </div>
                                     </header>
 
@@ -279,7 +279,7 @@
                                                 <span class="newsprint-status-live">● LIVE</span>
                                             </div>
                                             <div class="newsprint-match-teams" style="font-size: 1rem;">
-                                                <div style="font-size: 0.9rem;">HAMBURG SV</div>
+                                                <div style="font-size: 0.9rem;">HEIM – GAST</div>
                                                 <div class="newsprint-score" style="font-size: 0.85rem;">2:1</div>
                                             </div>
                                         </div>
@@ -377,15 +377,15 @@
                         <div class="logo-icon">⚽</div>
                         <span data-site-logo>Liga Manager Online</span>
                     </a>
-                    <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
+                    <p><span data-region-empty hidden>Das Portal für <span data-site-region></span>. </span>Alle Ligen, alle Spiele, alle Ergebnisse.</p>
                 </div>
 
                 <div>
                     <h4 class="footer-title">Ligen</h4>
                     <div class="footer-links">
-                        <a href="#league-section">Oberliga Hamburg</a>
-                        <a href="#league-section">Landesliga</a>
-                        <a href="#league-section">Bezirksliga</a>
+                        <a href="#league-section">Tabelle</a>
+                        <a href="#league-section">Spielplan</a>
+                        <a href="#league-section">Archiv</a>
                         <a href="#league-section">Kreisliga</a>
                     </div>
                 </div>
@@ -542,25 +542,26 @@
             return isNaN(y) ? -1 : (y > 50 ? 1900 + y : 2000 + y);
         }
         function shortLeagueName(name) {
-            return String(name).replace(/\s*\d{2}\/\d{2}\s*$/, '')
-                .replace(/^Hamburg-Oberliga$/i, 'Oberliga')
-                .replace(/Landesliga\s+Hammoniastaffel/i, 'Landesliga Hammonia')
-                .replace(/Landesliga\s+Hansastaffel/i, 'Landesliga Hansa');
+            let n = String(name).replace(/\s*\d{2}\/\d{2}\s*$/, '');
+            // Kurznamen der Instanz (config/instance.php: league_short_names)
+            for (const [from, to] of Object.entries(leagueShortNames)) {
+                n = n.replace(new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), to);
+            }
+            return n;
         }
 
+        let leagueShortNames = {};
         async function initLeagueSelector() {
             const select = document.getElementById('league-select');
             try {
                 const res = await fetch(`${API_BASE}/list-leagues.php`);
                 const data = await res.json();
                 if (data.leagues && data.leagues.length > 0) {
-                    // Standard: neueste Saison der Hamburg-Oberliga (hhoberliga2627 > hhoberliga2526 ...)
-                    const oberliga = data.leagues
-                        .filter(l => /^hhoberliga\d{4}\.l98$/i.test(l.file))
-                        .sort((a, b) => b.file.localeCompare(a.file));
+                    // Standard: Standardliga der Instanz (api/list-leagues.php: default)
+                    leagueShortNames = data.short_names || {};
                     const urlLiga = new URLSearchParams(location.search).get('liga');
                     const defaultFile = (urlLiga && data.leagues.some(l => l.file === urlLiga))
-                        ? urlLiga : (oberliga[0] || data.leagues[0]).file;
+                        ? urlLiga : (data.default || data.leagues[0].file);
 
                     // Nach Saison gruppieren, neueste zuerst
                     const groups = {};
@@ -730,7 +731,7 @@
                         <td class="table-rank ${rankClass}">${rank}${formatRankTrend(team)}</td>
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                 onerror="this.src='img/teams/blank.png'" alt="">
+                                 onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                             ${teamLink(team.name, 'table-team-name')}
                         </td>
                         <td class="table-stats">${team.played}</td>
@@ -786,7 +787,7 @@
         async function loadLiveMatches() {
             const container = document.getElementById('live-ticker');
             try {
-                // ohne ?liga= liefert die API die neueste Saison der Hamburg-Oberliga
+                // ohne ?liga= liefert die API die Standardliga der Instanz
                 const res = await fetch(`${API_BASE}/get-league-data.php`);
                 const data = await res.json();
                 if (!data.matches) throw new Error('keine Spiele');
@@ -978,7 +979,7 @@
             const played = m.played;
             const hw = played && Number(m.home_goals) > Number(m.guest_goals);
             const gw = played && Number(m.guest_goals) > Number(m.home_goals);
-            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
+            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
             // kurz: "16.10. 17:00" (Jahr weglassen), damit die Vereinsnamen Platz haben
             const shortDate = String(m.date || '').replace(/^(\d{1,2}\.\d{1,2}\.)\d{2,4}$/, '$1');
             const when = [shortDate, m.time || ''].filter(Boolean).join(' ');
@@ -1034,7 +1035,7 @@
             }
             const row = leagueData.table ? leagueData.table.find(t => t.name === teamName) : null;
             const rank = row ? leagueData.table.indexOf(row) + 1 : null;
-            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
+            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
 
             const lines = games.map(m => {
                 const isHome = m.home === teamName;
@@ -1062,7 +1063,7 @@
                 : '';
             openInfoModal(`
                 <div class="season-head">
-                    <img src="img/teams/${String(teamName).replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                    <img src="img/teams/${String(teamName).replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                     <div>
                         <h2 style="margin:0;">${sqEsc(teamName)}</h2>
                         <div style="color: var(--color-text-muted); font-size: 0.9rem;">${sqEsc(leagueData.options.Name || '')}${summary ? ' · ' + sqEsc(summary) : ''}</div>
@@ -1188,7 +1189,7 @@
                         <td class="table-rank ${rankClass}">${rank}${formatRankTrend(team)}</td>
                         <td class="table-team">
                             <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
-                                 onerror="this.src='img/teams/blank.png'" alt="">
+                                 onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                             ${teamLink(team.name)}
                         </td>
                         <td class="table-stats">${team.played}</td>
@@ -1366,7 +1367,7 @@
                                 ${byOffense.map((t, i) => `
                                     <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
@@ -1388,7 +1389,7 @@
                                 ${byDefense.map((t, i) => `
                                     <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
@@ -1412,7 +1413,7 @@
                                 ${byPoints.map((t, i) => `
                                     <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 2 ? 'var(--color-live)' : i >= leagueData.table.length - 3 ? 'var(--color-primary)' : 'var(--color-text-muted)'};">${i + 1}</div>
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
@@ -1496,7 +1497,7 @@
                                     <tr>
                                         <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
                                         <td class="table-team">
-                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                                             ${sqEsc(t.name)}
                                         </td>
                                         <td class="table-stats">${t.played}</td>
@@ -1527,7 +1528,7 @@
                                     <tr>
                                         <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
                                         <td class="table-team">
-                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                                             ${sqEsc(t.name)}
                                         </td>
                                         <td class="table-stats">${t.played}</td>
@@ -1558,7 +1559,7 @@
                                 <tr>
                                     <td class="table-rank ${i < 3 ? 'promotion' : i >= leagueData.table.length - 3 ? 'relegation' : ''}">${i + 1}</td>
                                     <td class="table-team">
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.src='img/teams/blank.png'" alt="">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                                         ${sqEsc(t.name)}
                                     </td>
                                     <td class="table-stats">${t.goals_for}</td>

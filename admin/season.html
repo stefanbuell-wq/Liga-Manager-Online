@@ -580,12 +580,12 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="new-league-name">Name der neuen Saison *</label>
-                                <input type="text" id="new-league-name" placeholder="z. B. Hamburg-Oberliga 27/28" oninput="validateStep1Inputs()">
+                                <input type="text" id="new-league-name" placeholder="z. B. Oberliga 27/28" oninput="validateStep1Inputs()">
                                 <small style="color:var(--color-text-muted); font-size:0.8rem;">Wird in der Liga-Auswahl und im Header angezeigt.</small>
                             </div>
                             <div class="form-group">
                                 <label for="new-league-file">Dateiname (.l98) *</label>
-                                <input type="text" id="new-league-file" placeholder="z. B. hhoberliga2728.l98" oninput="onNewFileInput()">
+                                <input type="text" id="new-league-file" placeholder="z. B. oberliga2728.l98" oninput="onNewFileInput()">
                                 <div id="file-validation-msg" style="font-size:0.82rem; margin-top:5px;"></div>
                             </div>
                         </div>
@@ -600,9 +600,13 @@
                     <div class="card">
                         <h3>Quell-Liga auswählen</h3>
                         <p style="color:var(--color-text-secondary); font-size:0.9rem; margin-top:0;">
-                            Wählen Sie die bestehende Saison aus, deren Einstellungen und Teams als Vorlage dienen sollen (z. B. „Hamburg-Oberliga 26/27“).
+                            Wählen Sie die bestehende Saison aus, deren Einstellungen und Teams als Vorlage dienen sollen (z. B. „Oberliga 26/27“).
                         </p>
                         <div id="source-league-list-container">Lade Ligen...</div>
+                        <div style="margin-top:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <button type="button" class="btn-secondary" onclick="startWithoutSource()">+ Neue Liga ohne Vorlage</button>
+                            <span style="font-size:0.85rem; color:var(--color-text-muted);">Für die erste Liga oder einen neuen Wettbewerb: Standardregeln, Mannschaften selbst eintragen.</span>
+                        </div>
                     </div>
                 </div>
 
@@ -648,7 +652,7 @@
                             <h4 style="margin:0 0 12px 0; font-size:0.95rem;">+ Neues Team (Aufsteiger) hinzufügen</h4>
                             <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
                                 <div style="width:44px; height:42px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-card); border:1px solid var(--color-border); border-radius:8px;">
-                                    <img id="new-team-logo-preview" src="../img/teams/blank.png" onerror="this.src='../img/teams/blank.png'" class="team-logo-preview" alt="">
+                                    <img id="new-team-logo-preview" src="../img/teams/blank.png" onerror="this.onerror=null;this.src='../img/teams/blank.png'" class="team-logo-preview" alt="">
                                 </div>
                                 <div style="flex:2; min-width:220px;">
                                     <label for="add-team-name" style="font-size:0.82rem;">Teamname *</label>
@@ -807,6 +811,7 @@
         // Wizard State
         let currentStep = 1;
         let selectedSourceLeague = null; // { id, file, name, options, absteiger_count }
+        let noSourceMode = false;        // Neue Liga ohne Vorlage (Standardregeln)
         let wizardTeams = [];            // [{ checked, name, short_name, logo_file, origin, rank, is_relegated, is_new }]
         let scheduleMode = 'auto';       // 'auto' | 'empty'
         let currentPreview = null;       // Result from action=preview
@@ -1031,6 +1036,8 @@
             }
 
             selectedSourceLeague = data.source_league;
+            noSourceMode = false;
+            document.getElementById('source-league-badge').textContent = 'Vorlage gewählt';
             wizardTeams = (data.teams || []).map(t => ({
                 checked: true,
                 name: t.name,
@@ -1058,6 +1065,28 @@
             updateStepPills();
 
             document.getElementById('step1-config-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Erste Liga bzw. Liga ohne Vorlage: Standardregeln (3/1/0 Punkte), Mannschaften in Schritt 2 eintragen
+        async function startWithoutSource() {
+            showError(null);
+            selectedSourceLeague = null;
+            noSourceMode = true;
+            wizardTeams = [];
+            document.getElementById('step1-config-card').classList.remove('hidden');
+            document.getElementById('source-league-badge').textContent = 'Ohne Vorlage';
+            document.getElementById('source-league-summary').innerHTML =
+                '<strong>Neue Liga ohne Vorlage:</strong> Standardregeln (Sieg 3, Unentschieden 1, Niederlage 0 Punkte; Hin- und Rückrunde). '
+                + 'Die Mannschaften tragen Sie in Schritt 2 ein.';
+            document.getElementById('new-league-name').value = '';
+            document.getElementById('new-league-file').value = '';
+            if (leagueListState.items.length) renderSourceLeagueItems();
+            await checkNewFilenameAvailability();
+            renderWizardTeams();
+            updateStepPills();
+            validateStep1Inputs();
+            document.getElementById('step1-config-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('new-league-name').focus();
         }
 
         function onNewFileInput() {
@@ -1098,7 +1127,7 @@
         function validateStep1Inputs() {
             const nameOk = document.getElementById('new-league-name').value.trim().length > 0;
             const btn = document.getElementById('btn-step1-next');
-            btn.disabled = !(selectedSourceLeague && nameOk && fileValidAndFree);
+            btn.disabled = !((selectedSourceLeague || noSourceMode) && nameOk && fileValidAndFree);
             return !btn.disabled;
         }
 
@@ -1134,7 +1163,7 @@
                         </td>
                         <td style="font-weight:700; color:var(--color-text-muted);">${nr}</td>
                         <td>
-                            <img src="${escHtml(logoSrc)}" onerror="this.src='../img/teams/blank.png'" class="team-logo-preview" alt="">
+                            <img src="${escHtml(logoSrc)}" onerror="this.onerror=null;this.src='../img/teams/blank.png'" class="team-logo-preview" alt="">
                         </td>
                         <td>
                             <input type="text" value="${escHtml(t.name)}" oninput="updateWizardTeamField(${idx}, 'name', this.value)" style="padding:7px 10px; font-weight:600;">
@@ -1404,8 +1433,8 @@
                 </div>
                 <div class="info-box" style="margin:0;">
                     <div style="font-size:0.78rem; color:var(--color-text-muted); text-transform:uppercase;">Quell-Liga (Options)</div>
-                    <div style="font-weight:700; font-size:1.02rem; margin-top:4px;">${escHtml(p.source_league.name)}</div>
-                    <div style="font-size:0.85rem; color:var(--color-text-secondary);">Actual = 1, Optionen kopiert</div>
+                    <div style="font-weight:700; font-size:1.02rem; margin-top:4px;">${p.source_league ? escHtml(p.source_league.name) : 'Ohne Vorlage'}</div>
+                    <div style="font-size:0.85rem; color:var(--color-text-secondary);">${p.source_league ? 'Actual = 1, Optionen kopiert' : 'Standardregeln (3/1/0 Punkte)'}</div>
                 </div>
                 <div class="info-box" style="margin:0;">
                     <div style="font-size:0.78rem; color:var(--color-text-muted); text-transform:uppercase;">Teams & Modus</div>
@@ -1426,7 +1455,7 @@
             document.getElementById('preview-teams-chips').innerHTML = p.teams.map(t => `
                 <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 12px; background:var(--color-bg-elevated); border:1px solid var(--color-border); border-radius:20px; font-size:0.88rem;">
                     <span style="color:var(--color-text-muted); font-weight:700;">#${t.original_id}</span>
-                    <img src="${escHtml(getTeamLogoSrc(t.name, t.logo_file))}" onerror="this.src='../img/teams/blank.png'" style="width:20px; height:20px; object-fit:contain;" alt="">
+                    <img src="${escHtml(getTeamLogoSrc(t.name, t.logo_file))}" onerror="this.onerror=null;this.src='../img/teams/blank.png'" style="width:20px; height:20px; object-fit:contain;" alt="">
                     <span style="font-weight:600;">${escHtml(t.name)}</span>
                     ${t.short_name ? `<span style="color:var(--color-text-muted);">(${escHtml(t.short_name)})</span>` : ''}
                 </div>
@@ -1610,7 +1639,7 @@
         }
 
         function updateStepPills() {
-            const step1Ready = selectedSourceLeague && fileValidAndFree && document.getElementById('new-league-name').value.trim().length > 0;
+            const step1Ready = (selectedSourceLeague || noSourceMode) && fileValidAndFree && document.getElementById('new-league-name').value.trim().length > 0;
             const n = getSelectedTeams().length;
             const step2Ready = step1Ready && n >= 4 && n <= 24;
 

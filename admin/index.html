@@ -1343,7 +1343,7 @@
                             <tr style="border-bottom:1px solid #eee;">
                                 <td style="padding:12px;">
                                     <img src="../img/teams/${leagueEsc(t.logo_file || (t.name.replace(/[^a-zA-Z0-9]/g, '') + '.gif'))}"
-                                         onerror="this.src='../img/teams/blank.png'"
+                                         onerror="this.onerror=null;this.src='../img/teams/blank.png'"
                                          style="height:30px; width:auto;">
                                 </td>
                                 <td style="padding:12px; font-weight:600;">${leagueEsc(t.name)}</td>

@@ -5,11 +5,16 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/../lib/LmoRepository.php';
+require_once __DIR__ . '/../lib/Instance.php';
 
 try {
     $repo = new LmoRepository();
     $leagues = $repo->getAllLeagues();
-    echo json_encode(['leagues' => $leagues]);
+    echo json_encode([
+        'leagues' => $leagues,
+        'default' => Instance::defaultLeagueFile(),                       // Standardliga der Instanz
+        'short_names' => (object)(Instance::get('league_short_names') ?: []), // Kurznamen fuer das Liga-Menue
+    ]);
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);
 }

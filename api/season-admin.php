@@ -374,17 +374,37 @@ function generateDoubleRoundRobin(array $teams, ?DateTimeImmutable $startDate, i
 }
 
 /**
+ * Standard-Optionen einer Liga ohne Vorlage (3/1/0 Punkte, Hin- und Rueckrunde, Ansichten wie LMO 4)
+ */
+function defaultLeagueOptions(): array
+{
+    return [
+        'Title' => 'Liga Manager Online 4', 'Type' => '0', 'goalfaktor' => '1', 'pointsfaktor' => '1', 'enableGameSort' => '1',
+        'Kegel' => '0', 'HandS' => '0', 'PointsForWin' => '3', 'PointsForDraw' => '1', 'PointsForLost' => '0',
+        'Spez' => '0', 'HideDraw' => '0', 'OnRun' => '0', 'MinusPoints' => '1', 'Direct' => '0',
+        'Champ' => '1', 'CL' => '0', 'CK' => '0', 'UC' => '0', 'AR' => '0', 'AB' => '0',
+        'namePkt' => 'Pkt.', 'nameTor' => 'Tore', 'tableHinRueck' => '1', 'tableHeimAusw' => '1',
+        'DatC' => '1', 'DatS' => '1', 'DatM' => '1', 'DatF' => '%d.%m. %H.%M', 'urlT' => '1', 'urlB' => '1',
+        'Plan' => '1', 'Ergebnis' => '1', 'mittore' => '1', 'favTeam' => '0', 'selTeam' => '0', 'ticker' => '0',
+        'Graph' => '1', 'Kreuz' => '1', 'Tabelle' => '1', 'Ligastats' => '1', 'kurve1' => '0', 'kurve2' => '0',
+    ];
+}
+
+/**
  * Validiert und bereitet alle Eingabedaten für Preview & Create auf
  */
 function validateAndPrepareSeason(PDO $pdo, array $input): array
 {
+    // Ohne Quell-Liga (erste Liga einer neuen Installation): Standardregeln
     $sourceFile = basename(trim((string)($input['source_liga'] ?? '')));
-    if ($sourceFile === '' || !preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $sourceFile)) {
-        throw new InvalidArgumentException('Bitte eine gültige Quell-Liga auswählen.');
+    $sourceLeague = null;
+    if ($sourceFile !== '') {
+        if (!preg_match('/^[a-zA-Z0-9_-]+\.(l98|L98|lmo|LMO)$/', $sourceFile)) {
+            throw new InvalidArgumentException('Bitte eine gültige Quell-Liga auswählen.');
+        }
+        $repo = new LmoRepository();
+        $sourceLeague = $repo->getLeagueByFile($sourceFile);
     }
-
-    $repo = new LmoRepository();
-    $sourceLeague = $repo->getLeagueByFile($sourceFile);
 
     $newName = trim((string)($input['new_name'] ?? ''));
     if ($newName === '' || mb_strlen($newName) > 120) {
@@ -462,8 +482,8 @@ function validateAndPrepareSeason(PDO $pdo, array $input): array
         $totalMatches = $roundsCount * $matchesPerRound;
     }
 
-    // Options von der Quell-Liga kopieren und anpassen
-    $options = is_array($sourceLeague['options']) ? $sourceLeague['options'] : [];
+    // Options von der Quell-Liga kopieren und anpassen (ohne Vorlage: Standardregeln wie LMO 4)
+    $options = ($sourceLeague && is_array($sourceLeague['options'])) ? $sourceLeague['options'] : defaultLeagueOptions();
     $options['Name'] = $newName;
     $options['Teams'] = (string)$teamCount;
     $options['Rounds'] = (string)$roundsCount;
@@ -471,11 +491,11 @@ function validateAndPrepareSeason(PDO $pdo, array $input): array
     $options['Actual'] = '1';
 
     return [
-        'source_league' => [
+        'source_league' => $sourceLeague ? [
             'id' => (int)$sourceLeague['id'],
             'file' => $sourceLeague['file'],
             'name' => $sourceLeague['name']
-        ],
+        ] : null,
         'new_name' => $newName,
         'new_file' => $newFile,
         'options' => $options,

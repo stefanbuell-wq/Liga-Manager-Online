@@ -15,12 +15,9 @@ require_once __DIR__ . '/../lib/LmoRepository.php';
 
 $ligaFile = $_GET['liga'] ?? null;
 if ($ligaFile === null || $ligaFile === '') {
-    // Standard: neueste Saison der Hamburg-Oberliga (z. B. hhoberliga2627.l98)
-    require_once __DIR__ . '/../lib/LmoDatabase.php';
-    $row = LmoDatabase::getInstance()
-        ->query("SELECT file FROM leagues WHERE file LIKE 'hhoberliga____.l98' ORDER BY file DESC LIMIT 1")
-        ->fetch();
-    $ligaFile = $row['file'] ?? 'hhoberliga2627.l98';
+    // Standardliga der Instanz (config/instance.php: default_league), sonst zuletzt angelegte Liga
+    require_once __DIR__ . '/../lib/Instance.php';
+    $ligaFile = Instance::defaultLeagueFile() ?? '';
 }
 
 // Validate file parameter against path traversal attacks

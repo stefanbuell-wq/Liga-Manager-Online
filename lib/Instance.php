@@ -18,6 +18,8 @@ class Instance
         'region'         => '',                     // fuer Texte, z. B. "Hamburger Amateurfußball"
         'legacy_forum'   => false,                  // true: Hinweis zur Uebernahme alter Forenkonten bei der Registrierung
         'legacy_host'    => '',                     // Host der frueheren Website (Altbilder/-links in Berichten), z. B. "hafo.de"
+        'default_league' => '',                     // Dateipraefix der Standardliga, z. B. "hhoberliga" -> neueste hhoberligaJJJJ.l98; leer = zuletzt angelegte Liga
+        'league_short_names' => [],                 // Kurznamen im Liga-Menue, z. B. ['Hamburg-Oberliga' => 'Oberliga']
     ];
 
     private static ?array $cfg = null;
@@ -72,6 +74,25 @@ class Instance
     public static function teamSignature(): string
     {
         return 'Dein ' . self::siteName() . '-Team';
+    }
+
+    /** Datei der Liga, die ohne ?liga= angezeigt wird */
+    public static function defaultLeagueFile(): ?string
+    {
+        try {
+            require_once __DIR__ . '/LmoDatabase.php';
+            $pdo = LmoDatabase::getInstance();
+            $prefix = preg_replace('/[^a-z0-9_-]/i', '', (string)self::get('default_league'));
+            if ($prefix !== '') {
+                $st = $pdo->prepare("SELECT file FROM leagues WHERE file LIKE ? ORDER BY file DESC LIMIT 1");
+                $st->execute([$prefix . '____.l98']);
+                if ($f = $st->fetchColumn()) return (string)$f;
+            }
+            $f = $pdo->query("SELECT file FROM leagues ORDER BY id DESC LIMIT 1")->fetchColumn();
+            return $f ? (string)$f : null;
+        } catch (Throwable $e) {
+            return null;
+        }
     }
 
     /** Oeffentliche Werte fuer die Seiten (ueber api/theme.php) */

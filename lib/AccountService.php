@@ -33,6 +33,17 @@ class AccountService
     {
         static $done = false;
         if ($done) return;
+        // Neue Installation: Grundtabelle anlegen (wie api/users.php)
+        $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            display_name TEXT,
+            role TEXT DEFAULT 'editor',
+            active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_login DATETIME
+        )");
         $cols = array_column($pdo->query("PRAGMA table_info(users)")->fetchAll(), 'name');
         $add = [
             'email' => "ALTER TABLE users ADD COLUMN email TEXT",
