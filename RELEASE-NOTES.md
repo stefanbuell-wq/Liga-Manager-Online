@@ -5,6 +5,22 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 18.11.2026 – Liga Manager Online als eigenständiges Produkt
+
+### Für Redaktion und Leser
+
+- **Auf hafo.de ändert sich sichtbar nichts.** Name, Farben, „HAFO-Tipp“ und die Oberliga als Startliga kommen jetzt aus den Einstellungen dieser Installation statt fest aus dem Programm.
+- Der Liga Manager Online liegt öffentlich auf GitHub (github.com/stefanbuell-wq/Liga-Manager-Online, Lizenz GPLv3). Andere Vereine und Portale können ihn installieren; hafo.de ist die erste Installation.
+- **Saison-Assistent:** „+ Neue Liga ohne Vorlage“ legt eine Liga mit Standardregeln an, auch wenn es noch keine passende Vorlage gibt.
+
+### Technik
+
+- `config/instance.php` (Vorlage `config/instance.example.php`) und `lib/Instance.php`: Name, Untertitel, Basis-URL, Mail-Kürzel, Tipp-Beschriftung, Region, Altforum-Hinweis, Alt-Host, Standardliga (`default_league`), Liga-Kurznamen; öffentlich über `api/theme.php` → `instance`, Seiten über `js/instance.js`
+- `api/list-leagues.php` liefert `default` und `short_names`; `api/get-league-data.php` ohne `?liga=` über `Instance::defaultLeagueFile()`
+- `scripts/install.php` (neue Installation, `--demo` mit erfundenen Beispieldaten), `scripts/demo-data.php`; `AccountService` legt `users` bei leerer DB an
+- Bild-Fallbacks mit `this.onerror=null` (keine Endlosschleife ohne `blank.png`)
+- Instanzspezifisches (Wappen, Altforum-Bilder, Import-Skripte, Rechtstexte, Betrieb) liegt im privaten Repo `hafo-site`
+
 ## 17.11.2026 – Spieltagsvorschau: gespeicherte Spiele bleiben beim Ergänzen erhalten
 
 ### Für Redaktion und Leser
