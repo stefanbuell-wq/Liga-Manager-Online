@@ -104,6 +104,23 @@ class Instance
         }
     }
 
+    /** Zuschaltbare Funktionen (Admin -> Einstellungen) und vorhandene Daten */
+    public static function features(): array
+    {
+        $f = ['history' => false, 'calculator' => false, 'tipp' => false];
+        try {
+            require_once __DIR__ . '/SettingsRepository.php';
+            $s = new SettingsRepository();
+            $f['calculator'] = $s->get('feature_calculator') === '1';
+            $f['tipp'] = $s->get('feature_tipp') === '1';
+            $pdo = LmoDatabase::getInstance();
+            $has = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'history_competitions'")->fetchColumn();
+            $f['history'] = $has && (int)$pdo->query("SELECT COUNT(*) FROM history_competitions")->fetchColumn() > 0;
+        } catch (Throwable $e) {
+        }
+        return $f;
+    }
+
     /** Oeffentliche Werte fuer die Seiten (ueber api/theme.php) */
     public static function publicSettings(): array
     {
@@ -112,6 +129,7 @@ class Instance
             'region'      => (string)self::get('region'),
             'legacyForum' => (bool)self::get('legacy_forum'),
             'testBanner'  => (string)self::get('test_banner'),
+            'features'    => self::features(),
         ];
     }
 

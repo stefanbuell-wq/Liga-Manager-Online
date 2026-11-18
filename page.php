@@ -8,7 +8,7 @@
  */
 require_once __DIR__ . '/lib/Instance.php';
 
-$pages = ['index', 'forum', 'kontakt', 'konto', 'suche'];
+$pages = ['index', 'forum', 'kontakt', 'konto', 'suche', 'historie'];
 $p = $_GET['p'] ?? 'index';
 if (!in_array($p, $pages, true)) {
     http_response_code(404);

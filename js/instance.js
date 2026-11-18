@@ -43,6 +43,9 @@
         each('[data-site-region]', function (el) { el.textContent = inst.region || el.getAttribute('data-site-region') || ''; });
         each('[data-region-empty]', function (el) { el.hidden = !inst.region; });
         each('[data-legacy-forum]', function (el) { el.hidden = !inst.legacyForum; });
+        // Zuschaltbare Funktionen (Admin -> Einstellungen): Links/Bereiche nur zeigen, wenn aktiv
+        var feat = inst.features || {};
+        each('[data-feature]', function (el) { el.hidden = !feat[el.getAttribute('data-feature')]; });
         var title = document.querySelector('title');
         if (title && title.hasAttribute('data-page')) {
             var page = title.getAttribute('data-page');

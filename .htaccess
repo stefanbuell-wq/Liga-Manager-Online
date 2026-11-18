@@ -10,7 +10,7 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^$ page.php?p=index [L,QSA]
-    RewriteRule ^(index|forum|kontakt|konto|suche)\.html$ page.php?p=$1 [L,QSA]
+    RewriteRule ^(index|forum|kontakt|konto|suche|historie)\.html$ page.php?p=$1 [L,QSA]
 </IfModule>
 
 # Security Headers

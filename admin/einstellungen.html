@@ -107,6 +107,14 @@
             <p>Die Einstellungen sind nur für Administratoren.</p>
         </div>
 
+        <div id="featureCard" class="card hidden">
+            <h2>🧩 Zusatzfunktionen</h2>
+            <p>Diese Funktionen sind optional. Ausgeschaltet sind sie für Besucher nicht zu sehen.</p>
+            <div class="field"><label><input type="checkbox" id="feat_calculator"> <strong>Tabellenrechner</strong> – „Was wäre wenn?“ an der Tabelle: Besucher tragen Ergebnisse ein und sehen die neue Tabelle (wird nicht gespeichert).</label></div>
+            <div class="field"><label><input type="checkbox" id="feat_tipp"> <strong>Tippspiel</strong> – angemeldete Mitglieder tippen die Spiele, mit Ranglisten je Spieltag und Saison. Tipprunden im Admin unter „Tippspiel“.</label></div>
+            <div class="actions"><button type="button" class="btn" onclick="saveFeatures()">Speichern</button></div>
+        </div>
+
         <form id="contactCard" class="card hidden" onsubmit="save(event)">
             <h2>✉️ Kontaktformular – Benachrichtigung</h2>
             <p>Wer soll eine E-Mail bekommen, wenn jemand das Kontaktformular abschickt? Es können zwei Personen
@@ -207,6 +215,10 @@
                 if (res.csrf_token) csrfToken = res.csrf_token;
                 KEYS.forEach(k => document.getElementById(k).value = res.data[k] || '');
                 document.getElementById('contactCard').classList.remove('hidden');
+                const f = res.data.features || {};
+                document.getElementById('feat_calculator').checked = !!f.calculator;
+                document.getElementById('feat_tipp').checked = !!f.tipp;
+                document.getElementById('featureCard').classList.remove('hidden');
                 initBriefing(res.data.briefing);
             } catch (e) {
                 toast('Laden fehlgeschlagen: ' + e.message, true);
@@ -222,6 +234,13 @@
             })).json();
             if (!res.success) throw new Error(res.error || 'Fehler');
             return res;
+        }
+
+        async function saveFeatures() {
+            try {
+                await post({ action: 'features_save', calculator: document.getElementById('feat_calculator').checked, tipp: document.getElementById('feat_tipp').checked });
+                toast('Gespeichert – gilt sofort für alle Besucher');
+            } catch (e) { toast(e.message, true); }
         }
 
         async function save(ev) {

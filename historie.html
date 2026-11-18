@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-page="Historie">Historie - Liga Manager Online</title>
+    <meta name="description" content="Ewige Tabelle, Meister, Pokalsieger und Rekorde.">
+
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/portal.css?v=20261121">
+    <script src="js/darkmode.js?v=20261121"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <script>
+        (function() {
+            const apply = t => t && t.cssVariables && Object.entries(t.cssVariables).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+            try { apply(JSON.parse(localStorage.getItem('hafo_theme') || 'null')); } catch (e) {}
+            fetch('api/theme.php').then(r => r.json()).then(t => { try { localStorage.setItem('hafo_theme', JSON.stringify(t)); } catch (e) {} apply(t); }).catch(() => {});
+        })();
+    </script>
+    <style>
+        .hist-wrap { max-width: 1200px; margin: var(--spacing-xl) auto var(--spacing-2xl); padding: 0 var(--spacing-md); }
+        .hist-wrap h1 { font-family: var(--font-display); font-size: 2rem; margin: 0; }
+        .hist-sub { color: var(--color-text-muted); margin: 4px 0 var(--spacing-lg); }
+        .hist-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--spacing-lg); }
+        .hist-tabs button { border: 1px solid var(--border-color); background: var(--color-bg-card); color: var(--color-text-primary); padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: .95rem; }
+        .hist-tabs button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+        .hist-tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: var(--spacing-md); color: var(--color-text-secondary); font-size: .9rem; }
+        .hist-tools input[type=search] { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--color-bg-card); color: var(--color-text-primary); min-width: 220px; }
+        .table-scroll { overflow-x: auto; }
+        .league-table th.sortable { cursor: pointer; white-space: nowrap; }
+        .league-table th.sorted { color: var(--color-primary); }
+        .league-table td.num, .league-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .league-table tr.current td:first-child { box-shadow: inset 4px 0 0 var(--color-live); }
+        .league-table tr.live td { background: rgba(0,163,92,.05); }
+        .club-link { color: inherit; text-decoration: none; }
+        .club-link:hover { color: var(--color-primary); text-decoration: underline; }
+        .hist-legend { font-size: .85rem; color: var(--color-text-muted); margin: var(--spacing-sm) 0 0; }
+        .hist-legend .dot { display: inline-block; width: 10px; height: 10px; background: var(--color-live); border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+        .hist-notes { margin-top: var(--spacing-lg); font-size: .88rem; color: var(--color-text-secondary); }
+        .hist-notes li { margin: 4px 0; }
+        .grid2 { display: grid; gap: var(--spacing-lg); grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+        .rec-card { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-md) var(--spacing-lg); }
+        .rec-card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+        .rec-card ol { margin: 0; padding-left: 1.4em; }
+        .rec-card li { margin: 6px 0; font-size: .92rem; }
+        .rec-card .val { font-weight: 800; color: var(--color-primary); margin-right: 6px; }
+        .rec-card .meta { color: var(--color-text-muted); font-size: .82rem; }
+        .titles-table td.season { white-space: nowrap; font-weight: 700; }
+        .muted { color: var(--color-text-muted); }
+        .club-head { display: flex; align-items: center; gap: 14px; margin-bottom: var(--spacing-md); }
+        .club-head img { width: 56px; height: 56px; object-fit: contain; }
+        .place-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+        .place { border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 8px; background: var(--color-bg-card); font-size: .82rem; }
+        .place b { display: block; font-size: 1.1rem; }
+        .place.p1 { border-color: #d4a017; background: rgba(212,160,23,.12); }
+        .place.up b, .place.down b { font-size: .9rem; color: var(--color-text-muted); }
+        .back { display: inline-block; margin-bottom: var(--spacing-md); color: var(--color-primary); cursor: pointer; font-weight: 600; }
+        .error-box { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--spacing-lg); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span data-site-logo>Liga Manager Online</span>
+                </a>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                    <a href="historie.html" class="nav-link active" data-feature="history">🏆 Historie</a>
+                    <a href="suche.html" class="nav-link">🔍 Suche</a>
+                </nav>
+                <div class="header-actions"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="hist-wrap">
+        <h1>🏆 Historie <span id="comp-name"></span></h1>
+        <p class="hist-sub" id="comp-source"></p>
+        <div class="hist-tabs" id="tabs">
+            <button data-tab="table" class="active">Ewige Tabelle</button>
+            <button data-tab="titles">Meister &amp; Pokalsieger</button>
+            <button data-tab="records">Rekorde</button>
+        </div>
+        <div id="view"><p class="muted">Wird geladen …</p></div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p class="footer-copyright"><span data-site-copyright>© Liga Manager Online</span> · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="kontakt.html">Kontakt</a></p>
+            </div>
+        </div>
+    </footer>
+    <script>
+    (function () {
+        const API = 'api/history.php';
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const fmt = n => Number(n).toLocaleString('de-DE');
+        const params = new URLSearchParams(location.search);
+        let comp = params.get('wettbewerb') || '';
+        let tab = params.get('ansicht') || 'table';
+        let live = params.get('live') === '1';
+        let tableRows = [], sortKey = 'rank', sortDir = 1, filter = '';
+        const view = document.getElementById('view');
+        const crest = k => k ? `<img src="img/teams/${esc(k)}.gif" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'">` : '<img src="img/teams/blank.png" alt="" loading="lazy">';
+
+        async function get(q) {
+            const r = await fetch(API + '?' + new URLSearchParams(Object.assign({ comp }, q)));
+            const d = await r.json().catch(() => ({ success: false, error: 'Fehler beim Laden.' }));
+            if (!d.success) throw new Error(d.error || 'Fehler beim Laden.');
+            if (d.competition) {
+                comp = d.competition.slug;
+                document.getElementById('comp-name').textContent = '· ' + d.competition.name;
+                document.getElementById('comp-source').textContent = d.competition.source ? 'Quelle: ' + d.competition.source : '';
+                window.__notes = d.competition.notes || [];
+            }
+            return d;
+        }
+        function setUrl() {
+            const p = new URLSearchParams();
+            if (tab !== 'table') p.set('ansicht', tab);
+            if (live) p.set('live', '1');
+            if (params.get('verein')) p.set('verein', params.get('verein'));
+            history.replaceState(null, '', 'historie.html' + (p.toString() ? '?' + p : ''));
+        }
+        function notes() {
+            const n = window.__notes || [];
+            return n.length ? `<ul class="hist-notes">${n.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+        }
+
+        // ---------------- Ewige Tabelle
+        async function showTable() {
+            const d = await get({ view: 'table', live: live ? 1 : 0 });
+            tableRows = d.data.rows;
+            const info = d.data;
+            view.innerHTML = `
+                <div class="hist-tools">
+                    <input type="search" id="flt" placeholder="Verein suchen …" value="${esc(filter)}">
+                    ${info.current_season ? `<label><input type="checkbox" id="live" ${live ? 'checked' : ''}> laufende Saison ${esc(info.current_season)} mitzählen (Stand heute)</label>` : ''}
+                </div>
+                <div class="table-card"><div class="table-scroll"><table class="league-table" id="et"></table></div></div>
+                <p class="hist-legend"><span class="dot"></span>spielt in der Saison ${esc(info.current_season || '')} · Stand: inkl. ${esc(info.baseline)}${info.live_season ? ' + laufende Saison ' + esc(info.live_season) + ' (vorläufig)' : ''} · Punkte nach 3-Punkte-Regel</p>
+                ${notes()}`;
+            document.getElementById('flt').addEventListener('input', e => { filter = e.target.value; renderTable(); });
+            const lv = document.getElementById('live');
+            if (lv) lv.addEventListener('change', e => { live = e.target.checked; setUrl(); showTable(); });
+            renderTable();
+        }
+        function renderTable() {
+            const cols = [['rank', '#', 1], ['name', 'Verein', 0], ['seasons', 'Spielz.', 1], ['played', 'Sp.', 1], ['won', 'S', 1], ['drawn', 'U', 1], ['lost', 'N', 1],
+                ['gf', 'Tore', 1], ['diff', 'Diff.', 1], ['points', 'Pkt.', 1], ['avg', 'Ø Pkt.', 1], ['first', 'seit', 1]];
+            const q = filter.trim().toLowerCase();
+            const rows = tableRows.filter(r => !q || r.name.toLowerCase().includes(q)).sort((a, b) => {
+                const x = a[sortKey], y = b[sortKey];
+                return (typeof x === 'string' ? x.localeCompare(y, 'de') : (x ?? 0) - (y ?? 0)) * sortDir;
+            });
+            document.getElementById('et').innerHTML = `<thead><tr>${cols.map(([k, l, n]) => `<th class="sortable ${n ? 'num' : ''} ${k === sortKey ? 'sorted' : ''}" data-k="${k}">${l}${k === sortKey ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+                <tbody>${rows.map(r => `<tr class="${r.current ? 'current' : ''} ${r.live ? 'live' : ''}">
+                    <td class="table-rank">${r.rank}.</td>
+                    <td><a class="club-link table-team" href="?verein=${r.id}" data-club="${r.id}">${crest(r.crest)}<span>${esc(r.name)}</span></a></td>
+                    <td class="num">${r.seasons}</td><td class="num">${fmt(r.played)}</td><td class="num">${fmt(r.won)}</td><td class="num">${fmt(r.drawn)}</td><td class="num">${fmt(r.lost)}</td>
+                    <td class="num">${fmt(r.gf)}:${fmt(r.ga)}</td><td class="num">${r.diff > 0 ? '+' : ''}${fmt(r.diff)}</td>
+                    <td class="num table-points">${fmt(r.points)}</td><td class="num">${r.avg.toFixed(2).replace('.', ',')}</td><td class="num">${esc(r.first_label || '')}</td></tr>`).join('')}</tbody>`;
+            document.querySelectorAll('#et th[data-k]').forEach(th => th.addEventListener('click', () => {
+                const k = th.dataset.k;
+                if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = (k === 'name' || k === 'rank' || k === 'first') ? 1 : -1; }
+                renderTable();
+            }));
+        }
+
+        // ---------------- Meister & Pokalsieger
+        async function showTitles() {
+            const d = (await get({ view: 'titles' })).data;
+            const count = (list, title) => `<div class="rec-card"><h3>${title}</h3><ol>${list.map(e => `<li><span class="val">${e.count}×</span>${esc(e.name)}${e.seasons && e.seasons.length && e.count <= 4 ? ` <span class="meta">(${e.seasons.map(esc).join(', ')})</span>` : ''}</li>`).join('')}</ol></div>`;
+            view.innerHTML = `
+                <div class="grid2" style="margin-bottom:var(--spacing-lg)">
+                    ${count(d.champions, 'Rekordmeister')}${count(d.cups, 'Rekord-Pokalsieger')}${d.doubles.length ? count(d.doubles, 'Double (Meister + Pokal)') : ''}
+                </div>
+                <div class="table-card"><div class="table-scroll"><table class="league-table titles-table">
+                    <thead><tr><th>Saison</th><th>Meister</th><th class="num">S-U-N</th><th class="num">Tore</th><th class="num">Pkt.</th><th>Pokalsieger</th><th>Anmerkung</th></tr></thead>
+                    <tbody>${d.list.slice().reverse().map(t => `<tr>
+                        <td class="season">${esc(t.label)}</td><td><b>${esc(t.champion || '–')}</b></td>
+                        <td class="num">${t.record ? `${t.record.won}-${t.record.drawn}-${t.record.lost}` : ''}</td>
+                        <td class="num">${t.record ? `${t.record.gf}:${t.record.ga}` : ''}</td><td class="num">${t.record ? t.record.points : ''}</td>
+                        <td>${esc(t.cup || '')}</td><td class="muted">${esc(t.note || '')}</td></tr>`).join('')}</tbody>
+                </table></div></div>${notes()}`;
+        }
+
+        // ---------------- Rekorde
+        async function showRecords() {
+            const d = (await get({ view: 'records' })).data;
+            const game = g => `<span class="val">${g.hg}:${g.gg}</span>${esc(g.home)} – ${esc(g.guest)} <span class="meta">${esc(g.season_label)}${g.date_label ? ', ' + esc(g.date_label) : ''}</span>`;
+            const season = (s, v) => `<span class="val">${v}</span>${esc(s.club)} <span class="meta">${esc(s.season_label)}, ${s.played} Sp., ${s.won}-${s.drawn}-${s.lost}, ${s.gf}:${s.ga}</span>`;
+            const streak = s => `<span class="val">${s.length}</span>${esc(s.club)} <span class="meta">${esc(s.from)} bis ${esc(s.to)}</span>`;
+            const card = (title, list, f) => `<div class="rec-card"><h3>${title}</h3><ol>${list.map(x => `<li>${f(x)}</li>`).join('')}</ol></div>`;
+            view.innerHTML = `
+                <p class="hist-sub">Aus ${fmt(d.matches_counted)} erfassten Spielen seit ${esc(d.since)}. Für frühere Jahre liegen keine Einzelspiele vor.</p>
+                <div class="grid2">
+                    ${card('Höchste Heimsiege', d.biggest_home_wins, game)}
+                    ${card('Höchste Auswärtssiege', d.biggest_away_wins, game)}
+                    ${card('Torreichste Spiele', d.most_goals, game)}
+                    ${card('Meiste Punkte in einer Saison', d.most_points_season, s => season(s, s.points + ' Pkt.'))}
+                    ${card('Längste Siegesserien', d.streaks.wins, streak)}
+                    ${card('Längste Niederlagenserien', d.streaks.losses, streak)}
+                    ${card('Längste Serien ohne Niederlage', d.streaks.unbeaten, streak)}
+                    ${card('Meiste Tore in einer Saison', d.most_goals_season, s => season(s, s.gf + ' Tore'))}
+                    ${card('Wenigste Gegentore je Spiel', d.fewest_against_season, s => season(s, (s.ga / s.played).toFixed(2).replace('.', ',')))}
+                </div>`;
+        }
+
+        // ---------------- Verein
+        async function showClub(id) {
+            const d = (await get({ view: 'club', id })).data;
+            const t = d.totals;
+            const mark = p => p === null || p === undefined ? '' : p;
+            view.innerHTML = `
+                <span class="back" id="back">← zurück zur Ewigen Tabelle</span>
+                <div class="club-head">${d.crest ? crest(d.crest) : ''}<div><h2 style="margin:0">${esc(d.name)}</h2>
+                    ${t ? `<div class="muted">Platz ${t.rank} der Ewigen Tabelle · ${t.seasons} Spielzeiten · ${fmt(t.played)} Spiele · ${fmt(t.points)} Punkte · ${fmt(t.gf)}:${fmt(t.ga)} Tore</div>` : ''}</div></div>
+                <div class="place-grid">${d.seasons.filter(s => s.place !== '-').map(s => {
+                    const p = mark(s.place);
+                    const cls = p === '1' ? 'p1' : p === 'hoeher' ? 'up' : p === 'tiefer' ? 'down' : '';
+                    const txt = p === 'hoeher' ? '↑ höher' : p === 'tiefer' ? '↓ tiefer' : p === '**' ? 'Abbruch' : p ? p + '.' : '✓';
+                    return `<div class="place ${cls}">${esc(s.label)}<b>${esc(txt)}</b></div>`;
+                }).join('')}</div>
+                <p class="hist-legend">↑ höher = in einer höheren Liga, ↓ tiefer = in einer tieferen Liga (laut Quelle)</p>`;
+            document.getElementById('back').addEventListener('click', () => { params.delete('verein'); setUrl(); show(); });
+        }
+
+        async function show() {
+            document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            try {
+                if (params.get('verein')) return await showClub(params.get('verein'));
+                if (tab === 'titles') return await showTitles();
+                if (tab === 'records') return await showRecords();
+                return await showTable();
+            } catch (e) {
+                view.innerHTML = `<div class="error-box">${esc(e.message)}</div>`;
+            }
+        }
+        document.getElementById('tabs').addEventListener('click', e => {
+            const b = e.target.closest('button[data-tab]'); if (!b) return;
+            tab = b.dataset.tab; params.delete('verein'); setUrl(); show();
+        });
+        view.addEventListener('click', e => {
+            const a = e.target.closest('a[data-club]'); if (!a) return;
+            e.preventDefault(); params.set('verein', a.dataset.club); setUrl(); show(); window.scrollTo(0, 0);
+        });
+        show();
+    })();
+    </script>
+    <script src="js/foerderer.js" defer></script>
+    <script src="js/instance.js?v=20261118b"></script>
+</body>
+</html>

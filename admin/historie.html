@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historie - Admin</title>
+    <style>
+        :root { --color-primary: #E2001A; --color-bg: #F5F5F5; --color-card: #FFFFFF; --color-border: rgba(0,0,0,.10); --color-text: #111; --color-muted: #767676; }
+        * { box-sizing: border-box; }
+        body { background: var(--color-bg); color: var(--color-text); margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.5; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; }
+        .back-link { display: inline-block; color: var(--color-primary); text-decoration: none; font-weight: 600; margin-bottom: 16px; }
+        h1 { margin: 0 0 4px; font-size: 1.9rem; }
+        .sub { margin: 0 0 20px; color: var(--color-muted); }
+        .card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 14px; padding: 18px 22px; margin-bottom: 20px; }
+        .card h2 { margin: 0 0 6px; font-size: 1.2rem; }
+        .card p.hint { margin: 0 0 14px; color: #555; font-size: .92rem; }
+        table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+        th { font-size: .78rem; text-transform: uppercase; color: var(--color-muted); }
+        input[type=text], select { padding: 7px 9px; border: 1px solid var(--color-border); border-radius: 8px; font-size: .92rem; max-width: 100%; }
+        button { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--color-border); background: #fff; cursor: pointer; font-size: .88rem; }
+        button.primary { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+        .ok { color: #12805c; font-weight: 600; }
+        .warn { color: #b26a00; }
+        .msg { position: fixed; bottom: 20px; right: 20px; background: #111; color: #fff; padding: 10px 16px; border-radius: 10px; display: none; max-width: 460px; z-index: 50; }
+        .msg.err { background: #a11; }
+        .error { background: #fdecea; color: #8a1c1c; padding: 14px 16px; border-radius: 10px; }
+        .muted { color: var(--color-muted); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">&larr; Zurück zum Admin-Dashboard</a>
+    <h1>🏆 Historie</h1>
+    <p class="sub" id="sub">Ewige Tabelle, Meister und Rekorde pflegen. Öffentliche Seite: <a href="../historie.html" target="_blank">Historie</a></p>
+    <div id="content"><p>Wird geladen …</p></div>
+</div>
+<div class="msg" id="msg"></div>
+<script>
+(function () {
+    const API = '../api/history.php';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let csrf = '', data = null;
+    const box = document.getElementById('content');
+
+    function toast(t, err) {
+        const m = document.getElementById('msg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); m.style.display = 'block';
+        clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = 'none', 5000);
+    }
+    async function load() {
+        const r = await fetch(API + '?view=admin', { credentials: 'same-origin' });
+        const d = await r.json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!r.ok || !d.success) { box.innerHTML = `<div class="error">${esc(d.error || 'Laden fehlgeschlagen.')} <a href="index.html">Zum Login</a></div>`; return; }
+        data = d.data; render();
+    }
+    async function post(body) {
+        const r = await fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+            body: JSON.stringify(Object.assign({ csrf_token: csrf, comp: data.competition.slug }, body)) });
+        const d = await r.json().catch(() => ({ error: 'Unerwartete Antwort.' }));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!r.ok || !d.success) throw new Error(d.error || 'Fehler');
+        return d;
+    }
+    function render() {
+        const c = data.competition;
+        document.getElementById('sub').innerHTML = `${esc(c.name)} · Altbestand bis ${esc(c.baseline)} · Öffentliche Seite: <a href="../historie.html" target="_blank">Historie</a>`;
+        const seasons = data.seasons.slice().reverse();
+        const clubOpts = data.clubs.map(k => `<option value="${k.id}">${esc(k.name)}</option>`).join('');
+        box.innerHTML = `
+            <div class="card">
+                <h2>Saisons übernehmen</h2>
+                <p class="hint">Am Saisonende eine Saison übernehmen: Bilanz und Platz aller Vereine werden in die Ewige Tabelle übernommen, der Erste wird als Meister eingetragen.
+                    Pokalsieger bitte von Hand eintragen. „Rückgängig“ entfernt die Saison wieder vollständig.</p>
+                ${seasons.length ? `<table><thead><tr><th>Saison</th><th>Stand</th><th>Pokalsieger</th><th></th></tr></thead><tbody>
+                ${seasons.map(s => `<tr data-season="${s.season}">
+                    <td><b>${esc(s.label)}</b><div class="muted">${esc(s.leagues.join(', '))}</div></td>
+                    <td>${s.adopted ? `<span class="ok">übernommen</span> <span class="muted">${esc(s.adopted.adopted_at)}${s.adopted.adopted_by ? ' · ' + esc(s.adopted.adopted_by) : ''}</span>`
+                        : s.unmapped.length ? `<span class="warn">${s.unmapped.length} Verein(e) nicht zugeordnet</span>`
+                        : s.open_matches ? `<span class="warn">${s.open_matches} von ${s.total_matches} Spielen ohne Ergebnis</span>` : '<span class="ok">alle Spiele gespielt</span>'}</td>
+                    <td>${s.adopted ? '' : '<input type="text" class="cup" placeholder="Pokalsieger (optional)">'}</td>
+                    <td>${s.adopted ? '<button data-act="unadopt">Rückgängig</button>' : `<button class="primary" data-act="adopt" ${s.unmapped.length ? 'disabled' : ''}>Übernehmen</button>`}</td>
+                </tr>`).join('')}</tbody></table>` : '<p class="muted">Keine Saison nach dem Altbestand vorhanden.</p>'}
+            </div>
+            <div class="card">
+                <h2>Vereinsnamen zuordnen</h2>
+                <p class="hint">Neue Vereinsnamen aus den Ligen einem Verein der Ewigen Tabelle zuordnen (z. B. nach Umbenennung) oder als neuen Verein anlegen.</p>
+                ${data.unmapped.length ? `<table><thead><tr><th>Name in der Liga</th><th>zuletzt</th><th>Verein</th><th></th></tr></thead><tbody>
+                ${data.unmapped.map(u => `<tr data-team="${esc(u.team_name)}"><td><b>${esc(u.team_name)}</b></td><td>${esc(u.last_season)}</td>
+                    <td><select class="club"><option value="">– neuer Verein –</option>${clubOpts}</select></td>
+                    <td><button class="primary" data-act="map">Speichern</button></td></tr>`).join('')}</tbody></table>`
+                : '<p class="ok">Alle Vereinsnamen sind zugeordnet.</p>'}
+            </div>`;
+    }
+    box.addEventListener('click', async e => {
+        const b = e.target.closest('button[data-act]'); if (!b) return;
+        const tr = b.closest('tr');
+        try {
+            if (b.dataset.act === 'adopt') {
+                const s = data.seasons.find(x => String(x.season) === tr.dataset.season);
+                let force = false;
+                if (s.open_matches) {
+                    if (!confirm(`${s.label}: Es fehlen noch ${s.open_matches} Ergebnisse. Trotzdem übernehmen? (Später einfach rückgängig machen und neu übernehmen.)`)) return;
+                    force = true;
+                } else if (!confirm(`Saison ${s.label} in die Ewige Tabelle übernehmen?`)) return;
+                const d = await post({ action: 'adopt', season: s.season, cup: tr.querySelector('.cup').value, force });
+                toast(d.message);
+            }
+            if (b.dataset.act === 'unadopt') {
+                if (!confirm('Übernahme dieser Saison rückgängig machen?')) return;
+                toast((await post({ action: 'unadopt', season: Number(tr.dataset.season) })).message);
+            }
+            if (b.dataset.act === 'map') {
+                const sel = tr.querySelector('.club').value;
+                const body = { action: 'map', team_name: tr.dataset.team };
+                if (sel) body.club_id = Number(sel); else body.new_club = tr.dataset.team;
+                toast((await post(body)).message);
+            }
+            await load();
+        } catch (err) { toast(err.message, true); }
+    });
+    load();
+})();
+</script>
+<script src="../js/instance.js?v=20261118b"></script>
+</body>
+</html>
