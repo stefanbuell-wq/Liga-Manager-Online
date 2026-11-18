@@ -1,106 +1,85 @@
-# Liga Manager Online (LMO)
+# Liga Manager Online (LMO26)
 
-Moderne PHP 8 Neuimplementierung des klassischen Liga Manager Online - ein webbasiertes System zur Verwaltung von Fußball-Ligen.
+Webbasiertes System für Amateurfußball-Portale: Ligen, Spielpläne und Tabellen, Spielberichte und Vorschauen,
+Kader, Forum, Sponsoren-Banner und Kontaktformular. PHP 8 und SQLite, ohne Framework, ohne Build-Schritt.
 
-## Features
+LMO26 ist die Neuentwicklung des klassischen [Liga Manager Online](https://liga-manager-online.de) und liest dessen
+`.l98`-Ligadateien. Es läuft produktiv auf [hafo.de](https://hafo.de) – Hamburger Fußball Online.
 
-- **SQLite-Datenbank** - Keine MySQL-Installation nötig
-- **Modernes Admin-Interface** - Dark Mode Design
-- **REST API** - Alle Operationen über JSON-API
-- **Sicherheit** - CSRF-Schutz, Rate Limiting, Session-Hardening
-- **Benutzerverwaltung** - Rollen (Admin/Editor), Passwort-Policy
-- **Team-Verwaltung** - Logos, Kurznamen
-- **Punktekorrekturen** - Abzüge/Boni mit Begründung
-- **News-System** - Integrierte Nachrichtenverwaltung
-- **Sponsoren-Banner** - Header (728×90) und Seiten (160×600), Rotation, Laufzeiten, Sichtkontakte/Klicks, CSV-Export – ohne Cookies und Drittanbieter
-- **Kontaktformular** - Themen Sponsoring/Allgemein/Fehler, Anfragen im Admin, Spamschutz ohne CAPTCHA
+## Funktionen
 
-## Systemanforderungen
+- **Ligen:** Tabellen (auch Stand nach Spieltag, Heim/Auswärts), Spielplan, Kreuztabelle, Statistiken, Punktekorrekturen, Archiv aller Saisons
+- **Saison-Assistent:** neue Saison aus einer Vorlage (Auf-/Absteiger) oder ohne Vorlage, Spielplan als automatische Doppelrunde
+- **Ergebnisdienst:** Spieltag-Editor mit Heimrecht-Tausch
+- **Berichte:** Spielberichte und Spieltagsvorschauen mit Vorlagen, automatische Verknüpfung mit Spielen, Volltextsuche
+- **Kader:** Spieler, Profile, Vereinshistorie, Torschützen
+- **Forum:** Kategorien, Ungelesen-Markierung, Zitate, Formatierung, Bilder, Abos per Mail, Melden, Moderation
+- **Konten:** Selbstregistrierung mit Mail-Bestätigung und Freigabe, Profilbilder, Rollen Admin/Redaktion/Mitglied
+- **Sponsoren:** Banner (Header, Seiten, im Bericht) mit Laufzeiten, Sichtkontakten und Klicks – ohne Cookies und Drittanbieter
+- **Betrieb:** tägliches Mail-Briefing für das Team, Design-Editor (Farben, Name), Dunkelmodus, Release-Notes im Admin
 
-- PHP 8.0+
-- SQLite3 Extension
-- Webserver (Apache/nginx)
+## Voraussetzungen
+
+- PHP 8.0 oder neuer mit `pdo_sqlite`, `mbstring`, `json` (für Bild-Uploads zusätzlich `gd`)
+- Apache mit `.htaccess` (Zugriffssperren für `data/`, `config/`, `lib/`, `scripts/`, `cron/`)
 
 ## Installation
 
-1. Repository klonen:
 ```bash
 git clone https://github.com/stefanbuell-wq/Liga-Manager-Online.git
+cd Liga-Manager-Online
+php scripts/install.php --name="Musterliga.de" --tagline="Fußball in Musterstadt" --url=https://musterliga.de
 ```
 
-2. Auf Webserver kopieren
+Das Skript prüft die Voraussetzungen, legt `data/` und die Datenbank an, schreibt `config/instance.php`
+und fragt das Passwort für das erste Admin-Konto ab. Danach:
 
-3. `data/` Ordner beschreibbar machen:
-```bash
-chmod 755 data/
+1. Webserver auf den Ordner zeigen lassen, `/admin/` öffnen und anmelden.
+2. Unter **Saison-Assistent → „+ Neue Liga ohne Vorlage“** die erste Liga mit Mannschaften anlegen.
+3. Optional: `config/mail.example.php` nach `config/mail.php` kopieren (SMTP; ohne Datei wird PHP `mail()` benutzt).
+4. Impressum und Datenschutzerklärung als `impressum.html` und `datenschutz.html` ablegen (nicht im Repository).
+5. Vereinswappen als `img/teams/<Vereinsname ohne Sonderzeichen>.gif` ablegen (optional `img/teams/hd/*.png`).
+
+Lokal ausprobieren: `php -S localhost:8000` im Projektordner, dann http://localhost:8000/.
+
+Weitere Admin-Konten oder ein vergessenes Admin-Passwort: `php cron/create-admin.php <name>`.
+
+## Eigene Installation anpassen
+
+Alles, was eine Installation ausmacht, steht in `config/instance.php` (Vorlage: `config/instance.example.php`):
+Name und Untertitel, Adresse für Links in Mails, Kürzel im Betreff, Beschriftung des Tipps in Vorschauen,
+Region für Texte, Standardliga und Kurznamen im Liga-Menü. Name, Untertitel und Farben lassen sich zusätzlich
+im Admin unter **Design** ändern.
+
+## Regelmäßige Aufgaben (Cron)
+
+| Skript | Zweck |
+|--------|-------|
+| `cron/daily-briefing.php` | Morgendliche Mail an das Team: offene Anfragen, Registrierungen, Meldungen (`--dry-run` zum Testen) |
+| `cron/deactivate-inactive.php` | Inaktive Konten nach Frist deaktivieren |
+
+## Aufbau
+
+```
+admin/    Verwaltung (Ligen, Ergebnisse, Saison-Assistent, Berichte, Kader, Forum, Benutzer, Sponsoren, Design)
+api/      JSON-Endpunkte
+config/   instance.php, mail.php (nicht im Repository; Vorlagen *.example.php)
+cron/     Kommandozeilen-Aufgaben
+css/ js/ fonts/ img/
+data/     SQLite-Datenbank, Cache, Sitzungen (nicht im Repository)
+lib/      PHP-Klassen (Datenbank, Repositories, Sicherheit, Mail, Instanz)
+scripts/  Installation und Wartung (nur Kommandozeile)
+docs/     Entwickler-Notizen
 ```
 
-4. Admin-Panel öffnen: `http://your-domain/admin/`
+Hinweise für die Entwicklung (Architektur, Konventionen, Sicherheitsregeln): [CLAUDE.md](CLAUDE.md), [SECURITY.md](SECURITY.md).
+Änderungen: [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
-5. Anmelden unter `/konto.html` mit einem Konto aus der Datenbank (Benutzername oder E-Mail).
-   Es gibt **keinen** Standard-Login mehr (`config/auth.php` wird nicht mehr verwendet).
-   Erstes Admin-Konto bzw. vergessenes Admin-Passwort:
+## Herkunft und Lizenz
 
-   Admin-Konto anlegen oder Passwort neu setzen (nur per SSH/hPanel-Terminal, im Ordner `public_html`):
-   ```bash
-   php -d disable_functions= cron/create-admin.php "Benutzername"
-   ```
-   Das Passwort wird verdeckt abgefragt (beim Tippen erscheint nichts). `-d disable_functions=` ist bei Hostinger noetig, weil dort `system()` gesperrt ist.
-   Vorher DB sichern: `php -r '$p=new PDO("sqlite:data/database.sqlite");$p->exec("VACUUM INTO ".$p->quote(getenv("HOME")."/backups/database-pre-x.sqlite"));'`
+Der ursprüngliche Liga Manager Online stammt von Rene Marth ([liga-manager-online.de](https://liga-manager-online.de))
+und steht unter der GNU General Public License. Rene Marth hat am 27.01.2026 der Weiterentwicklung unter dem Namen
+„Liga Manager Online“ und der Veröffentlichung zugestimmt.
 
-## Struktur
-
-```
-Liga Manager Online/
-├── admin/           # Admin-Interface
-│   ├── index.html   # Hauptverwaltung
-│   ├── edit.html    # Spieltag-Editor
-│   ├── news.html    # News-Editor
-│   ├── sponsoren.html # Sponsoren-Banner
-│   └── anfragen.html  # Kontaktanfragen
-├── api/             # REST API Endpoints
-├── css/             # Stylesheets
-├── data/            # SQLite Datenbank (wird auto-erstellt)
-├── img/teams/       # Team-Logos
-├── js/              # JavaScript
-├── lib/             # PHP-Klassen
-└── index.html       # Öffentliche Startseite
-```
-
-## API Endpoints
-
-| Endpoint | Methode | Beschreibung |
-|----------|---------|--------------|
-| `/api/login.php` | POST | Authentifizierung |
-| `/api/check-auth.php` | GET | Auth-Status prüfen |
-| `/api/list-leagues.php` | GET | Alle Ligen auflisten |
-| `/api/get-league-data.php` | GET | Liga-Daten abrufen |
-| `/api/save-matchday.php` | POST | Spieltag speichern |
-| `/api/teams.php` | GET/POST | Team-Verwaltung |
-| `/api/corrections.php` | GET/POST | Punktekorrekturen |
-| `/api/users.php` | GET/POST | Benutzerverwaltung |
-| `/api/news.php` | GET | News abrufen |
-| `/api/save-news.php` | POST | News speichern |
-| `/api/foerderer.php` | GET/POST | Sponsoren-Banner: öffentlich ausliefern, `?go=ID` Klick-Weiterleitung, Sichtkontakte melden; Verwaltung nur Admin |
-| `/api/kontakt.php` | GET/POST | Kontaktformular absenden (öffentlich); Anfragen verwalten (nur Admin) |
-
-## Sicherheit
-
-- **CSRF-Token** bei allen POST-Requests erforderlich
-- **Rate Limiting**: 5 Fehlversuche = 15 Min. Sperre
-- **Session-Hardening**: HttpOnly, SameSite=Strict, Secure (HTTPS)
-- **Passwort-Policy**: Min. 8 Zeichen, Buchstaben + Zahlen
-- **bcrypt** Passwort-Hashing
-
-## Migration von alten LMO-Versionen
-
-Das System kann .l98-Dateien aus älteren LMO-Versionen importieren. Kontaktiere uns für Migrations-Support.
-
-## Lizenz
-
-MIT License
-
-## Historie
-
-Ursprünglich entwickelt 2007 für [hafo.de](https://hafo.de) - Hamburger Fußball Online.
-Komplett neu geschrieben 2025 für PHP 8 mit modernem Tech-Stack.
+LMO26 wurde 2025/2026 von Stefan Büll ([Buell Digital](https://buell-digital.de)) für hafo.de neu entwickelt und steht
+unter der **GNU General Public License v3.0** – siehe [LICENSE](LICENSE).

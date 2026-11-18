@@ -1,7 +1,7 @@
-# HAFO.de Security Guidelines
+# Liga Manager Online (LMO26) – Security Guidelines
 
 ## Overview
-This document outlines the security features and best practices for HAFO.de (LMO26).
+This document outlines the security features and best practices for Liga Manager Online (LMO26).
 
 ## Implemented Security Features
 
