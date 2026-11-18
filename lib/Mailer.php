@@ -32,7 +32,7 @@ class Mailer
             throw new Exception('Ungueltige Empfaengeradresse');
         }
         $from = $this->fromAddress();
-        $fromName = $this->cfg['from_name'] ?? Instance::siteName();
+        $fromName = ($this->cfg['from_name'] ?? '') ?: Instance::siteName();
         $subjectEnc = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $headers = [
             'From: ' . '=?UTF-8?B?' . base64_encode($fromName) . '?=' . " <$from>",

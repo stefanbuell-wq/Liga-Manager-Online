@@ -1,22 +1,22 @@
 <?php
 /**
  * Kopieren nach config/mail.php und ausfuellen (config/ wird nicht versioniert und
- * ist per .htaccess gesperrt). Postfach in hPanel > E-Mails anlegen, z. B.
- * noreply@buell-digital.de. Passwort gehoert nach Bitwarden, nicht in Chats.
+ * ist per .htaccess gesperrt). Postfach beim Hoster anlegen, z. B.
+ * noreply@example.org. Passwort nicht weitergeben oder committen.
  */
 return [
-    'host'      => 'smtp.hostinger.com',
+    'host'      => 'smtp.example.org',
     'port'      => 465,            // 465 = SSL, 587 = STARTTLS
     'secure'    => 'ssl',          // 'ssl' oder 'tls'
-    'username'  => 'noreply@buell-digital.de',
+    'username'  => 'noreply@example.org',
     'password'  => 'HIER-PASSWORT-EINTRAGEN',
-    'from'      => 'noreply@buell-digital.de',
-    'from_name' => 'HAFO.de',
-    'reply_to'  => 'noreply@buell-digital.de',
+    'from'      => 'noreply@example.org',
+    'from_name' => '',            // leer = Name aus config/instance.php
+    'reply_to'  => 'noreply@example.org',
     // Empfaenger fuer "Neue Registrierung wartet auf Freigabe"
     'admin_notify' => '',
     // Empfaenger fuer neue Kontaktanfragen (kontakt.html); leer = admin_notify
     'contact_notify' => '',
     // Basis-URL fuer Links in Mails
-    'base_url'  => 'https://hafo.de',
+    'base_url'  => '',            // leer = base_url aus config/instance.php
 ];
