@@ -20,6 +20,8 @@ class Instance
         'legacy_host'    => '',                     // Host der frueheren Website (Altbilder/-links in Berichten), z. B. "hafo.de"
         'default_league' => '',                     // Dateipraefix der Standardliga, z. B. "hhoberliga" -> neueste hhoberligaJJJJ.l98; leer = zuletzt angelegte Liga
         'league_short_names' => [],                 // Kurznamen im Liga-Menue, z. B. ['Hamburg-Oberliga' => 'Oberliga']
+        'mail_mode'      => 'send',                 // 'log' = keine Mails versenden, nur nach data/mail-log.txt schreiben (Testumgebung)
+        'test_banner'    => '',                     // Text eines roten Hinweisbalkens oben auf jeder Seite, z. B. "Testumgebung" (leer = aus)
     ];
 
     private static ?array $cfg = null;
@@ -102,6 +104,7 @@ class Instance
             'tipLabel'    => (string)self::get('tip_label'),
             'region'      => (string)self::get('region'),
             'legacyForum' => (bool)self::get('legacy_forum'),
+            'testBanner'  => (string)self::get('test_banner'),
         ];
     }
 

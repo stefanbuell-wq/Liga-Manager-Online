@@ -10,7 +10,7 @@
  *   [data-site-region]                  Region (z. B. "Hamburger Amateurfußball"), Element mit
  *                                       data-region-empty wird ausgeblendet, wenn keine Region gesetzt ist
  *   [data-legacy-forum]                 nur sichtbar, wenn die Instanz ein Altforum uebernommen hat
- *   <title data-page="Forum">           Seitentitel wird zu "Forum - Name"; ohne data-page: "Name - Untertitel"
+ *   <title data-page="Forum">           Seitentitel wird zu "Forum - Name"; data-page="": "Name - Untertitel"; ohne Attribut unveraendert
  */
 (function () {
     var KEY = 'hafo_theme';
@@ -44,9 +44,17 @@
         each('[data-region-empty]', function (el) { el.hidden = !inst.region; });
         each('[data-legacy-forum]', function (el) { el.hidden = !inst.legacyForum; });
         var title = document.querySelector('title');
-        if (title) {
+        if (title && title.hasAttribute('data-page')) {
             var page = title.getAttribute('data-page');
             document.title = page ? page + ' - ' + name : name + (tagline ? ' - ' + tagline : '');
+        }
+        if (inst.testBanner && !document.getElementById('lmo-test-banner')) {
+            var bar = document.createElement('div');
+            bar.id = 'lmo-test-banner';
+            bar.setAttribute('role', 'status');
+            bar.style.cssText = 'position:sticky;top:0;z-index:10000;background:#b00020;color:#fff;text-align:center;font:600 14px/1.4 system-ui,sans-serif;padding:6px 12px';
+            bar.textContent = inst.testBanner;
+            document.body.insertBefore(bar, document.body.firstChild);
         }
         window.LMO_INSTANCE = { siteName: name, siteTagline: tagline, region: inst.region || '', tipLabel: inst.tipLabel || 'Tipp', legacyForum: !!inst.legacyForum };
         try { document.dispatchEvent(new CustomEvent('lmo:instance', { detail: window.LMO_INSTANCE })); } catch (e) {}
@@ -56,7 +64,9 @@
     try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
     apply(cached);
 
-    fetch('api/theme.php').then(function (r) { return r.json(); }).then(function (t) {
+    // Basis aus der eigenen Script-Adresse (funktioniert auch aus admin/)
+    var base = (document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/js\/instance\.js.*$/, '') : '';
+    fetch(base + 'api/theme.php').then(function (r) { return r.json(); }).then(function (t) {
         try { localStorage.setItem(KEY, JSON.stringify(t)); } catch (e) {}
         apply(t);
     }).catch(function () {});

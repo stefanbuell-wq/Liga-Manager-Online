@@ -118,3 +118,4 @@ scripts/reimport-sqlite-clean.php
 deploy/
 REFERENZ-GESCHICHTE.md
 BACKLOG.md
+data/mail-log.txt

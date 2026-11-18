@@ -13,4 +13,6 @@ return [
     'region'       => '',                      // fuer Texte, z. B. "Musterstädter Amateurfußball"
     'legacy_forum' => false,                   // true: Hinweis zur Uebernahme alter Forenkonten bei der Registrierung
     'legacy_host'  => '',                      // Host der frueheren Website, deren Bild-Links auf legacy/ umgebogen werden
+    'mail_mode'    => 'send',                  // 'log' = keine Mails versenden, nur nach data/mail-log.txt (Testumgebung)
+    'test_banner'  => '',                      // z. B. 'Testumgebung – Daten sind eine Kopie' (roter Balken oben)
 ];

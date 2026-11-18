@@ -31,6 +31,12 @@ class Mailer
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             throw new Exception('Ungueltige Empfaengeradresse');
         }
+        // Testumgebung (config/instance.php: mail_mode = 'log'): nichts versenden, nur protokollieren
+        if (Instance::get('mail_mode') === 'log') {
+            $line = '[' . date('c') . "] AN: $to | BETREFF: $subject\n" . $body . "\n" . str_repeat('-', 60) . "\n";
+            @file_put_contents(__DIR__ . '/../data/mail-log.txt', $line, FILE_APPEND | LOCK_EX);
+            return;
+        }
         $from = $this->fromAddress();
         $fromName = ($this->cfg['from_name'] ?? '') ?: Instance::siteName();
         $subjectEnc = '=?UTF-8?B?' . base64_encode($subject) . '?=';
