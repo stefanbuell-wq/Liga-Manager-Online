@@ -109,18 +109,25 @@ class AvatarService
         $this->set($userId, null);
     }
 
-    /** Wappen zur Auswahl: Vereine mit HD-Wappen (Name aus data/crests/map.json) */
+    /** Wappen zur Auswahl: alle Vereine mit HD-Wappen (Namen aus den Ligen, sonst data/crests/map.json) */
     public function crestChoices(): array
     {
+        $names = [];
+        foreach ($this->pdo->query("SELECT DISTINCT name FROM teams WHERE name IS NOT NULL AND name <> ''") as $r) {
+            $names[preg_replace('/[^a-zA-Z0-9]/', '', $r['name'])] ??= $r['name'];
+        }
         $map = json_decode((string)@file_get_contents($this->root . '/data/crests/map.json'), true) ?: [];
-        $out = [];
         foreach ($map as $name => $e) {
-            if (empty($e['file']) || !preg_match('#^img/teams/hd/([A-Za-z0-9]+)\.png$#', $e['file'], $m)) continue;
-            if (!is_file($this->root . '/' . $e['file'])) continue;
-            $out[$m[1]] ??= ['key' => $m[1], 'name' => $name, 'img' => "img/teams/{$m[1]}.gif"];
+            if (!empty($e['file']) && preg_match('#^img/teams/hd/([A-Za-z0-9]+)\.png$#', $e['file'], $m)) $names[$m[1]] ??= $name;
+        }
+        $out = [];
+        foreach (glob($this->root . '/img/teams/hd/*.png') ?: [] as $file) {
+            $key = basename($file, '.png');
+            if (!preg_match('/^[A-Za-z0-9]{1,60}$/', $key)) continue;
+            $out[] = ['key' => $key, 'name' => $names[$key] ?? $key, 'img' => "img/teams/$key.gif"];
         }
         usort($out, fn($a, $b) => strcasecmp($a['name'], $b['name']));
-        return array_values($out);
+        return $out;
     }
 
     /**

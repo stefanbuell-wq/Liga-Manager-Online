@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wappen - Admin</title>
+    <style>
+        :root {
+            --color-primary: #E2001A;
+            --color-bg: #F5F5F5;
+            --color-card: #FFFFFF;
+            --color-border: rgba(0, 0, 0, 0.10);
+            --color-text: #111111;
+            --color-muted: #767676;
+            --ok: #12805c;
+            --warn: #b26a00;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--color-bg); color: var(--color-text); margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 28px 20px 60px; }
+        .back-link { display: inline-block; color: var(--color-primary); text-decoration: none; font-weight: 600; margin-bottom: 16px; }
+        h1 { margin: 0 0 4px; font-size: 1.9rem; }
+        .sub { margin: 0 0 20px; color: var(--color-muted); }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+        .toolbar input[type=search] { flex: 1; min-width: 220px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 1rem; }
+        .chips button { border: 1px solid var(--color-border); background: #fff; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-size: .9rem; }
+        .chips button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .count { color: var(--color-muted); font-size: .9rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+        .card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 14px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; }
+        .card.drag { outline: 3px dashed var(--color-primary); }
+        .crest { width: 72px; height: 72px; flex: 0 0 72px; border-radius: 10px; background: #fafafa repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 50% / 12px 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .crest img { max-width: 64px; max-height: 64px; }
+        .crest .none { font-size: .75rem; color: var(--color-muted); text-align: center; }
+        .info { flex: 1; min-width: 0; }
+        .name { font-weight: 700; word-break: break-word; }
+        .meta { font-size: .8rem; color: var(--color-muted); }
+        .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-right: 4px; }
+        .badge.hd { background: #e6f4ee; color: var(--ok); }
+        .badge.sd { background: #fff3e0; color: var(--warn); }
+        .badge.no { background: #fdecea; color: #a11; }
+        .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .actions button, .actions label { font-size: .8rem; border: 1px solid var(--color-border); background: #fff; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+        .actions label.up { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .actions input[type=file] { display: none; }
+        .msg { position: fixed; bottom: 20px; right: 20px; background: #111; color: #fff; padding: 10px 16px; border-radius: 10px; display: none; max-width: 420px; z-index: 50; }
+        .msg.err { background: #a11; }
+        .hint { background: #fff; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; font-size: .92rem; color: #444; }
+        dialog { border: none; border-radius: 14px; padding: 20px; max-width: 420px; width: 92%; }
+        dialog input { width: 100%; padding: 9px 10px; border: 1px solid var(--color-border); border-radius: 8px; font-size: 1rem; margin: 8px 0 14px; }
+        dialog .row { display: flex; gap: 8px; justify-content: flex-end; }
+        dialog button { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--color-border); background: #fff; cursor: pointer; }
+        dialog button.primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .error { background: #fdecea; color: #8a1c1c; padding: 14px 16px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">&larr; Zurück zum Admin-Dashboard</a>
+    <h1>🛡️ Vereinswappen</h1>
+    <p class="sub">Wappen für alle Vereine aus den Ligen pflegen. Sie erscheinen in Tabellen, Spielplänen, Berichten und als Profilbild-Auswahl.</p>
+    <div class="hint">Bild hochladen oder auf eine Karte ziehen: PNG, JPG, GIF oder WebP, am besten quadratisch mit transparentem Hintergrund, mindestens 160 × 160 Pixel, max. 3 MB.
+        Das Bild wird automatisch zugeschnitten und verkleinert. Ersetzte Wappen werden aufbewahrt (Ordner <code>img/teams/_alt/</code>).
+        Nach dem Austausch sehen Besucher das neue Wappen spätestens nach einem Tag.</div>
+    <div class="toolbar">
+        <input type="search" id="q" placeholder="Verein suchen …" autocomplete="off">
+        <div class="chips" id="filters">
+            <button data-f="all" class="active">Alle</button>
+            <button data-f="none">Ohne Wappen</button>
+            <button data-f="sd">Nur klein</button>
+            <button data-f="hd">Mit HD-Wappen</button>
+        </div>
+        <span class="count" id="count"></span>
+    </div>
+    <div id="list"><p>Wird geladen …</p></div>
+</div>
+
+<dialog id="copyDlg">
+    <form method="dialog" id="copyForm">
+        <strong id="copyTitle"></strong>
+        <p class="meta" style="margin:6px 0 0">Wappen eines anderen Vereins übernehmen, z. B. für zweite Mannschaften.</p>
+        <input id="copySource" list="crestNames" placeholder="Verein mit Wappen …" autocomplete="off">
+        <datalist id="crestNames"></datalist>
+        <div class="row"><button value="cancel" formnovalidate>Abbrechen</button><button class="primary" value="ok" id="copyOk">Übernehmen</button></div>
+    </form>
+</dialog>
+<div class="msg" id="msg"></div>
+
+<script>
+(function () {
+    const API = '../api/crests.php';
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let csrf = '', items = [], filter = 'all';
+
+    function toast(text, err) {
+        const m = document.getElementById('msg');
+        m.textContent = text; m.className = 'msg' + (err ? ' err' : ''); m.style.display = 'block';
+        clearTimeout(toast.t); toast.t = setTimeout(() => { m.style.display = 'none'; }, 3500);
+    }
+
+    async function load() {
+        const r = await fetch(API, { credentials: 'same-origin' });
+        const d = await r.json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!r.ok || !d.success) {
+            document.getElementById('list').innerHTML = `<div class="error">${esc(d.error || 'Laden fehlgeschlagen.')} <a href="index.html">Zum Login</a></div>`;
+            return;
+        }
+        items = d.data;
+        render();
+    }
+
+    function state(it) { return it.hd ? 'hd' : (it.small ? 'sd' : 'none'); }
+
+    function render() {
+        const q = document.getElementById('q').value.trim().toLowerCase();
+        const list = items.filter(it => (filter === 'all' || state(it) === filter)
+            && (!q || (it.name + ' ' + it.aliases.join(' ')).toLowerCase().includes(q)));
+        const missing = items.filter(it => state(it) === 'none').length;
+        document.getElementById('count').textContent = `${list.length} von ${items.length} Vereinen · ${missing} ohne Wappen`;
+        document.getElementById('crestNames').innerHTML = items.filter(it => it.url).map(it => `<option value="${esc(it.name)}">`).join('');
+        document.getElementById('list').innerHTML = list.length ? `<div class="grid">${list.map(card).join('')}</div>` : '<p>Keine Vereine gefunden.</p>';
+    }
+
+    function card(it) {
+        const s = state(it);
+        const badge = s === 'hd' ? '<span class="badge hd">HD</span>' : s === 'sd' ? '<span class="badge sd">nur klein</span>' : '<span class="badge no">kein Wappen</span>';
+        const img = it.url ? `<img src="../${esc(it.url)}?v=${it.version}" alt="" loading="lazy">` : '<div class="none">kein<br>Wappen</div>';
+        const id = 'f-' + esc(it.key);
+        return `<div class="card" data-key="${esc(it.key)}">
+            <div class="crest">${img}</div>
+            <div class="info">
+                <div class="name">${esc(it.name)}</div>
+                <div class="meta">${badge}${it.seasons} Saison${it.seasons === 1 ? '' : 's'}${it.aliases.length ? ' · auch: ' + esc(it.aliases.join(', ')) : ''}</div>
+                <div class="actions">
+                    <label class="up" for="${id}">${it.url ? 'Ersetzen' : 'Hochladen'}</label>
+                    <input type="file" id="${id}" accept="image/png,image/jpeg,image/gif,image/webp" data-act="upload">
+                    <button type="button" data-act="copy">Von Verein übernehmen</button>
+                    ${it.url ? '<button type="button" data-act="remove">Entfernen</button>' : ''}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function byKey(key) { return items.find(it => it.key === key); }
+    function replace(it) {
+        const i = items.findIndex(x => x.key === it.key);
+        if (i >= 0) items[i] = Object.assign({}, items[i], it);
+        render();
+    }
+
+    async function post(body, isForm) {
+        const opts = { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-Token': csrf } };
+        if (isForm) { body.append('csrf_token', csrf); opts.body = body; }
+        else { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(Object.assign({ csrf_token: csrf }, body)); }
+        const r = await fetch(API, opts);
+        const d = await r.json().catch(() => ({ error: 'Unerwartete Antwort vom Server.' }));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!r.ok || !d.success) throw new Error(d.error || 'Fehler');
+        return d;
+    }
+
+    async function upload(it, file) {
+        if (!file) return;
+        if (file.size > 3 * 1024 * 1024) { toast('Datei zu groß (max. 3 MB).', true); return; }
+        const fd = new FormData();
+        fd.append('action', 'upload'); fd.append('name', it.name); fd.append('file', file);
+        try { const d = await post(fd, true); replace(d.data); toast(`${it.name}: ${d.message}`); }
+        catch (e) { toast(e.message, true); }
+    }
+
+    document.getElementById('list').addEventListener('change', e => {
+        if (e.target.dataset.act !== 'upload') return;
+        const it = byKey(e.target.closest('.card').dataset.key);
+        upload(it, e.target.files[0]);
+        e.target.value = '';
+    });
+
+    document.getElementById('list').addEventListener('click', async e => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const it = byKey(btn.closest('.card').dataset.key);
+        if (btn.dataset.act === 'remove') {
+            if (!confirm(`Wappen von „${it.name}“ entfernen? Es wird aufbewahrt und kann wiederhergestellt werden.`)) return;
+            try { const d = await post({ action: 'remove', name: it.name }); replace(d.data); toast(d.message); }
+            catch (err) { toast(err.message, true); }
+        }
+        if (btn.dataset.act === 'copy') {
+            const dlg = document.getElementById('copyDlg');
+            document.getElementById('copyTitle').textContent = it.name;
+            document.getElementById('copySource').value = '';
+            dlg.dataset.key = it.key;
+            dlg.showModal();
+        }
+    });
+
+    document.getElementById('copyDlg').addEventListener('close', async () => {
+        const dlg = document.getElementById('copyDlg');
+        if (dlg.returnValue !== 'ok') return;
+        const it = byKey(dlg.dataset.key);
+        const source = document.getElementById('copySource').value.trim();
+        if (!source) return;
+        try { const d = await post({ action: 'copy', name: it.name, source }); replace(d.data); toast(d.message); }
+        catch (err) { toast(err.message, true); }
+    });
+
+    // Ziehen und Ablegen auf eine Karte
+    const list = document.getElementById('list');
+    list.addEventListener('dragover', e => { const c = e.target.closest('.card'); if (c) { e.preventDefault(); c.classList.add('drag'); } });
+    list.addEventListener('dragleave', e => { const c = e.target.closest('.card'); if (c) c.classList.remove('drag'); });
+    list.addEventListener('drop', e => {
+        const c = e.target.closest('.card'); if (!c) return;
+        e.preventDefault(); c.classList.remove('drag');
+        upload(byKey(c.dataset.key), e.dataTransfer.files[0]);
+    });
+
+    document.getElementById('q').addEventListener('input', render);
+    document.getElementById('filters').addEventListener('click', e => {
+        const b = e.target.closest('button[data-f]'); if (!b) return;
+        filter = b.dataset.f;
+        document.querySelectorAll('#filters button').forEach(x => x.classList.toggle('active', x === b));
+        render();
+    });
+
+    load();
+})();
+</script>
+<script src="../js/instance.js?v=20261118b"></script>
+</body>
+</html>

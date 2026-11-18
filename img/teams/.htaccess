@@ -6,3 +6,9 @@
     RewriteCond %1/hd/%2.png -f
     RewriteRule ^([A-Za-z0-9]+)\.gif$ hd/$1.png [L]
 </IfModule>
+
+# Wappen werden im Admin gepflegt (admin/wappen.html): nur 1 Tag cachen, damit ersetzte Wappen bald sichtbar sind
+<IfModule mod_expires.c>
+    ExpiresByType image/gif "access plus 1 day"
+    ExpiresByType image/png "access plus 1 day"
+</IfModule>
