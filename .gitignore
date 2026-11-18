@@ -46,7 +46,7 @@ img/foerderer/*
 # Profilbilder: hochgeladene nie committen, Altforum-Bilder und .htaccess schon
 img/avatars/*
 !img/avatars/.htaccess
-!img/avatars/legacy/
+# (Altforum-Bilder: Instanz-Repo)
 img/forum/*
 !img/forum/.htaccess
 config/*
@@ -88,3 +88,33 @@ legacy/*
 # Wappen-Import (lokal)
 crest-review.html
 data/crests/orig/
+
+# ------------------------------------------------------------------
+# Instanzspezifische Dateien (hafo.de: privates Repo hafo-site, Ordner overlay/)
+# Liegen lokal und auf dem Server, gehoeren aber nicht ins Produkt-Repository.
+img/teams/*
+!img/teams/.htaccess
+!img/teams/blank.png
+img/avatars/legacy/
+img/news/
+data/crests/
+data/legacy-avatars.json
+impressum.html
+datenschutz.html
+main.php
+migrate-*.php
+cleanup-news.php
+link-match-news.php
+lib/LegacyContentConverter.php
+scripts/build-legacy-images.php
+scripts/export-json-by-year.php
+scripts/fetch-crests.php
+scripts/crest-review.php
+scripts/resize-crests.php
+scripts/import-fupa-*.php
+scripts/import-transfermarkt.php
+scripts/link-old-news.php
+scripts/reimport-sqlite-clean.php
+deploy/
+REFERENZ-GESCHICHTE.md
+BACKLOG.md
