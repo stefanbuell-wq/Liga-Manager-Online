@@ -38,7 +38,7 @@ function ensureUsersTable() {
         last_login DATETIME
     )");
 
-    // Kein automatischer Default-Admin mehr (frueher admin/hafo) – Ersteinrichtung per CLI-Skript
+    // Kein automatischer Default-Admin mehr  – Ersteinrichtung per CLI-Skript
 }
 
 // Auth Check (außer für Passwort-Änderung des eigenen Accounts)

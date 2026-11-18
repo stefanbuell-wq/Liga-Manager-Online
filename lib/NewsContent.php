@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . '/Instance.php';
 /**
  * Aufbereitung von News-/Spielbericht-Inhalten fuer die Anzeige.
  *
- * - Altbilder der frueheren hafo.de-Seite (../images, www.hafo.de/news/uploads, ...)
+ * - Altbilder der frueheren Website (Instanz-Einstellung legacy_host) (../images, <legacy_host>/news/uploads, ...)
  *   werden auf den lokalen Ordner legacy/ umgeschrieben (Bilder dort 1:1 abgelegt).
  * - Wappen von stillgelegten Hosts (v-manager, dfd-systems) werden auf
  *   vereinswappen.de umgeschrieben und ueber api/img-proxy.php geladen (CSP img-src 'self').
@@ -209,9 +210,10 @@ class NewsContent
             return preg_replace('#^\.\./(?=img/|legacy/|icons/|api/)#i', '', $src);
         }
 
-        // Altpfade der frueheren hafo.de-Seite -> legacy/<pfad>
+        // Altpfade der frueheren Website (Instanz: legacy_host) -> legacy/<pfad>
         $legacy = null;
-        if (preg_match('#^https?://(?:www\.)?hafo\.de/(.+)$#i', $src, $m)) {
+        $legacyHost = (string)Instance::get('legacy_host');
+        if ($legacyHost !== '' && preg_match('#^https?://(?:www\.)?' . preg_quote($legacyHost, '#') . '/(.+)$#i', $src, $m)) {
             $legacy = $m[1];
         } elseif (strpos($src, '../') === 0) {
             $legacy = substr($src, 3);
@@ -313,7 +315,8 @@ class NewsContent
     public static function displayAuthor(?string $author, ?string $html): string
     {
         $author = trim((string)$author);
-        $generic = ['', 'redakteur', 'redaktion', 'admin', 'hafo', 'hafo.de'];
+        $site = mb_strtolower(Instance::siteName());
+        $generic = ['', 'redakteur', 'redaktion', 'admin', $site, preg_replace('/\.\w+$/', '', $site)];
         if (!in_array(mb_strtolower($author), $generic, true)) return $author;
         if ($html && preg_match('#^\s*<center>\s*(?:<[^>]+>\s*)*([^<>]{4,40}?)\s*(?:</[^>]+>\s*)*</center>#u', $html, $m)) {
             $name = trim(html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'));

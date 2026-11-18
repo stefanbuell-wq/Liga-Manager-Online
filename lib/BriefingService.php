@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/Instance.php';
 /**
  * Taegliches Briefing per E-Mail: was heute fuer Redaktion/Admins ansteht.
  *
@@ -42,7 +43,7 @@ class BriefingService
         $this->settings = new SettingsRepository();
         $file = __DIR__ . '/../config/mail.php';
         $cfg = file_exists($file) ? (require $file) : [];
-        $this->base = rtrim($cfg['base_url'] ?? 'https://hafo.de', '/');
+        $this->base = Instance::baseUrl($cfg['base_url'] ?? null);
     }
 
     /* ---------- Konfiguration ---------- */
@@ -243,11 +244,11 @@ class BriefingService
         $day = (new DateTimeImmutable('now', new DateTimeZone(self::TZ)));
         $weekday = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][(int)$day->format('w')];
         $greeting = 'Guten Morgen' . ($recipient['name'] !== '' ? ' ' . $recipient['name'] : '') . ',';
-        $intro = $total ? 'heute steht auf HAFO.de an: ' . implode(', ', $summary) . '.' : 'heute steht auf HAFO.de nichts an.';
+        $intro = $total ? 'heute steht auf ' . Instance::siteName() . ' an: ' . implode(', ', $summary) . '.' : 'heute steht auf ' . Instance::siteName() . ' nichts an.';
         $body = $greeting . "\n\n" . $intro . "\n\n" . implode("\n", $parts)
             . "\n--\nTägliches Briefing von " . $this->base . "\n"
             . 'Welche Bereiche Sie bekommen, legt ein Administrator unter ' . $this->base . "/admin/einstellungen.html fest.\n";
-        $subject = '[HAFO] Briefing ' . $weekday . ' ' . $day->format('d.m.') . ': '
+        $subject = '[' . Instance::mailTag() . '] Briefing ' . $weekday . ' ' . $day->format('d.m.') . ': '
             . ($total ? implode(', ', $summary) : 'nichts offen');
         return ['subject' => $subject, 'body' => $body, 'total' => $total];
     }

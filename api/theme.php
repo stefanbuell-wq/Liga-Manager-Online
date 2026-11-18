@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../lib/LmoDatabase.php';
+require_once __DIR__ . '/../lib/Instance.php';
 
 // Ensure settings table exists
 $pdo = LmoDatabase::getInstance();
@@ -29,8 +30,8 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS settings (
 // Default theme values
 $defaultTheme = [
     // Branding
-    'siteName' => 'HAFO.de',
-    'siteTagline' => 'Hamburger Fußball Online',
+    'siteName' => (string)Instance::get('site_name'),
+    'siteTagline' => (string)Instance::get('site_tagline'),
     'logoUrl' => '',
     'faviconUrl' => '',
 
@@ -83,6 +84,8 @@ function getThemeSettings($pdo, $defaults) {
         // Convert camelCase
         $key = lcfirst(str_replace('_', '', ucwords($key, '_')));
         if (isset($theme[$key])) {
+            // Leerer Name/Untertitel = Vorgabe aus config/instance.php
+            if (in_array($key, ['siteName', 'siteTagline'], true) && trim((string)$row['value']) === '') continue;
             $theme[$key] = $row['value'];
         }
     }
@@ -148,6 +151,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         '--font-primary' => "'" . $theme['fontPrimary'] . "', -apple-system, BlinkMacSystemFont, sans-serif",
         '--font-display' => "'" . $theme['fontDisplay'] . "', '" . $theme['fontPrimary'] . "', sans-serif",
     ];
+
+    // Instanz-Werte fuer die Seiten (Tipp-Beschriftung, Region, Altforum-Hinweis)
+    $theme['instance'] = Instance::publicSettings();
 
     $json = json_encode($theme);
 

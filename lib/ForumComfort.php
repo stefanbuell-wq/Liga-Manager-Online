@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/Instance.php';
 /**
  * Forum-Komfort: Ungelesen-Markierung und Themen-Abos mit E-Mail-Benachrichtigung.
  *
@@ -221,7 +222,7 @@ class ForumComfort
     {
         $file = __DIR__ . '/../config/mail.php';
         $cfg = file_exists($file) ? (require $file) : [];
-        return rtrim($cfg['base_url'] ?? 'https://hafo.de', '/');
+        return Instance::baseUrl($cfg['base_url'] ?? null);
     }
 
     /**
@@ -260,9 +261,9 @@ class ForumComfort
                     . "Zum Beitrag:\n$link\n\n"
                     . "Weitere Mails zu diesem Thema bekommst du erst wieder, nachdem du es besucht hast.\n"
                     . "Keine Mails mehr zu diesem Thema:\n" . $this->unsubscribeUrl((int)$r['user_id'], $topicId) . "\n\n"
-                    . "Dein HAFO.de-Team";
+                    . Instance::teamSignature();
                 try {
-                    (new Mailer())->send($r['email'], 'HAFO-Forum: Neue Antwort in „' . mb_substr($post['title'], 0, 80) . '“', $body);
+                    (new Mailer())->send($r['email'], Instance::siteName() . ' Forum: Neue Antwort in „' . mb_substr($post['title'], 0, 80) . '“', $body);
                     $done->execute([(int)$r['user_id'], $topicId]);
                     $n++;
                 } catch (Throwable $e) {

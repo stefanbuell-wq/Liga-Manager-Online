@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/Instance.php';
 /**
  * Kontaktanfragen (Sponsoring, allgemein, Fehlermeldungen)
  *
@@ -129,11 +130,11 @@ class ContactService
     /** Test-Mail an alle Empfaenger; gibt je Adresse true oder die Fehlermeldung zurueck. */
     public static function sendTestNotification(): array
     {
-        $base = rtrim(self::mailConfig()['base_url'] ?? 'https://hafo.de', '/');
+        $base = Instance::baseUrl(self::mailConfig()['base_url'] ?? null);
         $result = [];
         foreach (self::notifyRecipients() as $to) {
             try {
-                (new Mailer())->send($to, '[HAFO] Test: Benachrichtigung Kontaktformular',
+                (new Mailer())->send($to, '[' . Instance::mailTag() . '] Test: Benachrichtigung Kontaktformular',
                     "Diese Test-Mail wurde im Admin unter \"Einstellungen\" ausgelöst.\n\n"
                     . "Sie kommt an, also erhalten Sie künftig eine Mail, sobald jemand das Kontaktformular auf $base nutzt.\n");
                 $result[$to] = true;
@@ -151,7 +152,7 @@ class ContactService
         if (!$recipients) {
             return;
         }
-        $base = rtrim(self::mailConfig()['base_url'] ?? 'https://hafo.de', '/');
+        $base = Instance::baseUrl(self::mailConfig()['base_url'] ?? null);
         $lines = [
             'Neue Kontaktanfrage #' . $id . ' über ' . $base,
             '',
@@ -171,7 +172,7 @@ class ContactService
         $lines[] = 'Bitte nicht auf diese Mail antworten, sondern direkt an die oben genannte Adresse schreiben.';
         foreach ($recipients as $to) {
             try {
-                (new Mailer())->send($to, '[HAFO] ' . self::TOPICS[$topic] . ': ' . $name, implode("\n", $lines));
+                (new Mailer())->send($to, '[' . Instance::mailTag() . '] ' . self::TOPICS[$topic] . ': ' . $name, implode("\n", $lines));
             } catch (Throwable $e) {
                 error_log('Kontakt-Benachrichtigung an ' . $to . ' fehlgeschlagen: ' . $e->getMessage());
             }

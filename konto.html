@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mein Konto - HAFO.de</title>
+    <title data-page="Mein Konto">Mein Konto - Liga Manager Online</title>
 
     <!-- Fonts (lokal eingebunden) -->
     <link rel="stylesheet" href="css/fonts.css">
@@ -81,7 +81,7 @@
             <div class="header-inner">
                 <a href="index.html" class="logo">
                     <div class="logo-icon">⚽</div>
-                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    <span data-site-logo>Liga Manager Online</span>
                 </a>
 
                 <nav class="nav">
@@ -171,8 +171,10 @@
                         <label for="rg-email">E-Mail</label><input type="email" id="rg-email" required autocomplete="email">
                         <label for="rg-pass">Passwort</label><input type="password" id="rg-pass" required minlength="8" autocomplete="new-password">
                         <div class="hint">Mind. 8 Zeichen, Buchstaben und Zahlen.</div>
+                        <div data-legacy-forum hidden>
                         <label for="rg-legacy">Früherer Forenname (optional)</label><input id="rg-legacy" maxlength="60" autocomplete="off">
-                        <div class="hint">Warst du schon im alten HAFO-Forum aktiv? Dann trag deinen alten Namen ein – nach Prüfung übernimmst du ihn samt deinen Beiträgen.</div>
+                        <div class="hint">Warst du schon im alten Forum von <span data-site-name></span> aktiv? Dann trag deinen alten Namen ein – nach Prüfung übernimmst du ihn samt deinen Beiträgen.</div>
+                        </div>
                         <input class="hp" id="rg-website" tabindex="-1" autocomplete="off" aria-hidden="true">
                         <div class="hint" style="margin-top:var(--spacing-md)">Nach der Registrierung bestätigst du deine E-Mail-Adresse; danach schaltet ein Administrator dein Konto frei. Hinweise zum Datenschutz: <a href="datenschutz.html">Datenschutzerklärung</a>.</div>
                         <button type="submit" class="btn btn-primary">Registrieren</button>
@@ -201,7 +203,7 @@
                 <div class="footer-brand">
                     <a href="index.html" class="logo">
                         <div class="logo-icon">⚽</div>
-                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                        <span data-site-logo>Liga Manager Online</span>
                     </a>
                     <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
                 </div>
@@ -234,7 +236,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+                <p class="footer-copyright" data-site-copyright>© Liga Manager Online</p>
             </div>
         </div>
     </footer>
@@ -398,5 +400,6 @@
     init();
     </script>
     <script src="js/foerderer.js" defer></script>
+    <script src="js/instance.js?v=20261118"></script>
 </body>
 </html>

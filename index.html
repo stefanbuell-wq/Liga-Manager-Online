@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAFO.de - Hamburger Fußball Online</title>
+    <title>Liga Manager Online</title>
 
     <!-- Fonts (lokal eingebunden) -->
     <link rel="stylesheet" href="css/fonts.css">
@@ -44,7 +44,7 @@
                     }
                     // Update site name if changed
                     if (theme.siteName) {
-                        document.title = theme.siteName + ' - ' + (theme.siteTagline || 'Hamburger Fußball Online');
+                        document.title = theme.siteName + (theme.siteTagline ? ' - ' + theme.siteTagline : '');
                     }
                 })
                 .catch(() => {});
@@ -59,7 +59,7 @@
             <div class="header-inner">
                 <a href="portal.html" class="logo">
                     <div class="logo-icon">⚽</div>
-                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    <span data-site-logo>Liga Manager Online</span>
                 </a>
 
                 <nav class="nav">
@@ -297,7 +297,7 @@
                                     </main>
 
                                     <footer class="newsprint-footer" style="padding: 0.5rem 1rem; font-size: 0.55rem;">
-                                        <div>HAFO</div>
+                                        <div data-site-name>LMO</div>
                                         <div>LIVE</div>
                                     </footer>
                                 </div>
@@ -375,7 +375,7 @@
                 <div class="footer-brand">
                     <a href="portal.html" class="logo">
                         <div class="logo-icon">⚽</div>
-                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                        <span data-site-logo>Liga Manager Online</span>
                     </a>
                     <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
                 </div>
@@ -410,7 +410,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+                <p class="footer-copyright" data-site-copyright>© Liga Manager Online</p>
                 <div class="footer-social">
                     <a href="https://facebook.com" target="_blank" rel="noopener" title="Facebook">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -457,7 +457,7 @@
     <script src="js/player-stats.js?v=20260216"></script>
     <script>
         // ============================================
-        // HAFO.de Portal JavaScript
+        // Portal JavaScript
         // ============================================
 
         const API_BASE = 'api';
@@ -1616,6 +1616,7 @@
     </script>
     <script src="js/newsprint.js"></script>
     <script src="js/foerderer.js" defer></script>
+    <script src="js/instance.js?v=20261118"></script>
 </body>
 
 </html>

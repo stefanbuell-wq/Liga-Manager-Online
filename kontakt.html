@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kontakt - HAFO.de</title>
-    <meta name="description" content="Kontakt zu HAFO.de – Sponsoring, Fragen und Hinweise zum Hamburger Amateurfußball.">
+    <title data-page="Kontakt">Kontakt - Liga Manager Online</title>
+    <meta name="description" content="Kontakt – Sponsoring, Fragen und Hinweise.">
 
     <!-- Fonts (lokal eingebunden) -->
     <link rel="stylesheet" href="css/fonts.css">
@@ -83,7 +83,7 @@
             <div class="header-inner">
                 <a href="index.html" class="logo">
                     <div class="logo-icon">⚽</div>
-                    <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                    <span data-site-logo>Liga Manager Online</span>
                 </a>
 
                 <nav class="nav">
@@ -122,7 +122,7 @@
                         <li>Auf Smartphones in angepasster Größe</li>
                         <li>Monatliche Auswertung: Sichtkontakte und Klicks</li>
                     </ul>
-                    <p style="margin:var(--spacing-sm) 0 0; font-size:.9rem;">Ihr Beitrag deckt die Hosting-Kosten von HAFO.de und hält das Portal für alle frei zugänglich.</p>
+                    <p style="margin:var(--spacing-sm) 0 0; font-size:.9rem;">Ihr Beitrag deckt die Hosting-Kosten von <span data-site-name>dieser Seite</span> und hält das Portal für alle frei zugänglich.</p>
                 </div>
             </section>
 
@@ -203,7 +203,7 @@
                 <div class="footer-brand">
                     <a href="index.html" class="logo">
                         <div class="logo-icon">⚽</div>
-                        <span>HAFO<span style="color: var(--color-primary);">.de</span></span>
+                        <span data-site-logo>Liga Manager Online</span>
                     </a>
                     <p>Das Portal für Hamburger Amateurfußball. Alle Ligen, alle Spiele, alle Ergebnisse.</p>
                 </div>
@@ -236,7 +236,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p class="footer-copyright">© 2026 HAFO.de - Hamburger Fußball Online</p>
+                <p class="footer-copyright" data-site-copyright>© Liga Manager Online</p>
             </div>
         </div>
     </footer>
@@ -259,7 +259,7 @@
             document.getElementById('sponsor-box').style.display = sp ? '' : 'none';
             document.getElementById('intro-title').textContent = sp ? 'Sponsor werden' : 'Kontakt';
             document.getElementById('intro-text').textContent = sp
-                ? 'HAFO.de wird durch Sponsoren finanziert. Mit einem Banner erreichen Sie die Hamburger Amateurfußball-Szene – Spieler, Trainer, Vereine und Fans.'
+                ? ((window.LMO_INSTANCE && LMO_INSTANCE.siteName) || 'Diese Seite') + ' wird durch Sponsoren finanziert. Mit einem Banner erreichen Sie die ' + ((window.LMO_INSTANCE && LMO_INSTANCE.region) || 'Amateurfußball') + '-Szene – Spieler, Trainer, Vereine und Fans.'
                 : 'Fragen, Hinweise oder ein falsches Ergebnis entdeckt? Schreiben Sie uns – wir melden uns so schnell wie möglich.';
             document.getElementById('company-label').textContent = sp ? 'Firma' : 'Verein / Firma';
             message.placeholder = sp
@@ -268,6 +268,7 @@
         }
         topic.addEventListener('change', applyTopic);
         applyTopic();
+        document.addEventListener('lmo:instance', applyTopic);
 
         message.addEventListener('input', () => {
             document.getElementById('c-count').textContent = message.value.length;
@@ -324,5 +325,6 @@
     })();
     </script>
     <script src="js/foerderer.js" defer></script>
+    <script src="js/instance.js?v=20261118"></script>
 </body>
 </html>

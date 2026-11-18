@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuigkeiten - HAFO LMO</title>
+    <title>Neuigkeiten - Admin</title>
     <style>
         :root {
             --color-primary: #E2001A;
@@ -50,7 +50,7 @@
         <a href="index.html" class="back-link">&larr; Zurück zum Admin-Dashboard</a>
         <div class="page-head">
             <h1>🆕 Neuigkeiten</h1>
-            <p id="sub">Was sich auf HAFO.de geändert hat – die neueste Version steht oben.</p>
+            <p id="sub">Was sich auf der Seite geändert hat – die neueste Version steht oben.</p>
         </div>
         <div id="notes"><p>Wird geladen …</p></div>
     </div>
@@ -125,7 +125,7 @@
                     return;
                 }
                 box.innerHTML = render(d.markdown);
-                document.getElementById('sub').textContent = `Was sich auf HAFO.de geändert hat – die neueste Version steht oben. Stand: ${d.updated}`;
+                document.getElementById('sub').textContent = `Was sich auf der Seite geändert hat – die neueste Version steht oben. Stand: ${d.updated}`;
             })
             .catch(() => { document.getElementById('notes').innerHTML = '<div class="error">Neuigkeiten konnten nicht geladen werden.</div>'; });
     })();

@@ -1,5 +1,5 @@
 /**
- * HAFO.de Forum JavaScript
+ * Forum JavaScript
  * Handles forum categories, topics, and posts
  */
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Design Editor - HAFO Admin</title>
+    <title>Design Editor - Admin</title>
     <link rel="stylesheet" href="../css/fonts.css">
     <style>
         :root {
@@ -533,11 +533,11 @@
                 <h2>Branding</h2>
                 <div class="setting-row">
                     <label>Website-Name</label>
-                    <input type="text" class="text-input" id="siteName" value="HAFO.de" oninput="updatePreview()">
+                    <input type="text" class="text-input" id="siteName" value="" placeholder="leer = Name aus config/instance.php" oninput="updatePreview()">
                 </div>
                 <div class="setting-row">
                     <label>Tagline</label>
-                    <input type="text" class="text-input" id="siteTagline" value="Hamburger Fußball Online" oninput="updatePreview()">
+                    <input type="text" class="text-input" id="siteTagline" value="" placeholder="leer = Untertitel aus config/instance.php" oninput="updatePreview()">
                 </div>
             </div>
 
@@ -671,7 +671,7 @@
                 <div class="preview-header">
                     <div class="preview-logo">
                         <div class="preview-logo-icon">&#9917;</div>
-                        <span id="previewSiteName">HAFO<span style="color: var(--preview-primary)">.de</span></span>
+                        <span id="previewSiteName">Liga Manager Online</span>
                     </div>
                     <nav class="preview-nav">
                         <a href="#" class="active">News</a>
@@ -1004,8 +1004,8 @@
         function resetToDefaults() {
             if (confirm('Alle Einstellungen auf Standard zurucksetzen?')) {
                 applyPreset('default');
-                document.getElementById('siteName').value = 'HAFO.de';
-                document.getElementById('siteTagline').value = 'Hamburger Fußball Online';
+                document.getElementById('siteName').value = '';
+                document.getElementById('siteTagline').value = '';
                 document.getElementById('borderRadius').value = 12;
                 document.getElementById('borderRadiusValue').textContent = '12px';
                 document.getElementById('shadowIntensity').value = 40;

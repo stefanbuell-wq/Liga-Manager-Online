@@ -2,7 +2,7 @@
 /**
  * Taegliches Briefing an Redaktion/Admins (Empfaenger und Bereiche: Admin > Einstellungen).
  * Nur per CLI, z. B. Plesk "Geplante Aufgaben" taeglich 07:05:
- *   php /hafo.de/httpdocs/cron/daily-briefing.php
+ *   php /pfad/zum/webroot/cron/daily-briefing.php
  * Optionen: --force (auch wenn heute schon gesendet), --dry-run (nur anzeigen, nichts senden)
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }

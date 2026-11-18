@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/Instance.php';
 /**
- * Minimaler SMTP-Mailer (SSL/465 oder STARTTLS/587) fuer Hostinger.
+ * Minimaler SMTP-Mailer (SSL/465 oder STARTTLS/587) (z. B. Hostinger, netcup).
  * Konfiguration: config/mail.php (siehe config/mail.example.php). Ohne Konfiguration
  * wird PHPs mail() verwendet. Keine externen Abhaengigkeiten.
  */
@@ -21,7 +22,7 @@ class Mailer
 
     public function fromAddress(): string
     {
-        return $this->cfg['from'] ?? ($this->cfg['username'] ?? 'noreply@hafo.de');
+        return $this->cfg['from'] ?? ($this->cfg['username'] ?? ('noreply@' . (parse_url(Instance::baseUrl($this->cfg['base_url'] ?? null), PHP_URL_HOST) ?: 'localhost')));
     }
 
     /** Sendet eine Text-Mail. Wirft Exception bei Fehler. */
@@ -31,7 +32,7 @@ class Mailer
             throw new Exception('Ungueltige Empfaengeradresse');
         }
         $from = $this->fromAddress();
-        $fromName = $this->cfg['from_name'] ?? 'HAFO.de';
+        $fromName = $this->cfg['from_name'] ?? Instance::siteName();
         $subjectEnc = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $headers = [
             'From: ' . '=?UTF-8?B?' . base64_encode($fromName) . '?=' . " <$from>",

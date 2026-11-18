@@ -51,6 +51,8 @@ img/forum/*
 !img/forum/.htaccess
 config/*
 !config/.htaccess
+!config/mail.example.php
+!config/instance.example.php
 data/login.override
 data/ratelimit.off
 

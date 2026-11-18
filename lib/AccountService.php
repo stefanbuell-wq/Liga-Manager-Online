@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/Instance.php';
 /**
  * Konten fuer Forennutzer: Registrierung, E-Mail-Bestaetigung, Freigabe durch Admin,
  * Uebernahme alter Forennamen (Claim), Passwort zuruecksetzen, Inaktivitaet.
@@ -107,10 +108,10 @@ class AccountService
 
         $token = $this->createToken($userId, 'verify', self::VERIFY_TTL);
         try {
-        $this->mail($email, 'HAFO.de – Bitte bestätige deine E-Mail-Adresse',
-            "Hallo $username,\n\nbitte bestätige deine Registrierung bei HAFO.de mit diesem Link (48 Stunden gültig):\n\n"
+        $this->mail($email, Instance::siteName() . ' – Bitte bestätige deine E-Mail-Adresse',
+            "Hallo $username,\n\nbitte bestätige deine Registrierung bei " . Instance::siteName() . " mit diesem Link (48 Stunden gültig):\n\n"
             . $this->url("konto.html?verify=$token") . "\n\nDanach prüft ein Administrator dein Konto und schaltet es frei.\n"
-            . "Wenn du dich nicht registriert hast, ignoriere diese E-Mail einfach.\n\nDein HAFO.de-Team");
+            . "Wenn du dich nicht registriert hast, ignoriere diese E-Mail einfach.\n\n" . Instance::teamSignature());
         } catch (Exception $e) {
             // Ohne Bestaetigungsmail ist das Konto unbrauchbar -> wieder entfernen
             $this->pdo->prepare("DELETE FROM auth_tokens WHERE user_id = ?")->execute([$userId]);
@@ -135,7 +136,7 @@ class AccountService
         if ($notify) {
             $u = $this->getUser($row['user_id']);
             try {
-                $this->mail($notify, 'HAFO.de – Neue Registrierung wartet auf Freigabe',
+                $this->mail($notify, Instance::siteName() . ' – Neue Registrierung wartet auf Freigabe',
                     "Neue Registrierung: {$u['username']} <{$u['email']}>"
                     . ($u['legacy_claim'] ? "\nMöchte früheren Forennamen übernehmen: {$u['legacy_claim']}" : '')
                     . "\n\nFreigabe im Admin unter Benutzer: " . $this->url('admin/index.html'));
@@ -184,9 +185,9 @@ class AccountService
             $this->pdo->rollBack();
             throw $e;
         }
-        $this->mail($u['email'], 'HAFO.de – Dein Konto ist freigeschaltet',
-            "Hallo,\n\ndein Konto bei HAFO.de ist freigeschaltet. Du kannst dich jetzt anmelden mit dem Benutzernamen:\n\n    $loginName\n\n"
-            . $this->url('konto.html') . "\n\nDein HAFO.de-Team");
+        $this->mail($u['email'], Instance::siteName() . ' – Dein Konto ist freigeschaltet',
+            "Hallo,\n\ndein Konto bei " . Instance::siteName() . " ist freigeschaltet. Du kannst dich jetzt anmelden mit dem Benutzernamen:\n\n    $loginName\n\n"
+            . $this->url('konto.html') . "\n\n" . Instance::teamSignature());
         return $loginName;
     }
 
@@ -211,9 +212,9 @@ class AccountService
         if (!$u || (int)$u['active'] !== 1 || ($u['status'] ?? 'active') !== 'active') return;
         $this->pdo->prepare("UPDATE auth_tokens SET used_at = strftime('%s','now') WHERE user_id = ? AND type = 'reset' AND used_at IS NULL")->execute([$u['id']]);
         $token = $this->createToken((int)$u['id'], 'reset', self::RESET_TTL);
-        $this->mail($u['email'], 'HAFO.de – Passwort zurücksetzen',
+        $this->mail($u['email'], Instance::siteName() . ' – Passwort zurücksetzen',
             "Hallo {$u['username']},\n\nfür dein Konto wurde ein neues Passwort angefordert. Der Link ist 1 Stunde gültig:\n\n"
-            . $this->url("konto.html?reset=$token") . "\n\nWenn du das nicht warst, ignoriere diese E-Mail – dein Passwort bleibt unverändert.\n\nDein HAFO.de-Team");
+            . $this->url("konto.html?reset=$token") . "\n\nWenn du das nicht warst, ignoriere diese E-Mail – dein Passwort bleibt unverändert.\n\n" . Instance::teamSignature());
     }
 
     public function resetPassword(string $token, string $newPassword): void
@@ -296,7 +297,7 @@ class AccountService
 
     private function url(string $path): string
     {
-        $base = rtrim($this->mailConfig('base_url') ?: 'https://hafo.de', '/');
+        $base = Instance::baseUrl($this->mailConfig('base_url'));
         return $base . '/' . ltrim($path, '/');
     }
 

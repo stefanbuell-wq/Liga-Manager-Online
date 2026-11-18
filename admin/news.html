@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Verwaltung - HAFO Admin</title>
+    <title>News Verwaltung - Admin</title>
     <link rel="stylesheet" href="../css/league-modern.css">
     <style>
         :root {
@@ -2254,6 +2254,9 @@
 
         // ===== Vorschau-Spiele Repeater =====
         let previewGameCount = 0;
+        // Beschriftung des Tipps (config/instance.php: tip_label), z. B. "HAFO-Tipp"
+        let tipLabel = 'Tipp';
+        fetch('../api/theme.php').then(r => r.json()).then(t => { if (t.instance && t.instance.tipLabel) tipLabel = t.instance.tipLabel; }).catch(() => {});
 
         function addPreviewGame() {
             previewGameCount++;
@@ -2295,7 +2298,7 @@
                     <textarea class="pgame-text" style="min-height:60px" placeholder="Vorschautext zu diesem Spiel..."></textarea>
                 </div>
                 <div class="form-group" style="margin-bottom:0">
-                    <input type="text" class="pgame-tip" placeholder="HAFO-Tipp (z.B. 2:1)">
+                    <input type="text" class="pgame-tip" placeholder="${escapeHtml(tipLabel)} (z.B. 2:1)">
                 </div>
             `;
             container.appendChild(div);
@@ -2337,8 +2340,8 @@
                     game.venue = parts.join(' | ');
                     rest = rest.substring(meta[0].length);
                 }
-                // HAFO-Tipp; alles danach (im letzten Spiel) ist der Abschluss-Text
-                const tip = rest.match(/\s<br><b>HAFO-Tipp:<\/b>\s*([^<]*)/i);
+                // Tipp (Beschriftung je Instanz, frueher fest "HAFO-Tipp"); alles danach (im letzten Spiel) ist der Abschluss-Text
+                const tip = rest.match(/\s<br><b>[^<]*?Tipp:<\/b>\s*([^<]*)/i);
                 let after = '';
                 if (tip) {
                     game.tip = textOf(tip[1]);
@@ -2771,7 +2774,7 @@
                 }
 
                 if (tip) {
-                    parts.push(` <br><b>HAFO-Tipp:</b> ${escapeHtml(tip)}`);
+                    parts.push(` <br><b>${escapeHtml(tipLabel)}:</b> ${escapeHtml(tip)}`);
                 }
             });
 

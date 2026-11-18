@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../lib/Instance.php';
 /**
  * Abmeldelink aus Forum-Benachrichtigungen (ohne Anmeldung, signiert):
  *   GET ?u=<user_id>&t=<topic_id>&s=<signatur>
@@ -32,10 +33,10 @@ try {
 $h = fn($v) => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 ?><!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HAFO.de – Benachrichtigung</title>
+<title><?= $h(Instance::siteName()) ?> – Benachrichtigung</title>
 <style>body{font-family:system-ui,sans-serif;max-width:520px;margin:60px auto;padding:0 20px;color:#222;line-height:1.5}a{color:#d40000}</style>
 </head><body>
-<h1>HAFO.de</h1>
+<h1><?= $h(Instance::siteName()) ?></h1>
 <?php if ($ok): ?>
 <p>Erledigt: Du bekommst keine E-Mails mehr zum Thema <strong>„<?= $h($title) ?>“</strong>.</p>
 <p>Wieder abonnieren kannst du im Thema mit dem Knopf „🔔 Abonnieren“.</p>

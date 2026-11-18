@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anfragen - HAFO Admin</title>
+    <title>Anfragen - Admin</title>
     <link rel="stylesheet" href="../css/fonts.css">
     <style>
         :root {
@@ -203,7 +203,7 @@
             }
             document.getElementById('list').innerHTML = items.map(r => {
                 const ints = (r.interests || '').split(',').filter(Boolean).map(k => interests[k] || k);
-                const subject = encodeURIComponent('Ihre Anfrage bei HAFO.de');
+                const subject = encodeURIComponent('Ihre Anfrage');
                 const replyBody = encodeURIComponent(`Hallo ${r.name},\n\nvielen Dank für Ihre Nachricht.\n\n\n\n> ${String(r.message).split('\n').join('\n> ')}`);
                 return `<div class="card req ${r.status === 'erledigt' ? 'done' : ''}">
                     <div class="req-head">
