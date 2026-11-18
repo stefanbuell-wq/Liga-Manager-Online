@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tippspiel - Admin</title>
+    <style>
+        :root { --color-primary: #E2001A; --color-bg: #F5F5F5; --color-card: #FFFFFF; --color-border: rgba(0,0,0,.10); --color-text: #111; --color-muted: #767676; }
+        * { box-sizing: border-box; }
+        body { background: var(--color-bg); color: var(--color-text); margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.5; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; }
+        .back-link { display: inline-block; color: var(--color-primary); text-decoration: none; font-weight: 600; margin-bottom: 16px; }
+        h1 { margin: 0 0 4px; font-size: 1.9rem; }
+        .sub { margin: 0 0 20px; color: var(--color-muted); }
+        .card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 14px; padding: 18px 22px; margin-bottom: 20px; }
+        .card h2 { margin: 0 0 6px; font-size: 1.2rem; }
+        .card p.hint { margin: 0 0 14px; color: #555; font-size: .92rem; }
+        table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+        th { font-size: .78rem; text-transform: uppercase; color: var(--color-muted); }
+        input[type=text], select { padding: 7px 9px; border: 1px solid var(--color-border); border-radius: 8px; font-size: .92rem; max-width: 100%; }
+        button { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--color-border); background: #fff; cursor: pointer; font-size: .88rem; }
+        button.primary { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+        .ok { color: #12805c; font-weight: 600; }
+        .warn { color: #b26a00; }
+        .msg { position: fixed; bottom: 20px; right: 20px; background: #111; color: #fff; padding: 10px 16px; border-radius: 10px; display: none; max-width: 460px; z-index: 50; }
+        .msg.err { background: #a11; }
+        .error { background: #fdecea; color: #8a1c1c; padding: 14px 16px; border-radius: 10px; }
+        .muted { color: var(--color-muted); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">&larr; Zurück zum Admin-Dashboard</a>
+    <h1>🎯 Tippspiel</h1>
+    <p class="sub">Tipprunden anlegen und freischalten. Öffentliche Seite: <a href="../tippspiel.html" target="_blank">Tippspiel</a></p>
+    <div id="content"><p>Wird geladen …</p></div>
+</div>
+<div class="msg" id="msg"></div>
+<script>
+(function () {
+    const API = '../api/tipp.php';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let csrf = '', data = null;
+    const box = document.getElementById('content');
+    function toast(t, err) {
+        const m = document.getElementById('msg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); m.style.display = 'block';
+        clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = 'none', 5000);
+    }
+    async function load() {
+        const r = await fetch(API + '?action=admin', { credentials: 'same-origin' });
+        const d = await r.json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!r.ok || !d.success) { box.innerHTML = `<div class="error">${esc(d.error || 'Laden fehlgeschlagen.')} <a href="index.html">Zum Login</a></div>`; return; }
+        data = d.data; render();
+    }
+    async function post(body) {
+        const r = await fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: JSON.stringify(Object.assign({ csrf_token: csrf }, body)) });
+        const d = await r.json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!d.success) throw new Error(d.error || 'Fehler');
+        return d;
+    }
+    function render() {
+        const state = data.enabled
+            ? '<p class="ok">Das Tippspiel ist eingeschaltet und auf der Website sichtbar.</p>'
+            : '<p class="warn">Das Tippspiel ist ausgeschaltet – Besucher sehen es nicht. Einschalten unter <a href="einstellungen.html">⚙️ Einstellungen → Zusatzfunktionen</a>. Tipprunden können vorher schon angelegt werden.</p>';
+        const rows = data.rounds.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.league_name)}</td><td>ab ${r.start_round}. Spieltag</td><td>${r.players}</td>
+            <td>${+r.active ? '<span class="ok">aktiv</span>' : '<span class="muted">pausiert</span>'}</td>
+            <td><button data-toggle="${r.id}" data-active="${+r.active ? 0 : 1}">${+r.active ? 'Pausieren' : 'Aktivieren'}</button></td></tr>`).join('');
+        box.innerHTML = `<div class="card">${state}</div>
+            <div class="card"><h2>Tipprunden</h2>
+              ${rows ? `<table><thead><tr><th>Name</th><th>Liga</th><th>Start</th><th>Mitspieler</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="muted">Noch keine Tipprunde angelegt.</p>'}
+            </div>
+            <div class="card"><h2>Neue Tipprunde</h2>
+              <p class="hint">Eine Tipprunde gehört zu einer Liga. Getippt wird ab dem gewählten Spieltag; Spiele sind bis zum Anstoß tippbar. Punkte: exakt 3 · Tordifferenz 2 · Tendenz 1.</p>
+              <p><select id="nr-league">${data.leagues.map(l => `<option value="${esc(l.file)}">${esc(l.name)}</option>`).join('')}</select></p>
+              <p><input type="text" id="nr-name" placeholder="Name (leer = „Tippspiel <Liga>“)" maxlength="100" style="width:360px"></p>
+              <p>ab Spieltag <input type="text" id="nr-start" value="1" style="width:60px"></p>
+              <button class="primary" id="nr-create">Anlegen</button>
+            </div>`;
+    }
+    box.addEventListener('click', async e => {
+        const b = e.target.closest('button'); if (!b) return;
+        try {
+            if (b.dataset.toggle) { await post({ action: 'set_active', round: +b.dataset.toggle, active: b.dataset.active === '1' }); toast('Gespeichert.'); return load(); }
+            if (b.id === 'nr-create') {
+                const d = await post({ action: 'create_round', league_file: document.getElementById('nr-league').value, name: document.getElementById('nr-name').value, start_round: +document.getElementById('nr-start').value || 1 });
+                toast(d.message); return load();
+            }
+        } catch (err) { toast(err.message, true); }
+    });
+    load();
+})();
+</script>
+</body>
+</html>

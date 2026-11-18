@@ -5,6 +5,28 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 18.11.2026 (Nachtrag) – Wappen im Admin, Historie, Tabellenrechner, Tippspiel
+
+### Für Redaktion und Leser
+
+- **🛡️ Wappen im Admin pflegen:** Neues Wappen per Drag & Drop hochladen, das Programm erzeugt großes und kleines Wappen selbst; alte Bilder werden archiviert. Wappen eines anderen Vereins übernehmen (z. B. nach Umbenennung).
+- **🏆 Historie (neue öffentliche Seite):** Ewige Tabelle der Oberliga Hamburg seit 1945 (sortierbar, laufende Saison zuschaltbar), Meister und Pokalsieger, Rekorde (höchste Siege, torreichste Spiele, meiste Punkte, längste Serien) und je Verein alle Platzierungen. Grundlage ist die Ewige Tabelle der hafo.de-Redaktion.
+  - Am Saisonende im Admin unter „🏆 Historie“ die Saison übernehmen und den Pokalsieger eintragen.
+- **🧮 Tabellenrechner „Was wäre wenn?“** unter der Tabelle: Ergebnisse für offene Spiele eintragen, die Tabelle rechnet sofort neu. Standard: aus.
+- **🎯 Tippspiel:** Mitglieder tippen bis zum Anstoß, Punkte 3/2/1, Ranglisten je Spieltag und gesamt. Tipprunden im Admin unter „🎯 Tippspiel“. Standard: aus.
+- Tabellenrechner und Tippspiel schaltet man unter **⚙️ Einstellungen → Zusatzfunktionen** ein. Ausgeschaltet sind sie nirgends sichtbar.
+- Admin-Anleitung: neues Kapitel 14 „Wappen, Historie, Tippspiel“.
+
+### Technik
+
+- Wappen: `lib/CrestService.php`, `api/crests.php` (nur Admin, CSRF), `admin/wappen.html`; `img/teams/.htaccess` mit 1 Tag Cache (ec7e6f0)
+- Historie: `lib/HistoryService.php` (Tabellen `history_*`), `api/history.php`, `historie.html`, `admin/historie.html`, Import `scripts/history-import.php <json> <slug>`; Daten der Instanz liegen nicht im Produkt-Repo (df3dd53)
+- Zusatzfunktionen: `Instance::features()` (history/calculator/tipp), `app_settings` `feature_calculator`/`feature_tipp`, `api/settings.php` `features_save`; `page.php` blendet `data-feature`-Elemente schon im HTML aus
+- Tabellenrechner: `js/tabellenrechner.js` (rein im Browser) (e52362e)
+- Tippspiel: `lib/TippService.php` (Tabellen `tipp_rounds`, `tipps`), `api/tipp.php`, `tippspiel.html`, `admin/tippspiel.html`; Sperre ab Anstoß wird auf dem Server geprüft (Europe/Berlin)
+- Testumgebung: `mail_mode` `'log'` (Mails nur nach `data/mail-log.txt`) und `test_banner` in `config/instance.php` (20a4504); `page.php` liefert Seitentitel, Logo und Copyright mit Instanzname schon im HTML (2d14c23)
+- `.htaccess`: `historie` und `tippspiel` über `page.php`
+
 ## 18.11.2026 – Liga Manager Online als eigenständiges Produkt
 
 ### Für Redaktion und Leser

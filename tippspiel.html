@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-page="Tippspiel">Tippspiel - Liga Manager Online</title>
+    <meta name="description" content="Tippspiel: Ergebnisse tippen, Punkte sammeln, Ranglisten.">
+
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/portal.css?v=20261122">
+    <script src="js/darkmode.js?v=20261121"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <script>
+        (function() {
+            const apply = t => t && t.cssVariables && Object.entries(t.cssVariables).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+            try { apply(JSON.parse(localStorage.getItem('hafo_theme') || 'null')); } catch (e) {}
+            fetch('api/theme.php').then(r => r.json()).then(t => { try { localStorage.setItem('hafo_theme', JSON.stringify(t)); } catch (e) {} apply(t); }).catch(() => {});
+        })();
+    </script>
+    <style>
+        .tw { max-width: 1000px; margin: var(--spacing-xl) auto var(--spacing-2xl); padding: 0 var(--spacing-md); }
+        .tw h1 { font-family: var(--font-display); font-size: 2rem; margin: 0; }
+        .sub { color: var(--color-text-muted); margin: 4px 0 var(--spacing-lg); }
+        .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: var(--spacing-md); }
+        .bar select, .bar button { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--color-bg-card); color: var(--color-text-primary); font-size: .95rem; cursor: pointer; }
+        .bar .md { font-weight: 700; min-width: 110px; text-align: center; }
+        .tabs { display: flex; gap: 8px; margin-bottom: var(--spacing-md); }
+        .tabs button { border: 1px solid var(--border-color); background: var(--color-bg-card); color: var(--color-text-primary); padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; }
+        .tabs button.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+        .card { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-md) var(--spacing-lg); margin-bottom: var(--spacing-md); }
+        .m { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        .m:last-child { border-bottom: 0; }
+        .m .h { text-align: right; font-weight: 600; } .m .g { font-weight: 600; }
+        .m .tip { display: flex; gap: 4px; align-items: center; }
+        .m .tip input { width: 46px; padding: 6px; text-align: center; font-size: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--color-bg-card); color: var(--color-text-primary); }
+        .m .tip input:disabled { opacity: .55; }
+        .m .info { font-size: .8rem; color: var(--color-text-muted); min-width: 120px; }
+        .m .res { font-weight: 800; }
+        .pts { display: inline-block; min-width: 28px; text-align: center; border-radius: 6px; padding: 1px 6px; font-weight: 800; font-size: .82rem; background: var(--border-color); }
+        .pts.p3 { background: #12805c; color: #fff; } .pts.p2 { background: #3c8dbc; color: #fff; } .pts.p1 { background: #d4a017; color: #111; }
+        .m .when { grid-column: 1 / -1; font-size: .78rem; color: var(--color-text-muted); margin-top: -6px; }
+        .others { grid-column: 1 / -1; font-size: .85rem; background: var(--color-bg-secondary, rgba(0,0,0,.03)); border-radius: 8px; padding: 6px 10px; }
+        .linkbtn { background: none; border: 0; color: var(--color-primary); cursor: pointer; padding: 0; font-size: .8rem; }
+        .actions { display: flex; gap: 12px; align-items: center; margin-top: var(--spacing-md); flex-wrap: wrap; }
+        .btn-save { background: var(--color-primary); color: #fff; border: 0; border-radius: var(--radius-md); padding: 10px 20px; font-weight: 700; cursor: pointer; }
+        .note { font-size: .85rem; color: var(--color-text-muted); }
+        .rank td.num, .rank th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .rank tr.me td { background: rgba(226,0,26,.06); font-weight: 700; }
+        .msg { margin-top: 8px; font-weight: 600; }
+        .msg.err { color: #b00020; } .msg.ok { color: #12805c; }
+        @media (max-width: 640px) { .m { grid-template-columns: 1fr auto 1fr; } .m .info { grid-column: 1 / -1; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span data-site-logo>Liga Manager Online</span>
+                </a>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                    <a href="historie.html" class="nav-link" data-feature="history" hidden>🏆 Historie</a>
+                    <a href="tippspiel.html" class="nav-link active" data-feature="tipp" hidden>🎯 Tippspiel</a>
+                    <a href="suche.html" class="nav-link">🔍 Suche</a>
+                </nav>
+                <div class="header-actions"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="tw">
+        <h1>🎯 Tippspiel</h1>
+        <p class="sub">Tippe die Ergebnisse bis zum Anstoß. Exakt: 3 Punkte · richtige Tordifferenz: 2 · richtige Tendenz: 1.</p>
+        <div id="view"><p class="note">Wird geladen …</p></div>
+        <p class="note" style="margin-top:24px">Datenschutz: In den Ranglisten und bei „Tipps der anderen“ erscheint dein Anzeigename aus dem Konto. Tipps anderer sind erst nach Anstoß sichtbar.</p>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p class="footer-copyright"><span data-site-copyright>© Liga Manager Online</span> · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="kontakt.html">Kontakt</a></p>
+            </div>
+        </div>
+    </footer>
+    <script>
+    (function () {
+        const API = 'api/tipp.php';
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const view = document.getElementById('view');
+        const params = new URLSearchParams(location.search);
+        let csrf = '', rounds = [], round = +params.get('runde') || 0, md = +params.get('spieltag') || 0, tab = params.get('ansicht') || 'tipps', loggedIn = false, info = null;
+        const dfmt = (d, t) => {
+            const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(d || ''); if (!m) return 'Termin offen';
+            const wd = ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(+m[3], m[2] - 1, +m[1]).getDay()];
+            return `${wd} ${m[1].padStart(2, '0')}.${m[2].padStart(2, '0')}.${m[3]}${t ? ' · ' + t.slice(0, 5) + ' Uhr' : ''}`;
+        };
+        const ptsBadge = p => p === null || p === undefined ? '' : `<span class="pts p${p}">${p}</span>`;
+
+        async function get(q) {
+            const r = await fetch(API + '?' + new URLSearchParams(q), { credentials: 'same-origin' });
+            const d = await r.json().catch(() => ({ success: false, error: 'Fehler beim Laden.' }));
+            if (d.csrf_token) csrf = d.csrf_token;
+            if (!d.success) throw new Error(d.error || 'Fehler beim Laden.');
+            return d;
+        }
+        function setUrl() {
+            const p = new URLSearchParams();
+            if (round) p.set('runde', round); if (md) p.set('spieltag', md); if (tab !== 'tipps') p.set('ansicht', tab);
+            history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : ''));
+        }
+        function bar() {
+            const sel = rounds.length > 1 ? `<select id="sel-round">${rounds.map(r => `<option value="${r.id}"${+r.id === round ? ' selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : `<strong>${esc(rounds[0].name)}</strong>`;
+            const nav = info ? `<button id="md-prev" ${md <= info.start_round ? 'disabled' : ''}>‹</button><span class="md">${md}. Spieltag</span><button id="md-next" ${md >= info.rounds ? 'disabled' : ''}>›</button>` : '';
+            return `<div class="bar">${sel}${nav}</div>
+                <div class="tabs"><button data-tab="tipps" class="${tab === 'tipps' ? 'active' : ''}">Meine Tipps</button><button data-tab="spieltag" class="${tab === 'spieltag' ? 'active' : ''}">Spieltagswertung</button><button data-tab="gesamt" class="${tab === 'gesamt' ? 'active' : ''}">Gesamtwertung</button></div>`;
+        }
+        async function show() {
+            try {
+                if (!rounds.length) {
+                    const d = await get({ action: 'rounds' }); rounds = d.data; loggedIn = d.user && d.user.logged_in;
+                    if (!rounds.length) { view.innerHTML = '<div class="card">Zurzeit läuft keine Tipprunde.</div>'; return; }
+                    if (!rounds.some(r => +r.id === round)) round = +rounds[0].id;
+                }
+                const d = await get({ action: 'matchday', round, md: md || '' });
+                info = d.data.round; md = d.data.md; loggedIn = d.data.logged_in; setUrl();
+                if (tab === 'tipps') return renderTips(d.data.matches);
+                const r = await get({ action: 'ranking', round, md: tab === 'spieltag' ? md : '' });
+                renderRanking(r.data);
+            } catch (e) { view.innerHTML = `<div class="card">${esc(e.message)}</div>`; }
+        }
+        function renderTips(ms) {
+            const login = loggedIn ? '' : '<div class="card">Zum Tippen bitte <a href="konto.html">anmelden oder ein Konto anlegen</a>.</div>';
+            const rows = ms.map(m => {
+                const dis = !loggedIn || m.locked ? 'disabled' : '';
+                const t = m.tip || ['', ''];
+                const res = m.result ? `<span class="res">${m.result[0]}:${m.result[1]}</span> ${ptsBadge(m.points)}` : (m.locked ? 'läuft / gesperrt' : `${m.tip_count} Tipp${m.tip_count === 1 ? '' : 's'}`);
+                const others = m.locked ? `<button class="linkbtn" data-others="${m.id}">Tipps der anderen</button>` : '';
+                return `<div class="m" data-id="${m.id}">
+                    <span class="h">${esc(m.home)}</span>
+                    <span class="tip"><input type="number" min="0" max="30" inputmode="numeric" value="${t[0]}" ${dis} aria-label="Tore ${esc(m.home)}">:<input type="number" min="0" max="30" inputmode="numeric" value="${t[1]}" ${dis} aria-label="Tore ${esc(m.guest)}"></span>
+                    <span class="g">${esc(m.guest)}</span>
+                    <span class="info">${res}<br>${others}</span>
+                    <span class="when">${dfmt(m.date, m.time)}</span>
+                    <div class="others" id="o-${m.id}" hidden></div>
+                </div>`;
+            }).join('');
+            const open = ms.some(m => !m.locked);
+            view.innerHTML = bar() + login + `<div class="card">${rows || '<p class="note">Keine Spiele an diesem Spieltag.</p>'}</div>` +
+                (loggedIn && open ? '<div class="actions"><button class="btn-save" id="save">Tipps speichern</button><span class="note">Leere Felder löschen einen Tipp.</span></div><div class="msg" id="msg"></div>' : '');
+        }
+        function renderRanking(rows) {
+            const head = tab === 'spieltag' ? `${md}. Spieltag` : 'Gesamt';
+            const body = rows.length ? rows.map(r => `<tr class="${r.me ? 'me' : ''}"><td class="num">${r.rank}.</td><td>${esc(r.name)}</td><td class="num"><b>${r.points}</b></td><td class="num">${r.exact}</td><td class="num">${r.diff}</td><td class="num">${r.tendency}</td><td class="num">${r.tips}</td></tr>`).join('')
+                : '<tr><td colspan="7" class="note">Noch keine gewerteten Tipps.</td></tr>';
+            view.innerHTML = bar() + `<div class="card"><h3 style="margin-top:0">Rangliste · ${head}</h3><div style="overflow-x:auto"><table class="league-table rank"><thead><tr><th class="num">#</th><th>Name</th><th class="num">Pkt</th><th class="num" title="exakte Ergebnisse">3er</th><th class="num" title="richtige Tordifferenz">2er</th><th class="num" title="richtige Tendenz">1er</th><th class="num">Tipps</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+        }
+        async function save() {
+            const tips = [...view.querySelectorAll('.m')].filter(el => !el.querySelector('input').disabled).map(el => {
+                const [h, g] = el.querySelectorAll('input'); return { match_id: +el.dataset.id, home: h.value, guest: g.value };
+            });
+            const msg = document.getElementById('msg');
+            try {
+                const r = await fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: JSON.stringify({ action: 'save', round, tips, csrf_token: csrf }) });
+                const d = await r.json().catch(() => ({}));
+                if (d.csrf_token) csrf = d.csrf_token;
+                if (!d.success) throw new Error(d.error || 'Speichern fehlgeschlagen.');
+                msg.className = 'msg ok'; msg.textContent = d.message;
+                setTimeout(show, 1200);
+            } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+        }
+        view.addEventListener('click', async e => {
+            const b = e.target.closest('button'); if (!b) return;
+            if (b.dataset.tab) { tab = b.dataset.tab; return show(); }
+            if (b.id === 'md-prev') { md--; return show(); }
+            if (b.id === 'md-next') { md++; return show(); }
+            if (b.id === 'save') return save();
+            if (b.dataset.others) {
+                const box = document.getElementById('o-' + b.dataset.others);
+                if (!box.hidden) { box.hidden = true; return; }
+                try {
+                    const d = await get({ action: 'match_tips', round, match: b.dataset.others });
+                    box.innerHTML = d.data.length ? d.data.map(t => `${esc(t.name)} <b>${t.tip[0]}:${t.tip[1]}</b> ${ptsBadge(t.points)}`).join(' · ') : 'Keine Tipps.';
+                } catch (err) { box.textContent = err.message; }
+                box.hidden = false;
+            }
+        });
+        view.addEventListener('change', e => { if (e.target.id === 'sel-round') { round = +e.target.value; md = 0; show(); } });
+        show();
+    })();
+    </script>
+    <script src="js/foerderer.js" defer></script>
+    <script src="js/instance.js?v=20261118b"></script>
+</body>
+</html>
