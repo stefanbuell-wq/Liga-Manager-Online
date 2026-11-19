@@ -27,7 +27,7 @@ class BriefingService
         'anfragen'        => 'Kontaktanfragen',
         'registrierungen' => 'Registrierungen (Forum)',
         'forum'           => 'Forum: neue Beiträge',
-        'meldungen'       => 'Gemeldete Forenbeiträge',
+        'meldungen'       => 'Gemeldete Forenbeiträge, Kommentare zur Freigabe',
         'banner'          => 'Auslaufende Sponsoren-Banner',
     ];
     public const MAX_RECIPIENTS = 8;
@@ -185,15 +185,31 @@ class BriefingService
 
     private function forumReports(): array
     {
-        if (!$this->tableExists('forum_reports')) return $this->empty('admin/forum.html');
         require_once __DIR__ . '/ForumComfort.php';
         $lines = [];
-        foreach ((new ForumComfort())->openReports() as $r) {
+        foreach ($this->tableExists('forum_reports') ? (new ForumComfort())->openReports() : [] as $r) {
             $why = array_filter(array_map(fn($x) => $x['reason'], $r['reports']));
             $lines[] = sprintf('"%s" – Beitrag von %s, %d× gemeldet%s', $r['title'] ?? '?', $r['author'] ?? '?', count($r['reports']),
                 $why ? ': ' . mb_substr(implode(' / ', $why), 0, 120) : '');
         }
-        return ['count' => count($lines), 'lines' => $lines, 'link' => $this->base . '/admin/forum.html'];
+        $link = $this->base . '/admin/forum.html';
+        // Kommentare unter Artikeln: wartende Freigaben und Meldungen
+        if ($this->tableExists('news_comments')) {
+            require_once __DIR__ . '/CommentService.php';
+            $cs = new CommentService();
+            $c = $cs->counts();
+            foreach (array_merge($cs->moderationList('pending', 30), $c['reported'] ? $cs->moderationList('reported', 30) : []) as $r) {
+                $text = trim(preg_replace('/\s+/u', ' ', $r['content']));
+                if (mb_strlen($text) > 80) $text = mb_substr($text, 0, 77) . '…';
+                $lines[] = sprintf('Kommentar von %s zu "%s"%s: %s', $r['name'], mb_substr((string)$r['title'], 0, 60),
+                    $r['status'] === 'pending' ? ' – wartet auf Freigabe' : ' – ' . $r['reports'] . '× gemeldet', $text);
+            }
+            if ($c['pending'] || $c['reported']) {
+                $lines[] = '      ' . $this->base . '/admin/kommentare.html';
+                if (!$this->tableExists('forum_reports') || !(new ForumComfort())->openReports()) $link = $this->base . '/admin/kommentare.html';
+            }
+        }
+        return ['count' => count(array_filter($lines, fn($l) => !str_starts_with($l, '      '))), 'lines' => $lines, 'link' => $link];
     }
 
     private function expiringBanners(DateTimeImmutable $now): array

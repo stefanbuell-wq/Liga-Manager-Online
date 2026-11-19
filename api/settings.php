@@ -8,7 +8,7 @@
  *   POST action=briefing_save, recipients[], send_empty (CSRF) – Empfaenger des taeglichen Briefings
  *   POST action=briefing_preview (CSRF)     – heutiger Inhalt je Empfaenger (ohne Versand)
  *   POST action=briefing_test (CSRF)        – Briefing jetzt als [TEST] an alle senden
- *   POST action=features_save, calculator, tipp (CSRF) – zuschaltbare Funktionen
+ *   POST action=features_save, calculator, tipp, comments (off|open|approval), live (CSRF) – zuschaltbare Funktionen
  */
 
 require_once __DIR__ . '/../lib/Security.php';
@@ -39,7 +39,9 @@ try {
         foreach (ContactService::NOTIFY_KEYS as $k) {
             $data[$k] = $settings->get($k);
         }
-        $data['features'] = ['calculator' => $settings->get('feature_calculator') === '1', 'tipp' => $settings->get('feature_tipp') === '1'];
+        $cm = (string)$settings->get('feature_comments');
+        $data['features'] = ['calculator' => $settings->get('feature_calculator') === '1', 'tipp' => $settings->get('feature_tipp') === '1',
+            'comments' => in_array($cm, ['open', 'approval'], true) ? $cm : 'off', 'live' => $settings->get('feature_live') === '1'];
         $briefing = new BriefingService();
         $data['briefing'] = $briefing->getConfig() + [
             'sections' => BriefingService::SECTIONS,
@@ -60,6 +62,8 @@ try {
         if ($action === 'features_save') {
             $settings->set('feature_calculator', !empty($in['calculator']) ? '1' : '0');
             $settings->set('feature_tipp', !empty($in['tipp']) ? '1' : '0');
+            $settings->set('feature_comments', in_array($in['comments'] ?? '', ['open', 'approval'], true) ? $in['comments'] : 'off');
+            $settings->set('feature_live', !empty($in['live']) ? '1' : '0');
             @unlink(__DIR__ . '/../data/cache/theme.json'); // Seiten lesen die Schalter ueber api/theme.php
             stJson(['success' => true]);
         }

@@ -107,12 +107,14 @@ class Instance
     /** Zuschaltbare Funktionen (Admin -> Einstellungen) und vorhandene Daten */
     public static function features(): array
     {
-        $f = ['history' => false, 'calculator' => false, 'tipp' => false];
+        $f = ['history' => false, 'calculator' => false, 'tipp' => false, 'comments' => false, 'live' => false];
         try {
             require_once __DIR__ . '/SettingsRepository.php';
             $s = new SettingsRepository();
             $f['calculator'] = $s->get('feature_calculator') === '1';
             $f['tipp'] = $s->get('feature_tipp') === '1';
+            $f['comments'] = in_array($s->get('feature_comments'), ['open', 'approval'], true);
+            $f['live'] = $s->get('feature_live') === '1';
             $pdo = LmoDatabase::getInstance();
             $has = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'history_competitions'")->fetchColumn();
             $f['history'] = $has && (int)$pdo->query("SELECT COUNT(*) FROM history_competitions")->fetchColumn() > 0;

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kommentare - Admin</title>
+    <style>
+        :root { --color-primary: #E2001A; --color-bg: #F5F5F5; --color-card: #FFFFFF; --color-border: rgba(0,0,0,.10); --color-text: #111; --color-muted: #767676; }
+        * { box-sizing: border-box; }
+        body { background: var(--color-bg); color: var(--color-text); margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.5; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; }
+        .back-link { display: inline-block; color: var(--color-primary); text-decoration: none; font-weight: 600; margin-bottom: 16px; }
+        h1 { margin: 0 0 4px; font-size: 1.9rem; }
+        .sub { margin: 0 0 20px; color: var(--color-muted); }
+        .card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 14px; padding: 18px 22px; margin-bottom: 20px; }
+        .card h2 { margin: 0 0 6px; font-size: 1.2rem; }
+        .card p.hint { margin: 0 0 14px; color: #555; font-size: .92rem; }
+        table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+        th { font-size: .78rem; text-transform: uppercase; color: var(--color-muted); }
+        input[type=text], select { padding: 7px 9px; border: 1px solid var(--color-border); border-radius: 8px; font-size: .92rem; max-width: 100%; }
+        button { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--color-border); background: #fff; cursor: pointer; font-size: .88rem; }
+        button.primary { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+        .ok { color: #12805c; font-weight: 600; }
+        .warn { color: #b26a00; }
+        .msg { position: fixed; bottom: 20px; right: 20px; background: #111; color: #fff; padding: 10px 16px; border-radius: 10px; display: none; max-width: 460px; z-index: 50; }
+        .msg.err { background: #a11; }
+        .error { background: #fdecea; color: #8a1c1c; padding: 14px 16px; border-radius: 10px; }
+        .muted { color: var(--color-muted); }
+        .tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}.tabs button{border:1px solid #ccc;background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer}
+    .tabs button.active{background:#e2001a;border-color:#e2001a;color:#fff}
+    .ctext{white-space:pre-wrap;overflow-wrap:anywhere;max-width:520px}
+    .tag{display:inline-block;font-size:.75rem;font-weight:700;border-radius:4px;padding:1px 6px;background:#d4a017;color:#111}
+    .tag.hidden{background:#777;color:#fff}.tag.rep{background:#b00020;color:#fff}.tag.vis{background:#12805c;color:#fff}
+    td.act button{margin:2px}
+</style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">&larr; Zurück zum Admin-Dashboard</a>
+    <h1>💬 Kommentare</h1>
+    <p class="sub">Kommentare unter Artikeln freigeben, ausblenden oder löschen. Pro Artikel schließen geht auch direkt unter dem Artikel auf der Website.</p>
+    <div id="content"><p>Wird geladen …</p></div>
+</div>
+<div class="msg" id="msg"></div>
+<script>
+(function () {
+    const API = '../api/comments.php';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const when = s => { const d = new Date(String(s).replace(' ', 'T') + 'Z'); return isNaN(d) ? '' : d.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }); };
+    let csrf = '', filter = new URLSearchParams(location.search).get('filter') || 'pending', data = null;
+    const box = document.getElementById('content');
+    const MODES = { off: 'ausgeschaltet', open: 'an – Kommentare erscheinen sofort', approval: 'an – erst nach Freigabe' };
+    const AMODES = { closed: 'geschlossen', off: 'ausgeblendet' };
+    function toast(t, err) {
+        const m = document.getElementById('msg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); m.style.display = 'block';
+        clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = 'none', 5000);
+    }
+    async function load() {
+        const r = await fetch(API + '?action=admin&filter=' + filter, { credentials: 'same-origin' });
+        const d = await r.json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!r.ok || !d.success) { box.innerHTML = `<div class="error">${esc(d.error || 'Laden fehlgeschlagen.')} <a href="index.html">Zum Login</a></div>`; return; }
+        data = d.data; render();
+    }
+    async function post(body) {
+        const r = await fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: JSON.stringify(Object.assign({ csrf_token: csrf }, body)) });
+        const d = await r.json().catch(() => ({}));
+        if (d.csrf_token) csrf = d.csrf_token;
+        if (!d.success) throw new Error(d.error || 'Fehler');
+        return d;
+    }
+    function render() {
+        const c = data.counts;
+        const state = data.mode === 'off'
+            ? '<p class="warn">Kommentare sind ausgeschaltet – Besucher sehen nichts. Einschalten unter <a href="einstellungen.html">⚙️ Einstellungen → Zusatzfunktionen</a>.</p>'
+            : `<p class="ok">Kommentare: ${esc(MODES[data.mode])}.</p>`;
+        const tab = (k, l) => `<button data-filter="${k}" class="${filter === k ? 'active' : ''}">${l}</button>`;
+        const rows = data.comments.map(x => {
+            const tag = x.status === 'pending' ? '<span class="tag">wartet</span>' : x.status === 'hidden' ? '<span class="tag hidden">ausgeblendet</span>' : '<span class="tag vis">sichtbar</span>';
+            const rep = x.reports ? ` <span class="tag rep">${x.reports}× gemeldet</span>${x.reasons ? '<br><small>' + esc(x.reasons) + '</small>' : ''}` : '';
+            return `<tr><td>${when(x.created_at)}<br>${tag}${rep}</td>
+                <td><b>${esc(x.name)}</b>${x.blocked ? ' <span class="tag rep">gesperrt</span>' : ''}<br><a href="../index.html?news=${x.news_id}" target="_blank">${esc(x.title || 'Artikel ' + x.news_id)}</a></td>
+                <td class="ctext">${esc(x.content)}</td>
+                <td class="act">${x.status !== 'visible' ? `<button class="primary" data-a="approve" data-id="${x.id}">Freigeben</button>` : ''}
+                    ${x.status !== 'hidden' ? `<button data-a="hide" data-id="${x.id}">Ausblenden</button>` : ''}
+                    <button data-a="delete" data-id="${x.id}">Löschen</button>
+                    <button data-a="${x.blocked ? 'unblock' : 'block'}" data-user="${x.user_id}">${x.blocked ? 'Sperre aufheben' : 'Nutzer sperren'}</button></td></tr>`;
+        }).join('');
+        const arts = data.articles.map(a => `<tr><td><a href="../index.html?news=${a.news_id}" target="_blank">${esc(a.title || 'Artikel ' + a.news_id)}</a></td><td>${esc(AMODES[a.mode] || a.mode)}</td>
+            <td><button data-a="reopen" data-news="${a.news_id}">Wieder öffnen</button></td></tr>`).join('');
+        const blocked = data.blocked.map(b => `<tr><td>${esc(b.name || 'Nutzer ' + b.user_id)}</td><td>${when(b.created_at)}</td><td><button data-a="unblock" data-user="${b.user_id}">Sperre aufheben</button></td></tr>`).join('');
+        box.innerHTML = `<div class="card">${state}</div>
+            <div class="card"><div class="tabs">${tab('pending', 'Warten auf Freigabe (' + c.pending + ')')}${tab('reported', 'Gemeldet (' + c.reported + ')')}${tab('hidden', 'Ausgeblendet')}${tab('all', 'Alle')}</div>
+              ${rows ? `<table><thead><tr><th>Zeit</th><th>Von / Artikel</th><th>Kommentar</th><th></th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="muted">Nichts zu tun.</p>'}</div>
+            <div class="card"><h2>Artikel mit geschlossenen Kommentaren</h2>${arts ? `<table><tbody>${arts}</tbody></table>` : '<p class="muted">Keine – alle Artikel sind offen.</p>'}
+              <p class="hint">Schließen oder ausblenden: als Redaktion angemeldet den Artikel auf der Website öffnen, unter dem Artikel steht die Auswahl.</p></div>
+            <div class="card"><h2>Gesperrte Nutzer</h2>${blocked ? `<table><tbody>${blocked}</tbody></table>` : '<p class="muted">Niemand gesperrt.</p>'}</div>`;
+    }
+    box.addEventListener('click', async e => {
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.dataset.filter) { filter = b.dataset.filter; history.replaceState(null, '', '?filter=' + filter); return load(); }
+        const a = b.dataset.a; if (!a) return;
+        try {
+            let body = { action: a, id: +b.dataset.id };
+            if (a === 'delete' && !confirm('Kommentar endgültig löschen?')) return;
+            if (a === 'block' || a === 'unblock') body = { action: a, user: +b.dataset.user };
+            if (a === 'reopen') body = { action: 'article_mode', news: +b.dataset.news, mode: 'open' };
+            const d = await post(body); toast(d.message || 'Erledigt.'); load();
+        } catch (err) { toast(err.message, true); }
+    });
+    load();
+})();
+</script>
+</body>
+</html>

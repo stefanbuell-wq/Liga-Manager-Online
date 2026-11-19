@@ -959,6 +959,7 @@
                     <div class="news-body" style="line-height: 1.8; color: var(--color-text-secondary);">
                         ${n.content || n.short_content || ''}
                     </div>
+                    <div id="news-comments" hidden></div>
                     <div style="text-align:center; margin-top: var(--spacing-xl);">
                         <button type="button" class="btn btn-secondary" onclick="closeNewsModal()" style="font-size:1rem; padding:12px 28px;">✕ Schließen</button>
                     </div>
@@ -968,6 +969,7 @@
                     history.replaceState(null, '', '?news=' + Number(newsId));
                 }
 
+                if (window.LmoComments) LmoComments.mount(document.getElementById('news-comments'), Number(newsId));
                 modal.style.display = 'block';
                 resetModalScroll();
                 setTimeout(() => modal.classList.add('active'), 10);
@@ -1628,6 +1630,8 @@
     <script src="js/newsprint.js"></script>
     <script src="js/foerderer.js" defer></script>
     <script src="js/tabellenrechner.js?v=20261118"></script>
+    <script src="js/comments.js?v=20261119"></script>
+    <script src="js/live.js?v=20261119"></script>
     <script src="js/instance.js?v=20261118c"></script>
 </body>
 

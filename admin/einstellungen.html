@@ -112,6 +112,9 @@
             <p>Diese Funktionen sind optional. Ausgeschaltet sind sie für Besucher nicht zu sehen.</p>
             <div class="field"><label><input type="checkbox" id="feat_calculator"> <strong>Tabellenrechner</strong> – „Was wäre wenn?“ an der Tabelle: Besucher tragen Ergebnisse ein und sehen die neue Tabelle (wird nicht gespeichert).</label></div>
             <div class="field"><label><input type="checkbox" id="feat_tipp"> <strong>Tippspiel</strong> – angemeldete Mitglieder tippen die Spiele, mit Ranglisten je Spieltag und Saison. Tipprunden im Admin unter „Tippspiel“.</label></div>
+            <div class="field"><label for="feat_comments"><strong>Kommentare unter Artikeln</strong> – nur angemeldete Mitglieder. Pro Artikel schließen oder ausblenden: direkt unter dem Artikel (als Redaktion angemeldet) oder unter „Kommentare“.</label>
+                <select id="feat_comments"><option value="off">aus</option><option value="open">an – Kommentare erscheinen sofort</option><option value="approval">an – Kommentare erscheinen erst nach Freigabe</option></select></div>
+            <div class="field"><label><input type="checkbox" id="feat_live"> <strong>Live-Ticker</strong> – angemeldete Zuschauer tickern ab 1 Stunde vor Anpfiff bis 1 Stunde nach Spielende (alle Ligen). Laufende Ticker erscheinen auffällig auf allen Seiten. Moderation unter „Live-Ticker“.</label></div>
             <div class="actions"><button type="button" class="btn" onclick="saveFeatures()">Speichern</button></div>
         </div>
 
@@ -218,6 +221,8 @@
                 const f = res.data.features || {};
                 document.getElementById('feat_calculator').checked = !!f.calculator;
                 document.getElementById('feat_tipp').checked = !!f.tipp;
+                document.getElementById('feat_comments').value = f.comments || 'off';
+                document.getElementById('feat_live').checked = !!f.live;
                 document.getElementById('featureCard').classList.remove('hidden');
                 initBriefing(res.data.briefing);
             } catch (e) {
@@ -238,7 +243,8 @@
 
         async function saveFeatures() {
             try {
-                await post({ action: 'features_save', calculator: document.getElementById('feat_calculator').checked, tipp: document.getElementById('feat_tipp').checked });
+                await post({ action: 'features_save', calculator: document.getElementById('feat_calculator').checked, tipp: document.getElementById('feat_tipp').checked,
+                    comments: document.getElementById('feat_comments').value, live: document.getElementById('feat_live').checked });
                 toast('Gespeichert – gilt sofort für alle Besucher');
             } catch (e) { toast(e.message, true); }
         }
