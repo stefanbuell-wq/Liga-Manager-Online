@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-page="Live-Ticker">Live-Ticker - Liga Manager Online</title>
+    <meta name="description" content="Live-Ticker: Zuschauer tickern die Spiele direkt vom Platz.">
+
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/portal.css?v=20261123">
+    <script src="js/darkmode.js?v=20261121"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E2001A' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>⚽</text></svg>">
+
+    <script>
+        (function() {
+            const apply = t => t && t.cssVariables && Object.entries(t.cssVariables).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+            try { apply(JSON.parse(localStorage.getItem('hafo_theme') || 'null')); } catch (e) {}
+            fetch('api/theme.php').then(r => r.json()).then(t => { try { localStorage.setItem('hafo_theme', JSON.stringify(t)); } catch (e) {} apply(t); }).catch(() => {});
+        })();
+    </script>
+    <style>
+        @keyframes lvPulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+        .lv { max-width: 900px; margin: var(--spacing-xl) auto var(--spacing-2xl); padding: 0 var(--spacing-md); }
+        .lv h1 { font-family: var(--font-display); font-size: 2rem; margin: 0 0 4px; }
+        .sub, .note { color: var(--color-text-muted); }
+        .note { font-size: .88rem; }
+        .card { background: var(--color-bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-md) var(--spacing-lg); margin-bottom: var(--spacing-md); }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #e2001a; margin-right: 6px; animation: lvPulse 1.2s infinite; }
+        .lg-h { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-muted); margin: 14px 0 6px; font-weight: 700; }
+        .mi { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); text-decoration: none; color: inherit; }
+        .mi:last-child { border-bottom: 0; } .mi:hover .t { color: var(--color-primary); }
+        .mi .t.h { text-align: right; } .mi .t { font-weight: 600; } .mi .sc { font-weight: 900; font-size: 1.1rem; min-width: 52px; text-align: center; }
+        .mi .st { font-size: .78rem; color: var(--color-text-muted); white-space: nowrap; } .mi .st.on { color: #e2001a; font-weight: 700; }
+        .board { text-align: center; border: 2px solid #e2001a; }
+        .board .lg { font-size: .85rem; color: var(--color-text-muted); }
+        .board .teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin: 12px 0; }
+        .board .tm { font-weight: 800; font-size: 1.15rem; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .board .tm img { width: 56px; height: 56px; object-fit: contain; }
+        .board .big { font-size: 3rem; font-weight: 900; color: #e2001a; font-variant-numeric: tabular-nums; }
+        .board .ph { font-weight: 700; color: #e2001a; }
+        .board .off { font-size: .85rem; color: var(--color-text-muted); margin-top: 6px; }
+        .btn-p { background: var(--color-primary); color: #fff; border: 0; border-radius: var(--radius-md); padding: 10px 18px; font-weight: 700; cursor: pointer; font-size: .95rem; }
+        .btn-s { background: var(--color-bg-card); color: var(--color-text-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 8px 12px; cursor: pointer; font-weight: 600; }
+        .quick { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+        .quick button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .form-grid label { font-size: .8rem; color: var(--color-text-muted); display: block; margin-bottom: 3px; }
+        .form-grid input, .form-grid select { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--color-bg-card); color: var(--color-text-primary); font-size: 1rem; box-sizing: border-box; }
+        .scorein { display: flex; gap: 4px; align-items: center; } .scorein input { width: 56px; text-align: center; }
+        .feed .ev { display: grid; grid-template-columns: 48px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        .feed .ev:last-child { border-bottom: 0; }
+        .feed .min { font-weight: 900; color: var(--color-text-muted); text-align: right; }
+        .feed .what { font-weight: 700; } .feed .meta { font-size: .78rem; color: var(--color-text-muted); }
+        .feed .ev.goal .what { color: #e2001a; } .feed .ev.del { opacity: .45; text-decoration: line-through; }
+        .feed .tools button { background: none; border: 0; padding: 0; margin-right: 10px; color: var(--color-text-muted); font-size: .78rem; cursor: pointer; }
+        .msg { font-weight: 600; margin-top: 8px; } .msg.err { color: #b00020; } .msg.ok { color: #12805c; }
+        .mod { background: rgba(0,0,0,.04); border-radius: 8px; padding: 8px 10px; font-size: .88rem; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        @media (max-width: 600px) { .board .big { font-size: 2.3rem; } .mi { grid-template-columns: 1fr auto 1fr; } .mi .st { grid-column: 1 / -1; text-align: center; } }
+    </style>
+</head>
+<body data-live-page="1">
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">⚽</div>
+                    <span data-site-logo>Liga Manager Online</span>
+                </a>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="index.html#league-section" class="nav-link">Ligen</a>
+                    <a href="index.html#news-section" class="nav-link">News</a>
+                    <a href="forum.html" class="nav-link">Forum</a>
+                    <a href="historie.html" class="nav-link" data-feature="history" hidden>🏆 Historie</a>
+                    <a href="live.html" class="nav-link active" data-feature="live" hidden>🔴 Live</a>
+                    <a href="tippspiel.html" class="nav-link" data-feature="tipp" hidden>🎯 Tippspiel</a>
+                    <a href="suche.html" class="nav-link">🔍 Suche</a>
+                </nav>
+                <div class="header-actions"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="lv">
+        <div id="view"><p class="note">Wird geladen …</p></div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p class="footer-copyright"><span data-site-copyright>© Liga Manager Online</span> · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="kontakt.html">Kontakt</a></p>
+            </div>
+        </div>
+    </footer>
+    <script>
+    (function () {
+        const API = 'api/live.php';
+        const view = document.getElementById('view');
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const PHASE = { pre: 'vor dem Spiel', first: '1. Halbzeit', half: 'Halbzeit', second: '2. Halbzeit', end: 'Abpfiff' };
+        const ICON = { kickoff: '▶️', goal: '⚽', yellow: '🟨', yellowred: '🟨🟥', red: '🟥', sub: '🔁', half: '⏸️', second: '▶️', end: '🏁', score: '🔢', note: '💬' };
+        const id = +new URLSearchParams(location.search).get('spiel') || 0;
+        let csrf = '', d = null, type = 'goal', timer = null, busy = false;
+        const crest = k => `<img src="img/teams/${esc(k)}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">`;
+        const time = s => { const t = new Date(String(s).replace(' ', 'T') + 'Z'); return isNaN(t) ? '' : t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); };
+        const sc = m => m.score ? `${m.score[0]}:${m.score[1]}` : (m.result ? `${m.result[0]}:${m.result[1]}` : '–:–');
+
+        async function get(q) {
+            const r = await fetch(API + '?' + new URLSearchParams(q), { credentials: 'same-origin' });
+            const j = await r.json().catch(() => ({ success: false, error: 'Fehler beim Laden.' }));
+            if (j.csrf_token) csrf = j.csrf_token;
+            if (!j.success) throw new Error(j.error || 'Fehler beim Laden.');
+            return j;
+        }
+        async function post(body) {
+            const r = await fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: JSON.stringify(Object.assign({ csrf_token: csrf }, body)) });
+            const j = await r.json().catch(() => ({}));
+            if (j.csrf_token) csrf = j.csrf_token;
+            if (!j.success) throw new Error(j.error || 'Fehler');
+            return j;
+        }
+        function schedule() { clearTimeout(timer); timer = setTimeout(() => { if (!document.hidden && !busy) load(); else schedule(); }, 20000); }
+
+        async function load() {
+            try { id ? await loadMatch() : await loadList(); }
+            catch (e) { view.innerHTML = `<div class="card">${esc(e.message)}</div>`; }
+            schedule();
+        }
+
+        async function loadList() {
+            const j = await get({ action: 'today' });
+            const ms = j.data;
+            let h = '<h1><span class="dot"></span>Live-Ticker</h1><p class="sub">Zuschauer tickern direkt vom Platz – ab einer Stunde vor Anpfiff. Der Ticker-Spielstand ist inoffiziell.</p>';
+            if (!ms.length) { view.innerHTML = h + '<div class="card">Gerade läuft kein Spiel. Der Ticker öffnet eine Stunde vor Anpfiff.</div>'; return; }
+            const active = ms.filter(m => m.events || m.reporters), rest = ms.filter(m => !m.events && !m.reporters);
+            const item = m => `<a class="mi" href="live.html?spiel=${m.id}"><span class="t h">${esc(m.home)}</span><span class="sc">${sc(m)}</span><span class="t">${esc(m.guest)}</span>
+                <span class="st ${m.events || m.reporters ? 'on' : ''}">${m.events || m.reporters ? '● ' + esc(PHASE[m.phase]) : (m.time ? esc(m.time.slice(0, 5)) + ' Uhr' : 'heute')}</span></a>`;
+            const group = list => { let out = '', lg = null; list.forEach(m => { if (m.league !== lg) { lg = m.league; out += `<div class="lg-h">${esc(lg)}</div>`; } out += item(m); }); return out; };
+            if (active.length) h += `<div class="card"><h2 style="margin-top:0"><span class="dot"></span>Wird getickert</h2>${group(active)}</div>`;
+            if (rest.length) h += `<div class="card"><h2 style="margin-top:0">Jetzt tickerbar</h2><p class="note">Du bist bei einem dieser Spiele? Spiel anklicken und mittickern${j.logged_in ? '' : ' (dafür <a href="konto.html">anmelden</a>)'}.</p>${group(rest)}</div>`;
+            view.innerHTML = h;
+        }
+
+        async function loadMatch() {
+            const j = await get({ action: 'match', id });
+            const focus = document.activeElement && view.contains(document.activeElement) && document.activeElement.closest('.tick-form');
+            d = j.data;
+            if (focus) { renderBoard(); renderFeed(); return; } // Eingabe nicht unterbrechen
+            render();
+        }
+
+        function board() {
+            const off = !d.open ? (d.no_date ? 'Für dieses Spiel ist kein Termin eingetragen.' : `Ticker geöffnet ${esc(d.opens_at)}–${esc(d.closes_at)} Uhr am ${esc(d.date)}.`) : '';
+            const ph = d.events || d.reporters ? `<div class="ph"><span class="dot"></span>${esc(PHASE[d.phase])}</div>` : '';
+            const res = d.result ? `<div class="off">Offizielles Ergebnis: <b>${d.result[0]}:${d.result[1]}</b></div>` : '';
+            return `<div class="lg">${esc(d.league)} · ${d.round}. Spieltag · ${esc(d.date || '')}${d.time ? ' · ' + esc(d.time.slice(0, 5)) + ' Uhr' : ''}</div>
+                <div class="teams"><div class="tm">${crest(d.home_crest)}${esc(d.home)}</div><div class="big">${d.score ? d.score[0] + ':' + d.score[1] : '–:–'}</div><div class="tm">${crest(d.guest_crest)}${esc(d.guest)}</div></div>
+                ${ph}${res}${off ? `<div class="off">${off}</div>` : ''}
+                ${d.reporter_names.length ? `<div class="off">Vor Ort: ${d.reporter_names.map(esc).join(', ')}</div>` : ''}`;
+        }
+        function renderBoard() { const b = document.getElementById('board'); if (b) b.innerHTML = board(); }
+
+        function feed() {
+            if (!d.feed.length) return '<p class="note">Noch keine Meldungen.</p>';
+            return d.feed.map(e => {
+                const team = e.team === 'home' ? d.home : e.team === 'guest' ? d.guest : '';
+                const what = [ICON[e.type] || '', esc(e.label), e.score ? `<b>${e.score[0]}:${e.score[1]}</b>` : '', team ? '– ' + esc(team) : '', e.player ? '(' + esc(e.player) + ')' : ''].filter(Boolean).join(' ');
+                const tools = [];
+                if (e.can_delete && !e.deleted) tools.push(`<button data-del="${e.id}">Löschen</button>`);
+                if (d.moderator && e.deleted) tools.push(`<button data-restore="${e.id}">Wiederherstellen</button>`);
+                if (d.moderator && !e.own) tools.push(`<button data-block="${e.user_id}">Nutzer sperren</button>`);
+                return `<div class="ev ${esc(e.type)} ${e.deleted ? 'del' : ''}"><div class="min">${e.minute !== null ? e.minute + '′' : ''}</div><div>
+                    <div class="what">${what}</div>${e.text ? `<div>${esc(e.text)}</div>` : ''}
+                    <div class="meta">${esc(e.name)} · ${time(e.created_at)}${tools.length ? ' · <span class="tools">' + tools.join('') + '</span>' : ''}</div></div></div>`;
+            }).join('');
+        }
+        function renderFeed() { const f = document.getElementById('feed'); if (f) f.innerHTML = feed(); }
+
+        function tickForm() {
+            if (!d.enabled) return d.moderator ? '<div class="card note">Der Live-Ticker ist unter Einstellungen ausgeschaltet. Sie sehen diese Seite als Redaktion.</div>' : '';
+            if (!d.open) return '';
+            if (!d.logged_in) return '<div class="card">Du bist im Stadion? <a href="konto.html">Anmelden</a> und mittickern.</div>';
+            if (d.blocked) return '<div class="card note">Du kannst zurzeit nicht tickern.</div>';
+            if (!d.present) return `<div class="card" style="text-align:center"><p style="margin-top:0">Du bist bei diesem Spiel? Dann tickere mit!</p><button class="btn-p" data-present="1">📍 Ich bin bei diesem Spiel</button></div>`;
+            const types = [['goal', '⚽ Tor'], ['yellow', '🟨 Gelb'], ['yellowred', '🟨🟥 Gelb-Rot'], ['red', '🟥 Rot'], ['sub', '🔁 Wechsel'], ['kickoff', '▶️ Anpfiff'], ['half', '⏸️ Halbzeit'], ['second', '▶️ 2. HZ'], ['end', '🏁 Abpfiff'], ['score', '🔢 Spielstand'], ['note', '💬 Text']];
+            return `<div class="card tick-form"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><strong>📍 Du tickerst dieses Spiel</strong><button class="btn-s" data-present="0">Nicht mehr dabei</button></div>
+                <div class="quick">${types.map(t => `<button class="btn-s ${t[0] === type ? 'active' : ''}" data-type="${t[0]}">${t[1]}</button>`).join('')}</div>
+                <div class="form-grid" id="fields"></div>
+                <div style="margin-top:12px"><button class="btn-p" id="send">Melden</button> <span class="note">Der Spielstand im Ticker ist inoffiziell.</span></div>
+                <div class="msg" id="msg"></div></div>`;
+        }
+        function fields() {
+            const f = document.getElementById('fields'); if (!f) return;
+            const cur = d.score || [0, 0];
+            const needTeam = ['goal', 'yellow', 'yellowred', 'red', 'sub'].includes(type);
+            const needScore = ['goal', 'score', 'half', 'end'].includes(type);
+            let h = `<div><label>Minute</label><input type="number" id="f-min" min="0" max="130" inputmode="numeric" placeholder="z. B. 23"></div>`;
+            if (needTeam) h += `<div><label>Mannschaft</label><select id="f-team"><option value="">bitte wählen</option><option value="home">${esc(d.home)}</option><option value="guest">${esc(d.guest)}</option></select></div>`;
+            if (needTeam) h += `<div><label>${type === 'sub' ? 'Spieler (rein/raus)' : type === 'goal' ? 'Torschütze' : 'Spieler'} (optional)</label><input id="f-player" maxlength="60"></div>`;
+            if (needScore) h += `<div><label>Spielstand${type === 'half' || type === 'end' ? ' (optional)' : ''}</label><div class="scorein"><input type="number" id="f-sh" min="0" max="40" value="${type === 'half' || type === 'end' ? (d.score ? cur[0] : '') : cur[0]}">:<input type="number" id="f-sg" min="0" max="40" value="${type === 'half' || type === 'end' ? (d.score ? cur[1] : '') : cur[1]}"></div></div>`;
+            h += `<div style="grid-column:1/-1"><label>${type === 'note' ? 'Text' : 'Kommentar (optional)'}</label><input id="f-text" maxlength="280" placeholder="${type === 'note' ? 'Was passiert gerade?' : ''}"></div>`;
+            f.innerHTML = h;
+            const team = document.getElementById('f-team');
+            if (team && type === 'goal') team.onchange = () => { // Spielstand automatisch hochzaehlen
+                const sh = document.getElementById('f-sh'), sg = document.getElementById('f-sg');
+                sh.value = cur[0] + (team.value === 'home' ? 1 : 0); sg.value = cur[1] + (team.value === 'guest' ? 1 : 0);
+            };
+        }
+        function render() {
+            view.innerHTML = `<p><a href="live.html">← Alle Live-Spiele</a></p>
+                <div class="card board" id="board">${board()}</div>
+                ${d.moderator ? `<div class="card mod">🛡️ Redaktion: ${d.score ? `<button class="btn-s" data-adopt="1">Ticker-Stand ${d.score[0]}:${d.score[1]} als Ergebnis übernehmen</button>` : 'Noch kein Ticker-Spielstand.'} <a href="admin/live.html">Übersicht</a></div>` : ''}
+                ${tickForm()}
+                <div class="card"><h2 style="margin-top:0">Ticker</h2><div class="feed" id="feed">${feed()}</div></div>`;
+            fields();
+        }
+        function msg(t, err) { const m = document.getElementById('msg'); if (m) { m.className = 'msg ' + (err ? 'err' : 'ok'); m.textContent = t; } else if (err) alert(t); }
+
+        view.addEventListener('click', async e => {
+            const b = e.target.closest('button'); if (!b) return;
+            try {
+                if (b.dataset.type) { type = b.dataset.type; view.querySelectorAll('[data-type]').forEach(x => x.classList.toggle('active', x === b)); fields(); return; }
+                if (b.dataset.present !== undefined) { await post({ action: 'present', id, on: b.dataset.present === '1' }); return loadMatch(); }
+                if (b.id === 'send') {
+                    const v = x => { const el = document.getElementById(x); return el ? el.value.trim() : ''; };
+                    busy = true; b.disabled = true;
+                    const r = await post({ action: 'event', id, type, minute: v('f-min'), team: v('f-team'), player: v('f-player'), text: v('f-text'), score_home: v('f-sh'), score_guest: v('f-sg') });
+                    busy = false; await loadMatch(); msg(r.message); if (window.LmoLive) LmoLive.refresh(); return;
+                }
+                if (b.dataset.del) { if (!confirm('Meldung löschen?')) return; await post({ action: 'delete', event: +b.dataset.del }); return loadMatch(); }
+                if (b.dataset.restore) { await post({ action: 'restore', event: +b.dataset.restore }); return loadMatch(); }
+                if (b.dataset.block) { if (!confirm('Diesen Nutzer für den Live-Ticker sperren?')) return; const r = await post({ action: 'block', user: +b.dataset.block }); alert(r.message); return; }
+                if (b.dataset.adopt) { if (!confirm('Ticker-Spielstand als offizielles Ergebnis eintragen?')) return; const r = await post({ action: 'adopt', id }); alert(r.message); return loadMatch(); }
+            } catch (err) { busy = false; b.disabled = false; msg(err.message, true); }
+        });
+        load();
+    })();
+    </script>
+    <script src="js/foerderer.js" defer></script>
+    <script src="js/live.js?v=20261119"></script>
+    <script src="js/instance.js?v=20261118c"></script>
+</body>
+</html>

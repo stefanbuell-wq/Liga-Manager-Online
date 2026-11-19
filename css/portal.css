@@ -215,6 +215,12 @@ h4 { font-size: 1.25rem; }
     font-size: 0.95rem;
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+/* viele Menuepunkte (Zusatzfunktionen an): auf mittleren Bildschirmen enger */
+@media (min-width: 1024px) and (max-width: 1320px) {
+    .nav-link { padding: var(--spacing-sm) 10px; font-size: 0.9rem; }
 }
 
 .nav-link:hover {
@@ -1333,3 +1339,6 @@ html[data-theme="dark"] .account-msg.err, html[data-theme="dark"] .contact-msg.e
 .calc-move.up { color: var(--color-live); }
 .calc-move.down { color: var(--color-primary); }
 .calc-empty { color: var(--color-text-muted); }
+
+/* Zusatzfunktionen ausgeschaltet: Menuepunkt ausblenden */
+.nav-link[hidden], .mobile-nav-link[hidden] { display: none !important; }

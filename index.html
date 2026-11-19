@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/fonts.css">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/portal.css?v=20261122">
+    <link rel="stylesheet" href="css/portal.css?v=20261123">
     <script src="js/darkmode.js?v=20261121"></script>
     <link rel="stylesheet" href="css/newsprint.css">
 
@@ -69,6 +69,7 @@
                     <a href="javascript:void(0)" onclick="goToTab('table')" class="nav-link">Tabelle</a>
                     <a href="forum.html" class="nav-link">Forum</a>
                     <a href="historie.html" class="nav-link" data-feature="history" hidden>🏆 Historie</a>
+                    <a href="live.html" class="nav-link" data-feature="live" hidden>🔴 Live</a>
                     <a href="tippspiel.html" class="nav-link" data-feature="tipp" hidden>🎯 Tippspiel</a>
                     <a href="suche.html" class="nav-link">🔍 Suche</a>
                 </nav>
@@ -104,12 +105,17 @@
                 <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('schedule')">Spiele</a>
                 <a href="javascript:void(0)" class="mobile-nav-link" onclick="toggleMobileMenu(); goToTab('table')">Tabelle</a>
                 <a href="forum.html" class="mobile-nav-link" onclick="toggleMobileMenu()">Forum</a>
+                <a href="historie.html" class="mobile-nav-link" data-feature="history" hidden>🏆 Historie</a>
+                <a href="live.html" class="mobile-nav-link" data-feature="live" hidden>🔴 Live</a>
+                <a href="tippspiel.html" class="mobile-nav-link" data-feature="tipp" hidden>🎯 Tippspiel</a>
                 <a href="suche.html" class="mobile-nav-link">🔍 Suche</a>
             </nav>
         </div>
     </div>
 
     <main>
+        <!-- Live-Ticker (nur sichtbar, wenn gerade getickert wird; js/live.js) -->
+        <div class="container"><div id="live-box" hidden></div></div>
         <!-- Hero Section -->
         <section class="hero">
             <div class="container">
@@ -1000,7 +1006,7 @@
                 : '–:–';
             const report = newsButton(m, 'mrow-report');
             return `
-                <div class="mrow">
+                <div class="mrow" data-mid="${Number(m.id) || ''}">
                     <span class="mrow-team home ${hw ? 'win' : ''}">${teamLink(m.home, 'mrow-name')}${logo(m.home)}</span>
                     <span class="mrow-score ${played ? '' : 'open'}">${score}</span>
                     <span class="mrow-team guest ${gw ? 'win' : ''}">${logo(m.guest)}${teamLink(m.guest, 'mrow-name')}</span>

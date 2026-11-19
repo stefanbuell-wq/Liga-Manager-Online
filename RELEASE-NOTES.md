@@ -5,6 +5,26 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 19.11.2026 – Kommentare und Live-Ticker
+
+### Für Redaktion und Leser
+
+- **💬 Kommentare unter Artikeln:** nur für angemeldete Mitglieder. Unter Einstellungen → Zusatzfunktionen: aus, sofort sichtbar oder erst nach Freigabe. Standard: aus.
+  - Pro Artikel offen, geschlossen oder ausgeblendet – direkt unter dem Artikel (als Redaktion angemeldet).
+  - Melden, Freigeben, Ausblenden, Löschen und Sperren im Admin unter „💬 Kommentare“; wartende und gemeldete Kommentare stehen im Briefing.
+- **🔴 Live-Ticker für alle Ligen:** Angemeldete Zuschauer klicken „Ich bin bei diesem Spiel“ und tickern Tore, Karten, Wechsel, Halbzeit und Text – von einer Stunde vor Anpfiff bis eine Stunde nach Spielende. Standard: aus.
+  - Laufende Ticker sind auffällig: roter LIVE-Streifen auf allen Seiten, Kasten auf der Startseite, LIVE-Markierung im Spielplan, eigene Seite „Live“.
+  - Der Ticker-Spielstand ist inoffiziell; die Redaktion übernimmt ihn per Klick als Ergebnis. Meldungen löschen und Nutzer sperren im Ticker oder unter „🔴 Live-Ticker“.
+- Mobiles Menü: Historie, Live und Tippspiel erscheinen dort jetzt auch (wenn eingeschaltet).
+- Menü: auf mittelgroßen Bildschirmen enger, damit alle Punkte in eine Zeile passen.
+
+### Technik
+
+- Kommentare: `lib/CommentService.php` (Tabellen `news_comments`, `news_comment_reports`, `news_comment_mode`, `user_blocks`), `api/comments.php`, `js/comments.js`, `admin/kommentare.html`; Einstellung `feature_comments` (off|open|approval)
+- Live-Ticker: `lib/LiveService.php` (Tabellen `live_events`, `live_presence`), `api/live.php` (`action=active` ohne Sitzung, 15 s cachebar), `js/live.js`, `live.html`, `admin/live.html`; Einstellung `feature_live`
+- Sperren für Mitmach-Funktionen gemeinsam in `user_blocks` (scope `comments` / `live`)
+- `page.php`/`.htaccess`: `live.html`; Spielzeilen tragen `data-mid` (Spiel-ID)
+
 ## 18.11.2026 (Nachtrag) – Wappen im Admin, Historie, Tabellenrechner, Tippspiel
 
 ### Für Redaktion und Leser
