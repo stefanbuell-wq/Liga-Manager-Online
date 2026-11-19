@@ -131,7 +131,7 @@
             <div class="crest">${img}</div>
             <div class="info">
                 <div class="name">${esc(it.name)}</div>
-                <div class="meta">${badge}${it.seasons} Saison${it.seasons === 1 ? '' : 's'}${it.aliases.length ? ' · auch: ' + esc(it.aliases.join(', ')) : ''}</div>
+                <div class="meta">${badge}${it.seasons} Saison${it.seasons === 1 ? '' : 's'}${it.history ? ' · nur Historie' : ''}${it.aliases.length ? ' · auch: ' + esc(it.aliases.join(', ')) : ''}</div>
                 <div class="actions">
                     <label class="up" for="${id}">${it.url ? 'Ersetzen' : 'Hochladen'}</label>
                     <input type="file" id="${id}" accept="image/png,image/jpeg,image/gif,image/webp" data-act="upload">

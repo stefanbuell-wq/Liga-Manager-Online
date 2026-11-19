@@ -346,15 +346,35 @@ class HistoryService
             'baseline' => self::seasonLabel((int)$comp['baseline_until'])];
     }
 
-    /** Wappen-Schluessel je Historie-Verein (aus den zugeordneten Vereinsnamen der Ligen) */
+    /** Wappen-Schluessel aus einem Historie-Vereinsnamen: ohne Klammerzusatz, nur Buchstaben/Ziffern */
+    public static function crestKeyForClub(string $name): string
+    {
+        return preg_replace('/[^a-zA-Z0-9]/', '', preg_replace('/\s*\(.*?\)/u', '', $name));
+    }
+
+    /**
+     * Wappen-Schluessel je Historie-Verein:
+     * 1. Wappen eines zugeordneten Vereinsnamens aus den Ligen
+     * 2. Wappen unter dem Historie-Namen (im Admin unter "Wappen" hochladbar)
+     * 3. Wappen der zweiten/dritten Mannschaft (z. B. "Hamburger SV" -> HamburgerSVII)
+     */
     private function crestKeys(int $cid): array
     {
         $dir = __DIR__ . '/../img/teams';
+        $has = fn($k) => $k !== '' && (is_file("$dir/hd/$k.png") || is_file("$dir/$k.gif"));
         $out = [];
         foreach ($this->teamMap($cid) as $team => $club) {
             $key = preg_replace('/[^a-zA-Z0-9]/', '', $team);
-            if ($key === '') continue;
-            if (is_file("$dir/hd/$key.png") || is_file("$dir/$key.gif")) $out[$club] = $key;
+            if (!isset($out[$club]) && $has($key)) $out[$club] = $key;
+        }
+        $st = $this->pdo->prepare("SELECT id, name FROM history_clubs WHERE competition_id = ?");
+        $st->execute([$cid]);
+        foreach ($st->fetchAll(PDO::FETCH_KEY_PAIR) as $id => $name) {
+            if (isset($out[(int)$id])) continue;
+            $base = self::crestKeyForClub($name);
+            foreach ([preg_replace('/[^a-zA-Z0-9]/', '', $name), $base, $base . 'II', $base . 'III'] as $k) {
+                if ($has($k)) { $out[(int)$id] = $k; break; }
+            }
         }
         return $out;
     }
@@ -463,7 +483,7 @@ class HistoryService
         $map = $this->teamMap((int)$comp['id']);
         $cacheFile = "$this->cacheDir/history-{$comp['slug']}-records.json";
         $cached = @json_decode((string)@file_get_contents($cacheFile), true);
-        if ($cached && ($cached['sig'] ?? '') === $sig . '-' . md5(json_encode($map)) . "-$limit") return $cached['data'];
+        if ($cached && ($cached['sig'] ?? '') === $sig . '-' . md5(json_encode($map)) . "-$limit-v2") return $cached['data'];
 
         $clubs = $this->clubsById((int)$comp['id']);
         $clubName = function (string $team) use ($map, $clubs) {
@@ -528,8 +548,9 @@ class HistoryService
                 }
                 if ($best >= 3) {
                     $streaks[$type][] = ['club' => $club, 'length' => $best,
-                        'from' => $bestRange[0]['season_label'] . ($bestRange[0]['date_label'] ? ', ' . $bestRange[0]['date_label'] : ''),
-                        'to' => $bestRange[1]['season_label'] . ($bestRange[1]['date_label'] ? ', ' . $bestRange[1]['date_label'] : '')];
+                        // Datum reicht (Wunsch Redaktion); ohne Datum die Saison
+                        'from' => $bestRange[0]['date_label'] ?: $bestRange[0]['season_label'],
+                        'to' => $bestRange[1]['date_label'] ?: $bestRange[1]['season_label']];
                 }
             }
         }
@@ -549,7 +570,7 @@ class HistoryService
             'streaks' => $streaks,
         ];
         if (!is_dir($this->cacheDir)) @mkdir($this->cacheDir, 0755, true);
-        @file_put_contents($cacheFile, json_encode(['sig' => $sig . '-' . md5(json_encode($map)) . "-$limit", 'data' => $data], JSON_UNESCAPED_UNICODE));
+        @file_put_contents($cacheFile, json_encode(['sig' => $sig . '-' . md5(json_encode($map)) . "-$limit-v2", 'data' => $data], JSON_UNESCAPED_UNICODE));
         return $data;
     }
 

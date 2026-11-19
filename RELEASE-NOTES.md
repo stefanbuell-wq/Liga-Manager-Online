@@ -15,6 +15,8 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 - **🔴 Live-Ticker für alle Ligen:** Angemeldete Zuschauer klicken „Ich bin bei diesem Spiel“ und tickern Tore, Karten, Wechsel, Halbzeit und Text – von einer Stunde vor Anpfiff bis eine Stunde nach Spielende. Standard: aus.
   - Laufende Ticker sind auffällig: roter LIVE-Streifen auf allen Seiten, Kasten auf der Startseite, LIVE-Markierung im Spielplan, eigene Seite „Live“.
   - Der Ticker-Spielstand ist inoffiziell; die Redaktion übernimmt ihn per Klick als Ergebnis. Meldungen löschen und Nutzer sperren im Ticker oder unter „🔴 Live-Ticker“.
+- **Historie, Rekorde:** Serien zeigen nur noch die Daten, z. B. „TuS Dassendorf: 07.05.2017 bis 19.11.2017“ (Wunsch Andi).
+- **Historie, Wappen:** Vereine, die nur in der Historie vorkommen (z. B. FV Wilhelmsburg 09), stehen jetzt auch unter „🛡️ Wappen“ und bekommen dort ein Wappen. Hat ein Verein kein eigenes Wappen, nimmt die Historie das der zweiten Mannschaft (z. B. Hamburger SV, FC St. Pauli).
 - Mobiles Menü: Historie, Live und Tippspiel erscheinen dort jetzt auch (wenn eingeschaltet).
 - Menü: auf mittelgroßen Bildschirmen enger, damit alle Punkte in eine Zeile passen.
 

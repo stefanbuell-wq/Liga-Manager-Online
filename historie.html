@@ -201,7 +201,7 @@
             const d = (await get({ view: 'records' })).data;
             const game = g => `<span class="val">${g.hg}:${g.gg}</span>${esc(g.home)} – ${esc(g.guest)} <span class="meta">${esc(g.season_label)}${g.date_label ? ', ' + esc(g.date_label) : ''}</span>`;
             const season = (s, v) => `<span class="val">${v}</span>${esc(s.club)} <span class="meta">${esc(s.season_label)}, ${s.played} Sp., ${s.won}-${s.drawn}-${s.lost}, ${s.gf}:${s.ga}</span>`;
-            const streak = s => `<span class="val">${s.length}</span>${esc(s.club)} <span class="meta">${esc(s.from)} bis ${esc(s.to)}</span>`;
+            const streak = s => `<span class="val">${s.length}</span>${esc(s.club)}: <span class="meta">${esc(s.from)} bis ${esc(s.to)}</span>`;
             const card = (title, list, f) => `<div class="rec-card"><h3>${title}</h3><ol>${list.map(x => `<li>${f(x)}</li>`).join('')}</ol></div>`;
             view.innerHTML = `
                 <p class="hist-sub">Aus ${fmt(d.matches_counted)} erfassten Spielen seit ${esc(d.since)}. Für frühere Jahre liegen keine Einzelspiele vor.</p>

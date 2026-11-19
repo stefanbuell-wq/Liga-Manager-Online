@@ -48,6 +48,30 @@ class CrestService
         foreach ($byKey as $k => $e) {
             $out[] = $this->status($k) + ['name' => $e['names'][0], 'aliases' => array_slice($e['names'], 1), 'seasons' => $e['seasons']];
         }
+        // Vereine nur aus der Historie (keine Saison in den Ligen): Wappen unter dem Historie-Namen
+        foreach ($this->historyOnlyClubs($byKey) as $k => $e) {
+            $out[] = $this->status($k) + ['name' => $e['name'], 'aliases' => [], 'seasons' => $e['seasons'], 'history' => true];
+        }
+        usort($out, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+        return $out;
+    }
+
+    private function historyOnlyClubs(array $teamKeys): array
+    {
+        $t = $this->pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'history_clubs'")->fetchColumn();
+        if (!$t) return [];
+        require_once __DIR__ . '/HistoryService.php';
+        $rows = $this->pdo->query("SELECT c.name, c.years,
+                (SELECT COUNT(*) FROM history_team_map m WHERE m.club_id = c.id) AS mapped
+            FROM history_clubs c")->fetchAll(PDO::FETCH_ASSOC);
+        $out = [];
+        foreach ($rows as $r) {
+            if ((int)$r['mapped'] > 0) continue;
+            $k = HistoryService::crestKeyForClub($r['name']);
+            if ($k === '' || isset($teamKeys[$k]) || isset($out[$k])) continue;
+            $years = json_decode((string)$r['years'], true);
+            $out[$k] = ['name' => trim(preg_replace('/\s*\(.*?\)/u', '', $r['name'])), 'seasons' => is_array($years) ? count($years) : 0];
+        }
         return $out;
     }
 
