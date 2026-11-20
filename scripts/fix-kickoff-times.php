@@ -7,8 +7,9 @@
  *   steht in der Datenbank noch der UTC-Wert  -> wird auf deutsche Zeit korrigiert
  *   steht dort etwas anderes (spaeter von Hand geaendert) -> bleibt unveraendert
  *
- * Aufruf (im Webroot):  php scripts/fix-kickoff-times.php            (nur anzeigen)
- *                       php scripts/fix-kickoff-times.php --apply    (schreiben)
+ * Aufruf (im Webroot):  php scripts/fix-kickoff-times.php [--dir=<ordner mit .l98>]            (nur anzeigen)
+ *                       php scripts/fix-kickoff-times.php [--dir=<ordner mit .l98>] --apply    (schreiben)
+ * Standardordner: ligen/
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 
@@ -17,6 +18,8 @@ require_once __DIR__ . '/../lib/LmoParser.php';
 
 $apply = in_array('--apply', $argv, true);
 $ligaDir = __DIR__ . '/../ligen';
+foreach ($argv as $a) if (str_starts_with($a, '--dir=')) $ligaDir = rtrim(substr($a, 6), '/');
+if (!is_dir($ligaDir)) { fwrite(STDERR, "Ordner nicht gefunden: $ligaDir\n"); exit(1); }
 $pdo = LmoDatabase::getInstance();
 $utc = new DateTimeZone('UTC');
 $de = new DateTimeZone('Europe/Berlin');
