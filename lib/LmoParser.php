@@ -124,9 +124,11 @@ class LmoParser
                     $isoDate = null;
 
                     if ($timestamp > 0) {
-                        $matchDate = date('d.m.Y', $timestamp);
-                        $matchTime = date('H:i', $timestamp);
-                        $isoDate = date('Y-m-d', $timestamp);
+                        // Anstosszeiten immer in deutscher Zeit (unabhaengig von der Zeitzone des Servers)
+                        $dt = (new DateTimeImmutable('@' . $timestamp))->setTimezone(new DateTimeZone('Europe/Berlin'));
+                        $matchDate = $dt->format('d.m.Y');
+                        $matchTime = $dt->format('H:i');
+                        $isoDate = $dt->format('Y-m-d');
                     }
 
                     if ($homeIdx > 0 && $guestIdx > 0) {

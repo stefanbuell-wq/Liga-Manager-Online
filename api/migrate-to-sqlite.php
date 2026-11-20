@@ -6,6 +6,7 @@ header('Content-Type: text/plain; charset=utf-8');
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 set_time_limit(300); // 5 minutes max
+date_default_timezone_set('Europe/Berlin'); // Anstosszeiten in deutscher Zeit
 
 require_once __DIR__ . '/../lib/LmoDatabase.php';
 require_once __DIR__ . '/../lib/LmoParser.php';

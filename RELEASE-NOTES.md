@@ -5,6 +5,19 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 20.11.2026 – Anstoßzeiten korrigiert
+
+### Für Redaktion und Leser
+
+- **Anstoßzeiten:** Bei der Umstellung auf das neue System wurden die Zeiten aus den alten Ligadateien eine Stunde (im Sommer zwei Stunden) zu früh übernommen. Das ist korrigiert. Zeiten, die seitdem von Hand geändert wurden, bleiben unverändert. Danke an „Kassenwart“ für den Hinweis im Forum!
+
+### Technik
+
+- `lib/LmoParser.php`: Anstoßzeit aus dem `.l98`-Zeitstempel immer in Europe/Berlin (vorher Zeitzone des Servers, bei der Übernahme UTC)
+- `scripts/fix-kickoff-times.php`: vergleicht jedes Spiel mit `ligen/*.l98`; korrigiert nur Spiele, bei denen noch der UTC-Wert steht (Probelauf ohne `--apply`)
+- `api/migrate-to-sqlite.php`: Zeitzone Europe/Berlin
+- `scripts/.htaccess` jetzt auch auf dem Server
+
 ## 19.11.2026 – Kommentare und Live-Ticker
 
 ### Für Redaktion und Leser
