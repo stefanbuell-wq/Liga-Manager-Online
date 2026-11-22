@@ -2965,8 +2965,11 @@
             const b = selectedBanner();
             const hadOwn = OWN_BANNER_RE.test(content);
             OWN_BANNER_RE.lastIndex = 0;
-            // Unveraenderter Altbanner: Inhalt bleibt, die Website setzt Bild und Link aus der Verwaltung ein
-            if (originalBanner && b && b.id === originalBanner.id && !hadOwn) return content;
+            // Unveraenderter Altbanner, der noch im Text steht: Inhalt bleibt, die Website setzt Bild und Link
+            // aus der Verwaltung ein. Aus Spielbericht-/Vorschau-Feldern neu erzeugtes HTML enthaelt keinen
+            // Banner mehr – dann unten wieder als Verweis einsetzen (sonst verschwindet er beim zweiten Speichern).
+            if (originalBanner && b && b.id === originalBanner.id && !hadOwn
+                && originalBanner.legacy && content.includes(fileBase(originalBanner.legacy))) return content;
             content = content.replace(OWN_BANNER_RE, '');
             // Altbanner (festes Bild im Text) entfernen, wenn bewusst ein anderer oder keiner gewaehlt wurde
             if (originalBanner && originalBanner.legacy && (!b || b.id !== originalBanner.id)) {

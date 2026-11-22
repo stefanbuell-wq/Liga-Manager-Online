@@ -16,6 +16,15 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 - `CrestService`: Einstellung `crest_version` wird bei jedem Hochladen/Übernehmen/Entfernen hochgezählt; `page.php` setzt `window.LMO_CREST_V` (`?v=…`), alle Wappen-Adressen in `index.html`, `historie.html`, `live.html`, `js/league-viewer.js`, `js/tabellenrechner.js` hängen ihn an
 - `scripts/crest-set.php "<Verein>" <bild>`: Wappen per Kommandozeile setzen (gleiche Verarbeitung wie im Admin)
+## 22.11.2026 – Banner im Spielbericht bleibt erhalten
+
+### Für Redaktion und Leser
+
+- **Sponsoren-Banner im Spielbericht:** Wurde ein schon gespeicherter Spielbericht erneut gespeichert (z. B. Text Stück für Stück ergänzt), fiel der Banner heraus und musste neu gewählt werden. Das ist behoben. Danke an Andi für den Hinweis!
+
+### Technik
+
+- `admin/news.html` `applyBanner()`: Abkürzung „unveränderter Banner, Inhalt bleibt“ nur noch, wenn ein Altbanner tatsächlich noch im Text steht; aus Spielbericht-/Vorschau-Feldern neu erzeugtes HTML bekommt den Verweis `<center class="hafo-banner hafo-banner-ID">` wieder vorangestellt
 
 ## 20.11.2026 – Anstoßzeiten korrigiert
 
