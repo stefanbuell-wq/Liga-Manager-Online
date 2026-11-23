@@ -75,6 +75,28 @@ class CrestService
         return $out;
     }
 
+    /** Wappen-Stand fuer Cache-Busting (?v=...): aendert sich bei jedem Hochladen, Uebernehmen, Entfernen */
+    public static function version(): string
+    {
+        try {
+            require_once __DIR__ . '/SettingsRepository.php';
+            $v = (string)(new SettingsRepository())->get('crest_version');
+        } catch (Throwable $e) {
+            $v = '';
+        }
+        return $v !== '' ? $v : '1';
+    }
+
+    private function bumpVersion(): void
+    {
+        try {
+            require_once __DIR__ . '/SettingsRepository.php';
+            (new SettingsRepository())->set('crest_version', (string)time());
+        } catch (Throwable $e) {
+            error_log('crest_version: ' . $e->getMessage());
+        }
+    }
+
     public function status(string $key): array
     {
         $hd = is_file("$this->dir/hd/$key.png");
@@ -105,6 +127,7 @@ class CrestService
         $src = $this->trim($src);
         $this->writeAll($key, $src);
         imagedestroy($src);
+        $this->bumpVersion();
         return $this->status($key);
     }
 
@@ -120,6 +143,7 @@ class CrestService
         if (!$src) throw new RuntimeException('Wappen konnte nicht gelesen werden.');
         $this->writeAll($key, $src);
         imagedestroy($src);
+        $this->bumpVersion();
         return $this->status($key);
     }
 
@@ -128,6 +152,7 @@ class CrestService
     {
         $key = $this->requireKey($name);
         $this->archive($key);
+        $this->bumpVersion();
         return $this->status($key);
     }
 

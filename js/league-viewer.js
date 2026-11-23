@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check "1. FC ..." -> "1FC..."
         if (!teamName) return 'img/teams/blank.png';
         const clean = teamName.replace(/[^a-zA-Z0-9]/g, '');
-        return `img/teams/${clean}.gif`;
+        return `img/teams/${clean}.gif${window.LMO_CREST_V || ''}`;
     }
 
     // === GLOBAL APP ===

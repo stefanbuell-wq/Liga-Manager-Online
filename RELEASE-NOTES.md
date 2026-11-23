@@ -5,6 +5,18 @@ Jede Version hat zwei Teile: **Für Redaktion und Leser** (was sich sichtbar än
 
 ---
 
+## 23.11.2026 – Neue Wappen sofort sichtbar
+
+### Für Redaktion und Leser
+
+- **Wappen:** Ein neu hochgeladenes Wappen erscheint jetzt sofort bei allen Besuchern. Vorher hielten Browser alte Wappen bis zu einen Monat lang fest – deshalb war z. B. das neue Wappen von TSV Buchholz 08 bei manchen noch nicht zu sehen.
+- **Historie:** Post SV hat ein Wappen (das alte Vereinslogo von 1925, passend zu den Oberliga-Jahren 1945–1955). Danke an Olaf Dombrowski!
+
+### Technik
+
+- `CrestService`: Einstellung `crest_version` wird bei jedem Hochladen/Übernehmen/Entfernen hochgezählt; `page.php` setzt `window.LMO_CREST_V` (`?v=…`), alle Wappen-Adressen in `index.html`, `historie.html`, `live.html`, `js/league-viewer.js`, `js/tabellenrechner.js` hängen ihn an
+- `scripts/crest-set.php "<Verein>" <bild>`: Wappen per Kommandozeile setzen (gleiche Verarbeitung wie im Admin)
+
 ## 20.11.2026 – Anstoßzeiten korrigiert
 
 ### Für Redaktion und Leser

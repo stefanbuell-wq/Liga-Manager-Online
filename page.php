@@ -46,6 +46,11 @@ try {
 }
 $html = preg_replace_callback('#data-feature="([a-z_]+)"( hidden)?#', fn($m) => 'data-feature="' . $m[1] . '"' . (empty($feat[$m[1]]) ? ' hidden' : ''), $html);
 
+// Wappen-Stand: Bild-Adressen bekommen ?v=..., damit neue Wappen sofort sichtbar sind
+require_once __DIR__ . '/lib/CrestService.php';
+$crestV = preg_replace('/[^0-9]/', '', CrestService::version()) ?: '1';
+$html = preg_replace('#</head>#', '<script>window.LMO_CREST_V="?v=' . $crestV . '";</script>' . "\n</head>", $html, 1);
+
 // Copyright
 $html = str_replace('>© Liga Manager Online<', '>' . $e('© ' . date('Y') . ' ' . $name . ($tagline !== '' ? ' - ' . $tagline : '')) . '<', $html);
 

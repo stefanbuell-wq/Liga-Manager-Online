@@ -746,7 +746,7 @@
                     <tr>
                         <td class="table-rank ${rankClass}">${rank}${formatRankTrend(team)}</td>
                         <td class="table-team">
-                            <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                            <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}"
                                  onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                             ${teamLink(team.name, 'table-team-name')}
                         </td>
@@ -997,7 +997,7 @@
             const played = m.played;
             const hw = played && Number(m.home_goals) > Number(m.guest_goals);
             const gw = played && Number(m.guest_goals) > Number(m.home_goals);
-            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
+            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
             // kurz: "16.10. 17:00" (Jahr weglassen), damit die Vereinsnamen Platz haben
             const shortDate = String(m.date || '').replace(/^(\d{1,2}\.\d{1,2}\.)\d{2,4}$/, '$1');
             const when = [shortDate, m.time || ''].filter(Boolean).join(' ');
@@ -1053,7 +1053,7 @@
             }
             const row = leagueData.table ? leagueData.table.find(t => t.name === teamName) : null;
             const rank = row ? leagueData.table.indexOf(row) + 1 : null;
-            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
+            const logo = name => `<img src="img/teams/${String(name || '').replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" class="mrow-logo" alt="">`;
 
             const lines = games.map(m => {
                 const isHome = m.home === teamName;
@@ -1081,7 +1081,7 @@
                 : '';
             openInfoModal(`
                 <div class="season-head">
-                    <img src="img/teams/${String(teamName).replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
+                    <img src="img/teams/${String(teamName).replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                     <div>
                         <h2 style="margin:0;">${sqEsc(teamName)}</h2>
                         <div style="color: var(--color-text-muted); font-size: 0.9rem;">${sqEsc(leagueData.options.Name || '')}${summary ? ' · ' + sqEsc(summary) : ''}</div>
@@ -1206,7 +1206,7 @@
                     <tr>
                         <td class="table-rank ${rankClass}">${rank}${formatRankTrend(team)}</td>
                         <td class="table-team">
-                            <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif"
+                            <img src="img/teams/${team.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}"
                                  onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                             ${teamLink(team.name)}
                         </td>
@@ -1385,7 +1385,7 @@
                                 ${byOffense.map((t, i) => `
                                     <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
@@ -1407,7 +1407,7 @@
                                 ${byDefense.map((t, i) => `
                                     <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 3 ? 'var(--color-live)' : 'var(--color-text-muted)'};">${i + 1}</div>
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
@@ -1431,7 +1431,7 @@
                                 ${byPoints.map((t, i) => `
                                     <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                                         <div style="width: 24px; text-align: center; font-weight: 700; color: ${i < 2 ? 'var(--color-live)' : i >= leagueData.table.length - 3 ? 'var(--color-primary)' : 'var(--color-text-muted)'};">${i + 1}</div>
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" style="width: 24px; height: 24px; border-radius: 4px;">
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sqEsc(t.name)}</div>
                                             <div style="height: 8px; background: var(--color-bg-elevated); border-radius: 4px; margin-top: 4px; overflow: hidden;">
@@ -1515,7 +1515,7 @@
                                     <tr>
                                         <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
                                         <td class="table-team">
-                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
+                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                                             ${sqEsc(t.name)}
                                         </td>
                                         <td class="table-stats">${t.played}</td>
@@ -1546,7 +1546,7 @@
                                     <tr>
                                         <td class="table-rank ${i < 3 ? 'promotion' : ''}">${i + 1}</td>
                                         <td class="table-team">
-                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
+                                            <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                                             ${sqEsc(t.name)}
                                         </td>
                                         <td class="table-stats">${t.played}</td>
@@ -1577,7 +1577,7 @@
                                 <tr>
                                     <td class="table-rank ${i < 3 ? 'promotion' : i >= leagueData.table.length - 3 ? 'relegation' : ''}">${i + 1}</td>
                                     <td class="table-team">
-                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
+                                        <img src="img/teams/${t.name.replace(/[^a-zA-Z0-9]/g, '')}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">
                                         ${sqEsc(t.name)}
                                     </td>
                                     <td class="table-stats">${t.goals_for}</td>

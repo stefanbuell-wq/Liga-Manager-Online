@@ -112,7 +112,7 @@
         let live = params.get('live') === '1';
         let tableRows = [], sortKey = 'rank', sortDir = 1, filter = '';
         const view = document.getElementById('view');
-        const crest = k => k ? `<img src="img/teams/${esc(k)}.gif" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'">` : '<img src="img/teams/blank.png" alt="" loading="lazy">';
+        const crest = k => k ? `<img src="img/teams/${esc(k)}.gif${window.LMO_CREST_V || ''}" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'">` : '<img src="img/teams/blank.png" alt="" loading="lazy">';
 
         async function get(q) {
             const r = await fetch(API + '?' + new URLSearchParams(Object.assign({ comp }, q)));

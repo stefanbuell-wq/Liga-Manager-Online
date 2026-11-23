@@ -14,7 +14,7 @@
         });
     }
     function logo(name) {
-        return 'img/teams/' + String(name).replace(/[^a-zA-Z0-9]/g, '') + '.gif';
+        return 'img/teams/' + String(name).replace(/[^a-zA-Z0-9]/g, '') + '.gif' + (window.LMO_CREST_V || '');
     }
 
     function compute(data, extra) {

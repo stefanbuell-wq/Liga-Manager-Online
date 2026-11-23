@@ -102,7 +102,7 @@
         const ICON = { kickoff: '▶️', goal: '⚽', yellow: '🟨', yellowred: '🟨🟥', red: '🟥', sub: '🔁', half: '⏸️', second: '▶️', end: '🏁', score: '🔢', note: '💬' };
         const id = +new URLSearchParams(location.search).get('spiel') || 0;
         let csrf = '', d = null, type = 'goal', timer = null, busy = false;
-        const crest = k => `<img src="img/teams/${esc(k)}.gif" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">`;
+        const crest = k => `<img src="img/teams/${esc(k)}.gif${window.LMO_CREST_V || ''}" onerror="this.onerror=null;this.src='img/teams/blank.png'" alt="">`;
         const time = s => { const t = new Date(String(s).replace(' ', 'T') + 'Z'); return isNaN(t) ? '' : t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); };
         const sc = m => m.score ? `${m.score[0]}:${m.score[1]}` : (m.result ? `${m.result[0]}:${m.result[1]}` : '–:–');
 
